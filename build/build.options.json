@@ -1,0 +1,12 @@
+{
+  "additionalFiles": "",
+  "builtInLibrariesFolders": "C:\\Program Files (x86)\\Arduino\\libraries",
+  "builtInToolsFolders": "C:\\Program Files (x86)\\Arduino\\tools-builder,C:\\Program Files (x86)\\Arduino\\hardware\\tools\\avr,C:\\Users\\chris\\AppData\\Local\\Arduino15\\packages",
+  "compiler.optimization_flags": "",
+  "customBuildProperties": "build.path=c:\\Users\\chris\\Documents\\Github\\arduino-heat-sensor\\build,build.warn_data_percentage=75,runtime.tools.arm-none-eabi-gcc.path=C:\\Users\\chris\\AppData\\Local\\Arduino15\\packages\\SparkFun\\tools\\arm-none-eabi-gcc\\8-2018-q4-major,runtime.tools.arm-none-eabi-gcc-8-2018-q4-major.path=C:\\Users\\chris\\AppData\\Local\\Arduino15\\packages\\SparkFun\\tools\\arm-none-eabi-gcc\\8-2018-q4-major",
+  "fqbn": "SparkFun:apollo3:amap3redboard:svl_baud=921600,loader=sparkfun_svl",
+  "hardwareFolders": "C:\\Program Files (x86)\\Arduino\\hardware,C:\\Users\\chris\\AppData\\Local\\Arduino15\\packages",
+  "otherLibrariesFolders": "C:\\Users\\chris\\Documents\\Arduino\\libraries",
+  "runtime.ide.version": "10813",
+  "sketchLocation": "c:\\Users\\chris\\Documents\\Github\\arduino-heat-sensor\\arduino-heat-sensor.ino"
+}
