@@ -1026,6 +1026,58 @@ int16_t GridEYE::getRegister(unsigned char reg, int8_t len)
 }
 
 // Start CK's code 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+/*
+#include <U8g2lib.h>
+
+#ifdef U8X8_HAVE_HW_SPI
+#include <SPI.h>
+#endif
+#ifdef U8X8_HAVE_HW_I2C
+#include <Wire.h>
+#endif
+
+class OLEDWrapper {
+  private:
+    U8G2_SSD1327_EA_W128128_1_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
+
+  public:
+    void u8g2_prepare(void) {
+      u8g2.setFont(u8g2_font_inb63_mn);
+      u8g2.setFontRefHeightExtendedText();
+      u8g2.setDrawColor(1);
+      u8g2.setFontPosTop();
+      u8g2.setFontDirection(0);
+    }
+
+    void drawUTF8(String val) {
+      u8g2.firstPage();
+      do {
+          u8g2_prepare();
+          u8g2.setFont(u8g2_font_ncenB14_tr);
+          u8g2.drawUTF8(0, 0, val.c_str());
+      } while( u8g2.nextPage() );
+    }
+
+    void drawInt(int val) {
+      MicrosecondTimer("drawInt");
+      u8g2.firstPage();
+      do {
+          u8g2_prepare();
+          u8g2.drawUTF8(30, 10, String(val).c_str());
+      } while( u8g2.nextPage() );
+    }
+
+    void setup_OLED() {
+      pinMode(10, OUTPUT);
+      pinMode(9, OUTPUT);
+      digitalWrite(10, 0);
+      digitalWrite(9, 0);
+      u8g2.begin();
+      u8g2.setBusClock(400000);
+    }
+};
+OLEDWrapper oledWrapper;
+*/
 #include <limits.h>
 class Utils {
   public:
