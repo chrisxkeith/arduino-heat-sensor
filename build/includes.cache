@@ -11,6 +11,16 @@
   },
   {
     "Sourcefile": "c:\\Users\\chris\\Documents\\Github\\arduino-heat-sensor\\build\\sketch\\arduino-heat-sensor.ino.cpp",
+    "Include": "Wire.h",
+    "Includepath": "C:\\Users\\chris\\AppData\\Local\\Arduino15\\packages\\SparkFun\\hardware\\apollo3\\1.2.0\\libraries\\Wire\\src"
+  },
+  {
+    "Sourcefile": "c:\\Users\\chris\\Documents\\Github\\arduino-heat-sensor\\build\\sketch\\arduino-heat-sensor.ino.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\chris\\AppData\\Local\\Arduino15\\packages\\SparkFun\\hardware\\apollo3\\1.2.0\\libraries\\Wire\\src\\Wire.cpp",
     "Include": "",
     "Includepath": null
   }
