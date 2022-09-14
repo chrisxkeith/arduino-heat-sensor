@@ -1109,8 +1109,12 @@ public:
 GridEyeSupport gridEyeSupport;
 
 void Utils::publish(String s) {
-  char buf[12];
-  sprintf(buf, "%10u", millis());
+  char buf[100];
+  int totalSeconds = millis() / 1000;
+  int secs = totalSeconds % 60;
+  int minutes = (totalSeconds / 60) % 60;
+  int hours = (totalSeconds / 60) / 60;
+  sprintf(buf, "%02u:%02u:%02u", hours, minutes, secs);
   String s1(buf);
   s1.concat(" ");
   s1.concat(s);
