@@ -94,6 +94,11 @@ class Buzzer {
     void buzzOff() {
         noTone(PIEZO_PIN);
     }
+    void buzzForSeconds(int nSeconds) {
+      this->buzzOn();
+      delay(nSeconds * 1000);
+      this->buzzOff();
+    }
 };
 Buzzer buzzer;
 
@@ -133,16 +138,50 @@ void setup() {
   Wire.begin();
   gridEyeSupport.begin();
   oledWrapper.setup_OLED();
-  delay(5000);
+  delay(3000);
   doDisplay();
-  buzzer.buzzOn();
-  delay(2000);
-  buzzer.buzzOff();
+  buzzer.buzzForSeconds(2);
   Utils::publish("Finished setup...");	
 }
 
+class TemperatureMonitor {
+  private:
+    const int THRESHOLD = 100;              // farenheit
+    int       whenCrossedThreshold = 0;     // milliseconds
+    int       lastBuzzTime = 0;
+  public:
+    void checkTimeAndTemp() {
+      int   now = millis();
+      int   currentTemp = gridEyeSupport.mostRecentValue;
+      if (currentTemp < this->THRESHOLD) {
+        this->whenCrossedThreshold = 0;
+      } else {
+        if (this->whenCrossedThreshold == 0) {
+          this->whenCrossedThreshold = now;
+          buzzer.buzzForSeconds(2);
+        } else {
+          int hoursOverThreshold = (((now - this->whenCrossedThreshold) / 1000) / 60) / 60;
+          int silentInterval = 0; // seconds, zero is flag for don't buzz.
+          switch (hoursOverThreshold) {
+            case 0:  silentInterval = 0;      break;
+            case 1:  silentInterval = 0;      break;
+            case 2:  silentInterval = 5 * 60; break;
+            case 3:  silentInterval = 60;     break;
+            default: silentInterval = 15;     break;
+          }
+          if (silentInterval > 0 && this->lastBuzzTime + silentInterval > now) {
+            buzzer.buzzForSeconds(2);
+            this->lastBuzzTime = millis();
+          }
+        }
+      }
+    }
+};
+TemperatureMonitor temperatureMonitor;
+
 int lastDisplay = 0;
 void loop() {
+  temperatureMonitor.checkTimeAndTemp();
   const int DISPLAY_RATE_IN_MS = 2000;
   int thisMS = millis();
   if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
