@@ -8,11 +8,10 @@
 #ifdef U8X8_HAVE_HW_I2C
 #include <Wire.h>
 #endif
-/*
-class OLEDWrapper {
-  private:
-    U8G2_SSD1327_EA_W128128_1_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 
+U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
+
+class OLEDWrapper {
   public:
     void u8g2_prepare(void) {
       u8g2.setFont(u8g2_font_inb63_mn);
@@ -32,7 +31,6 @@ class OLEDWrapper {
     }
 
     void drawInt(int val) {
-      MicrosecondTimer("drawInt");
       u8g2.firstPage();
       do {
           u8g2_prepare();
@@ -50,7 +48,7 @@ class OLEDWrapper {
     }
 };
 OLEDWrapper oledWrapper;
-*/
+
 #include <SparkFun_GridEYE_Arduino_Library.h>
 #include <Wire.h>
 #include <limits.h>
