@@ -77,6 +77,26 @@ public:
 };
 GridEyeSupport gridEyeSupport;
 
+class Buzzer {
+  private:
+    const int PIEZO_PIN = 6;
+  public:
+    Buzzer() {
+        pinMode(PIEZO_PIN, OUTPUT);
+    }
+    void buzzOn() {
+      for (int hz = 440; hz < 1000; hz += 25) {
+        tone(PIEZO_PIN, hz, 50);
+        delay(5);
+        for (int i = 3; i <= 7; i++);
+      }    
+    }
+    void buzzOff() {
+        noTone(PIEZO_PIN);
+    }
+};
+Buzzer buzzer;
+
 class Utils {
   public:
     static void publish(String s);
@@ -95,23 +115,13 @@ void Utils::publish(String s) {
   Serial.println(s1);
 }
 
-const String githubHash("github hash: to be filled in after 'git push'");
 const String githubRepo("https://github.com/chrisxkeith/arduino-heat-sensor");
+const String githubHash("github commit: to come");
 
 void doDisplay() {
   gridEyeSupport.readValue();
   Utils::publish(String(gridEyeSupport.mostRecentValue));
   oledWrapper.drawInt(gridEyeSupport.mostRecentValue);  
-}
-
-int lastDisplay = 0;
-const int DISPLAY_RATE_IN_MS = 2000;
-void display() {
-    int thisMS = millis();
-    if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
-      doDisplay();
-      lastDisplay = thisMS;
-    }
 }
 
 void setup() {
@@ -124,10 +134,19 @@ void setup() {
   gridEyeSupport.begin();
   oledWrapper.setup_OLED();
   delay(5000);
-  display();
+  doDisplay();
+  buzzer.buzzOn();
+  delay(2000);
+  buzzer.buzzOff();
   Utils::publish("Finished setup...");	
 }
 
+int lastDisplay = 0;
 void loop() {
-  display();
+  const int DISPLAY_RATE_IN_MS = 2000;
+  int thisMS = millis();
+  if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
+    doDisplay();
+    lastDisplay = thisMS;
+  }
 }
