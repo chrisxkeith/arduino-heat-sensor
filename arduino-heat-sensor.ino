@@ -95,28 +95,24 @@ void Utils::publish(String s) {
   Serial.println(s1);
 }
 
-class OLEDDisplayer {
+const String githubHash("github hash: to be filled in after 'git push'");
+const String githubRepo("https://github.com/chrisxkeith/arduino-heat-sensor");
 
-  public:
-    void display() {
-      Utils::publish(String(gridEyeSupport.mostRecentValue));
-
-    }
-};
-OLEDDisplayer oledDisplayer;
+void doDisplay() {
+  gridEyeSupport.readValue();
+  Utils::publish(String(gridEyeSupport.mostRecentValue));
+  oledWrapper.drawInt(gridEyeSupport.mostRecentValue);  
+}
 
 int lastDisplay = 0;
-const int DISPLAY_RATE_IN_MS = 150;
+const int DISPLAY_RATE_IN_MS = 2000;
 void display() {
     int thisMS = millis();
     if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
-      oledDisplayer.display();
+      doDisplay();
       lastDisplay = thisMS;
     }
 }
-
-const String githubHash("github hash: to be filled in after 'git push'");
-const String githubRepo("https://github.com/chrisxkeith/arduino-heat-sensor");
 
 void setup() {
   Serial.begin(57600);
@@ -124,21 +120,14 @@ void setup() {
   Utils::publish(githubRepo);
   Utils::publish(githubHash);
 
-  // Start your preferred I2C object
   Wire.begin();
-  // Library assumes "Wire" for I2C but you can pass something else with begin() if you like
-
-    gridEyeSupport.begin();
-    int now = millis();
-    gridEyeSupport.readValue();
-    delay(5000);
-    display();
-
+  gridEyeSupport.begin();
+  oledWrapper.setup_OLED();
+  delay(5000);
+  display();
   Utils::publish("Finished setup...");	
 }
 
 void loop() {
-    gridEyeSupport.readValue();
-    display();
-    delay(2000);
+  display();
 }
