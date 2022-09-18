@@ -38,6 +38,12 @@ class OLEDWrapper {
       } while( u8g2.nextPage() );
     }
 
+    void clear() {
+      u8g2.firstPage();
+      do {
+      } while( u8g2.nextPage() );      
+    }
+
     void setup_OLED() {
       pinMode(10, OUTPUT);
       pinMode(9, OUTPUT);
@@ -102,6 +108,53 @@ class Buzzer {
 };
 Buzzer buzzer;
 
+// #define TEST_DATA
+class TemperatureMonitor {
+  private:
+#ifdef TEST_DATA
+    const int THRESHOLD = 50;               // farenheit
+#else
+    const int THRESHOLD = 100;              // hit threshold immediately for testing
+#endif
+    int       lastBuzzTime = 0;
+  public:
+    int       whenCrossedThreshold = 0;     // milliseconds
+    
+    void checkTimeAndTemp() {
+      int   now = millis();
+      int   currentTemp = gridEyeSupport.mostRecentValue;
+      if (currentTemp < this->THRESHOLD) {
+        this->whenCrossedThreshold = 0;
+      } else {
+        if (this->whenCrossedThreshold == 0) {
+          this->whenCrossedThreshold = now;
+          buzzer.buzzForSeconds(2);
+        } else {
+          int hoursOverThreshold = (((now - this->whenCrossedThreshold) / 1000) / 60) / 60;
+#ifdef TEST_DATA
+          hoursOverThreshold *= 60 * 60; // convert to seconds for testing
+#endif
+          int silentInterval = 0; // seconds, zero is flag for don't buzz.
+          switch (hoursOverThreshold) {
+            case 0:  silentInterval = 0;      break;
+            case 1:  silentInterval = 0;      break;
+            case 2:  silentInterval = 5 * 60; break;
+            case 3:  silentInterval = 60;     break;
+            default: silentInterval = 15;     break;
+          }
+#ifdef TEST_DATA
+          silentInterval = max(silentInterval / 60, 2); // speed up testing
+#endif
+          if (silentInterval > 0 && this->lastBuzzTime + silentInterval > now) {
+            buzzer.buzzForSeconds(2);
+            this->lastBuzzTime = millis();
+          }
+        }
+      }
+    }
+};
+TemperatureMonitor temperatureMonitor;
+
 class Utils {
   public:
     static void publish(String s);
@@ -144,40 +197,6 @@ void setup() {
   Utils::publish("Finished setup...");	
 }
 
-class TemperatureMonitor {
-  private:
-    const int THRESHOLD = 100;              // farenheit
-    int       whenCrossedThreshold = 0;     // milliseconds
-    int       lastBuzzTime = 0;
-  public:
-    void checkTimeAndTemp() {
-      int   now = millis();
-      int   currentTemp = gridEyeSupport.mostRecentValue;
-      if (currentTemp < this->THRESHOLD) {
-        this->whenCrossedThreshold = 0;
-      } else {
-        if (this->whenCrossedThreshold == 0) {
-          this->whenCrossedThreshold = now;
-          buzzer.buzzForSeconds(2);
-        } else {
-          int hoursOverThreshold = (((now - this->whenCrossedThreshold) / 1000) / 60) / 60;
-          int silentInterval = 0; // seconds, zero is flag for don't buzz.
-          switch (hoursOverThreshold) {
-            case 0:  silentInterval = 0;      break;
-            case 1:  silentInterval = 0;      break;
-            case 2:  silentInterval = 5 * 60; break;
-            case 3:  silentInterval = 60;     break;
-            default: silentInterval = 15;     break;
-          }
-          if (silentInterval > 0 && this->lastBuzzTime + silentInterval > now) {
-            buzzer.buzzForSeconds(2);
-            this->lastBuzzTime = millis();
-          }
-        }
-      }
-    }
-};
-TemperatureMonitor temperatureMonitor;
 
 int lastDisplay = 0;
 void loop() {
@@ -187,5 +206,9 @@ void loop() {
   if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
     doDisplay();
     lastDisplay = thisMS;
-  }
+  } else if (temperatureMonitor.whenCrossedThreshold > 0) {
+    oledWrapper.clear();
+    delay(1000);
+    doDisplay();
+  }  
 }
