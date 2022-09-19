@@ -1,13 +1,7 @@
 // Please credit chris.keith@gmail.com .
 
 #include <U8g2lib.h>
-
-#ifdef U8X8_HAVE_HW_SPI
-#include <SPI.h>
-#endif
-#ifdef U8X8_HAVE_HW_I2C
 #include <Wire.h>
-#endif
 
 U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 
@@ -34,7 +28,7 @@ class OLEDWrapper {
       u8g2.firstPage();
       do {
           u8g2_prepare();
-          u8g2.drawUTF8(30, 10, String(val).c_str());
+      u8g2.drawUTF8(30, 10, String(val).c_str());
       } while( u8g2.nextPage() );
     }
 
@@ -56,7 +50,6 @@ class OLEDWrapper {
 OLEDWrapper oledWrapper;
 
 #include <SparkFun_GridEYE_Arduino_Library.h>
-#include <Wire.h>
 #include <limits.h>
 
 class GridEyeSupport {
@@ -200,15 +193,15 @@ void setup() {
 
 int lastDisplay = 0;
 void loop() {
-  temperatureMonitor.checkTimeAndTemp();
+  // temperatureMonitor.checkTimeAndTemp();
   const int DISPLAY_RATE_IN_MS = 2000;
   int thisMS = millis();
   if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
     doDisplay();
     lastDisplay = thisMS;
-  } else if (temperatureMonitor.whenCrossedThreshold > 0) {
+  } /* else if (temperatureMonitor.whenCrossedThreshold > 0) {
     oledWrapper.clear();
     delay(1000);
     doDisplay();
-  }  
+  } */
 }
