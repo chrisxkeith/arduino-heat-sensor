@@ -193,15 +193,15 @@ void setup() {
 
 int lastDisplay = 0;
 void loop() {
-  // temperatureMonitor.checkTimeAndTemp();
+  temperatureMonitor.checkTimeAndTemp();
   const int DISPLAY_RATE_IN_MS = 2000;
   int thisMS = millis();
   if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
     doDisplay();
     lastDisplay = thisMS;
-  } /* else if (temperatureMonitor.whenCrossedThreshold > 0) {
+  } else if (temperatureMonitor.whenCrossedThreshold > 0) {
     oledWrapper.clear();
     delay(1000);
     doDisplay();
-  } */
+  }
 }
