@@ -109,7 +109,7 @@ class TemperatureMonitor {
 #else
     const int THRESHOLD = 100;              // hit threshold immediately for testing
 #endif
-    int       lastBuzzTime = 0;
+    int       lastBuzzTime = 0;             // milliseconds
   public:
     int       whenCrossedThreshold = 0;     // milliseconds
     
@@ -123,9 +123,10 @@ class TemperatureMonitor {
           this->whenCrossedThreshold = now;
           buzzer.buzzForSeconds(2);
         } else {
-          int hoursOverThreshold = (((now - this->whenCrossedThreshold) / 1000) / 60) / 60;
 #ifdef TEST_DATA
-          hoursOverThreshold *= 60 * 60; // convert to seconds for testing
+          int hoursOverThreshold = ((now - this->whenCrossedThreshold) / 1000); // use seconds for testing
+#else
+          int hoursOverThreshold = (((now - this->whenCrossedThreshold) / 1000) / 60) / 60;
 #endif
           int silentInterval = 0; // seconds, zero is flag for don't buzz.
           switch (hoursOverThreshold) {
@@ -135,12 +136,14 @@ class TemperatureMonitor {
             case 3:  silentInterval = 60;     break;
             default: silentInterval = 15;     break;
           }
+          if (silentInterval > 0) {
 #ifdef TEST_DATA
-          silentInterval = max(silentInterval / 60, 2); // speed up testing
+            silentInterval = max(silentInterval / 60, 2); // speed up testing
 #endif
-          if (silentInterval > 0 && this->lastBuzzTime + silentInterval > now) {
-            buzzer.buzzForSeconds(2);
-            this->lastBuzzTime = millis();
+            if (this->lastBuzzTime + (silentInterval * 1000) < now) {
+              buzzer.buzzForSeconds(2);
+              this->lastBuzzTime = millis();
+            }
           }
         }
       }
