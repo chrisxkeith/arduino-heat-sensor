@@ -3,15 +3,19 @@
 #include <U8g2lib.h>
 #include <Wire.h>
 
+class Utils {
+  public:
+    static void publish(String s);
+};
+
 U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 
 class OLEDWrapper {
   public:
     void u8g2_prepare(void) {
-      u8g2.setFont(u8g2_font_inb63_mn);
+      u8g2.setFont(u8g2_font_fur49_tn);
       u8g2.setFontRefHeightExtendedText();
       u8g2.setDrawColor(1);
-      u8g2.setFontPosTop();
       u8g2.setFontDirection(0);
     }
 
@@ -24,11 +28,19 @@ class OLEDWrapper {
       } while( u8g2.nextPage() );
     }
 
+    void drawEdge() {
+      u8g2.drawLine(0, 0, 0, 95);
+      u8g2.drawLine(0, 95, 127, 95);  
+      u8g2.drawLine(127, 95, 127, 0);  
+      u8g2.drawLine(127, 0, 0, 0);  
+    }
+    
     void drawInt(int val) {
       u8g2.firstPage();
       do {
           u8g2_prepare();
-      u8g2.drawUTF8(30, 10, String(val).c_str());
+          drawEdge();
+          u8g2.drawUTF8(2, 90, String(val).c_str());
       } while( u8g2.nextPage() );
     }
 
@@ -150,11 +162,6 @@ class TemperatureMonitor {
     }
 };
 TemperatureMonitor temperatureMonitor;
-
-class Utils {
-  public:
-    static void publish(String s);
-};
 
 void Utils::publish(String s) {
   char buf[100];
