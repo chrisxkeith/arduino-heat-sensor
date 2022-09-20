@@ -133,7 +133,6 @@ class TemperatureMonitor {
       } else {
         if (this->whenCrossedThreshold == 0) {
           this->whenCrossedThreshold = now;
-          buzzer.buzzForSeconds(2);
         } else {
 #ifdef TEST_DATA
           int hoursOverThreshold = ((now - this->whenCrossedThreshold) / 1000); // use seconds for testing
@@ -150,11 +149,12 @@ class TemperatureMonitor {
           }
           if (silentInterval > 0) {
 #ifdef TEST_DATA
-            silentInterval = max(silentInterval / 60, 2); // speed up testing
+            silentInterval = max(silentInterval / 60, 5); // speed up testing
 #endif
             if (this->lastBuzzTime + (silentInterval * 1000) < now) {
               buzzer.buzzForSeconds(2);
               this->lastBuzzTime = millis();
+              Utils::publish("Buzzed at...");
             }
           }
         }
