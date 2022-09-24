@@ -8,7 +8,12 @@ class Utils {
     static void publish(String s);
 };
 
-U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
+// #define USE_FULL_BUFFER
+#ifdef USE_FULL_BUFFER
+  U8G2_SSD1327_EA_W128128_F_SW_I2C u8g2(U8G2_R0, 15, 4, U8X8_PIN_NONE);
+#else
+  U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
+#endif
 
 class OLEDWrapper {
   public:
@@ -19,13 +24,24 @@ class OLEDWrapper {
       u8g2.setFontDirection(0);
     }
 
+    void drawUTF8_fullBuffer(String val) {
+      u8g2.clearBuffer();
+      u8g2.setFont(u8g2_font_ncenB14_tr);
+      u8g2.drawUTF8(0, 0, val.c_str());
+      u8g2.sendBuffer();
+    }
+
     void drawUTF8(String val) {
+#ifdef USE_FULL_BUFFER
+      drawUTF8_fullBuffer(val);
+#else
       u8g2.firstPage();
       do {
           u8g2_prepare();
           u8g2.setFont(u8g2_font_ncenB14_tr);
           u8g2.drawUTF8(0, 0, val.c_str());
       } while( u8g2.nextPage() );
+#endif
     }
 
     void drawEdge() {
@@ -36,18 +52,27 @@ class OLEDWrapper {
     }
     
     void drawInt(int val) {
+#ifdef USE_FULL_BUFFER
+      drawUTF8_fullBuffer(String(val).c_str());
+#else
       u8g2.firstPage();
       do {
           u8g2_prepare();
           drawEdge();
           u8g2.drawUTF8(2, 90, String(val).c_str());
       } while( u8g2.nextPage() );
+#endif
     }
 
     void clear() {
+#ifdef USE_FULL_BUFFER
+      u8g2.clearBuffer();
+      u8g2.sendBuffer();
+#else
       u8g2.firstPage();
       do {
-      } while( u8g2.nextPage() );      
+      } while( u8g2.nextPage() );
+#endif      
     }
 
     void setup_OLED() {
