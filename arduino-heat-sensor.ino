@@ -181,7 +181,6 @@ const String githubHash("github commit: to come");
 
 void doDisplay() {
   gridEyeSupport.readValue();
-  Utils::publish(String(gridEyeSupport.mostRecentValue));
   oledWrapper.drawInt(gridEyeSupport.mostRecentValue);  
 }
 
