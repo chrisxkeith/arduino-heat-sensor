@@ -64,6 +64,44 @@ OLEDWrapper oledWrapper;
 #include <SparkFun_GridEYE_Arduino_Library.h>
 #include <limits.h>
 
+class Sensor {
+  private:
+    int     lastVal;
+  protected:
+    int     pin;
+    String  name;
+    double  factor; // apply to get human-readable values, e.g., degrees F
+
+  public:
+    Sensor(int pin, String name, double factor) {
+        this->pin = pin;
+        this->name = name;
+        this->factor = factor;
+        this->lastVal = INT_MIN;
+        pinMode(pin, INPUT);
+    }
+    
+    String getName() { return name; }
+
+    void sample() {
+        if (pin >= A0 && pin <= A5) {
+            lastVal = analogRead(pin);
+        } else {
+            lastVal = digitalRead(pin);
+        }
+    }
+    
+    int applyFactor(int val) {
+        return val * factor;
+    }
+
+    int getValue() {
+        return applyFactor(lastVal);
+    }
+};
+
+Sensor thermistorSensor(A0, "Stove", 0.036);
+
 class GridEyeSupport {
 private:
   GridEYE grideye;
@@ -113,6 +151,7 @@ class Buzzer {
 };
 Buzzer buzzer;
 
+// #define USE_THERMISTOR
 // #define TEST_DATA
 class TemperatureMonitor {
   private:
@@ -124,10 +163,19 @@ class TemperatureMonitor {
     int       lastBuzzTime = 0;             // milliseconds
   public:
     int       whenCrossedThreshold = 0;     // milliseconds
+
+    int getValue() {
+#ifdef USE_THERMISTOR
+      return thermistorSensor.getValue();
+#else
+      gridEyeSupport.readValue();
+      return gridEyeSupport.mostRecentValue;
+#endif
+    }
     
     void checkTimeAndTemp() {
       int   now = millis();
-      int   currentTemp = gridEyeSupport.mostRecentValue;
+      int   currentTemp = this->getValue();
       if (currentTemp < this->THRESHOLD) {
         this->whenCrossedThreshold = 0;
       } else {
@@ -180,8 +228,7 @@ const String githubRepo("https://github.com/chrisxkeith/arduino-heat-sensor");
 const String githubHash("github commit: to come");
 
 void doDisplay() {
-  gridEyeSupport.readValue();
-  oledWrapper.drawInt(gridEyeSupport.mostRecentValue);  
+  oledWrapper.drawInt(temperatureMonitor.getValue());  
 }
 
 void setup() {
