@@ -11,6 +11,8 @@ class Utils {
 U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 
 class OLEDWrapper {
+  private:
+      int   baseLine = 90;
   public:
     void u8g2_prepare(void) {
       u8g2.setFont(u8g2_font_fur49_tn);
@@ -18,16 +20,7 @@ class OLEDWrapper {
       u8g2.setDrawColor(1);
       u8g2.setFontDirection(0);
     }
-
-    void drawUTF8(String val) {
-      u8g2.firstPage();
-      do {
-          u8g2_prepare();
-          u8g2.setFont(u8g2_font_ncenB14_tr);
-          u8g2.drawUTF8(0, 0, val.c_str());
-      } while( u8g2.nextPage() );
-    }
-
+    
     void drawEdge() {
       u8g2.drawLine(0, 0, 0, 95);
       u8g2.drawLine(0, 95, 127, 95);  
@@ -39,8 +32,7 @@ class OLEDWrapper {
       u8g2.firstPage();
       do {
           u8g2_prepare();
-          drawEdge();
-          u8g2.drawUTF8(2, 90, String(val).c_str());
+          u8g2.drawUTF8(2, this->baseLine, String(val).c_str());
       } while( u8g2.nextPage() );
     }
 
@@ -48,6 +40,13 @@ class OLEDWrapper {
       u8g2.firstPage();
       do {
       } while( u8g2.nextPage() );      
+    }
+
+    void shiftDisplay(int shiftAmount) {
+      this->baseLine -= shiftAmount;
+      if (this->baseLine < 60) {
+        this->baseLine = 90;
+      }
     }
 
     void setup_OLED() {
@@ -248,16 +247,19 @@ void setup() {
 
 
 int lastDisplay = 0;
+int lastShift = 0;
 void loop() {
   temperatureMonitor.checkTimeAndTemp();
   const int DISPLAY_RATE_IN_MS = 2000;
   int thisMS = millis();
   if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
+    const int SHIFT_RATE = 1000 * 60 * 2; // Shift display every 2 minutes to avoid OLED burn-in.
+    if (thisMS - lastShift > SHIFT_RATE) {
+      oledWrapper.shiftDisplay(2);
+      lastShift = thisMS;
+    }
     doDisplay();
     lastDisplay = thisMS;
-  } else if (temperatureMonitor.whenCrossedThreshold > 0) {
-    oledWrapper.clear();
-    delay(1000);
-    doDisplay();
   }
+  
 }
