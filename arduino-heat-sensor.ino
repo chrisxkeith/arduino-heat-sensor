@@ -12,7 +12,7 @@ U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 
 class OLEDWrapper {
   private:
-      int   baseLine = 90;
+      int   baseLine = 70;
   public:
     void u8g2_prepare(void) {
       u8g2.setFont(u8g2_font_fur49_tn);
@@ -33,6 +33,8 @@ class OLEDWrapper {
       do {
           u8g2_prepare();
           u8g2.drawUTF8(2, this->baseLine, String(val).c_str());
+          u8g2.setFont(u8g2_font_fur11_tf);
+          u8g2.drawUTF8(6, this->baseLine + 20, "Fahrenheit");
       } while( u8g2.nextPage() );
     }
 
@@ -227,7 +229,8 @@ const String githubRepo("https://github.com/chrisxkeith/arduino-heat-sensor");
 const String githubHash("github commit: to come");
 
 void doDisplay() {
-  oledWrapper.drawInt(temperatureMonitor.getValue());  
+  oledWrapper.drawInt(temperatureMonitor.getValue());
+  oledWrapper.drawEdge();
 }
 
 void setup() {
