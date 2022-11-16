@@ -12,7 +12,8 @@ U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 
 class OLEDWrapper {
   private:
-      int   baseLine = 70;
+      const int START_BASELINE = 50;
+      int   baseLine = START_BASELINE;
   public:
     void u8g2_prepare(void) {
       u8g2.setFont(u8g2_font_fur49_tn);
@@ -45,9 +46,9 @@ class OLEDWrapper {
     }
 
     void shiftDisplay(int shiftAmount) {
-      this->baseLine -= shiftAmount;
-      if (this->baseLine < 60) {
-        this->baseLine = 90;
+      this->baseLine += shiftAmount;
+      if (this->baseLine > 70) {
+        this->baseLine = START_BASELINE;
       }
     }
 
