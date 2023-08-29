@@ -105,10 +105,8 @@ class Sensor {
 Sensor thermistorSensor(A0, "Stove", 0.036);
 
 class GridEyeSupport {
-private:
-  GridEYE grideye;
-
 public:
+  GridEYE grideye;
   int     mostRecentValue = INT_MIN;
 
   void begin() {
@@ -249,6 +247,19 @@ void setup() {
   Utils::publish("Finished setup...");	
 }
 
+int lastSend = 0;
+void printValues() {
+  int now = millis();
+  if (now - lastSend > 200) { // about every 200 ms
+    for(unsigned char i = 0; i < 64; i++) {
+      Serial.print(gridEyeSupport.grideye.getPixelTemperature(i));
+      Serial.print(",");
+    }
+    // End each frame with a linefeed
+    Serial.println();
+    lastSend = now;
+  }
+}
 
 int lastDisplay = 0;
 int lastShift = 0;
@@ -265,5 +276,5 @@ void loop() {
     doDisplay();
     lastDisplay = thisMS;
   }
-  
+  printValues();
 }
