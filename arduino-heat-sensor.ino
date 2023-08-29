@@ -251,7 +251,7 @@ void setup() {
 int lastSend = 0;
 void printValues() {
   int now = millis();
-  if (now - lastSend > 200) { // about every 200 ms
+  if (now - lastSend > 100) { // about every 100 ms
     for(unsigned char i = 0; i < 64; i++) {
       Serial.print(gridEyeSupport.grideye.getPixelTemperature(i));
       Serial.print(",");
