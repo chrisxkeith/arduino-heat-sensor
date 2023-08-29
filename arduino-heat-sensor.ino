@@ -212,6 +212,7 @@ class TemperatureMonitor {
 TemperatureMonitor temperatureMonitor;
 
 void Utils::publish(String s) {
+  return;
   char buf[100];
   int totalSeconds = millis() / 1000;
   int secs = totalSeconds % 60;
