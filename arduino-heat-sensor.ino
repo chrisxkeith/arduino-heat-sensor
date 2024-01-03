@@ -113,14 +113,27 @@ public:
     grideye.begin();
   }
 
+  float readOneSensor(int i) {
+    return (grideye.getPixelTemperature(i) * 9.0 / 5.0 + 32.0);
+  }
+
+  String getValues() {
+    String ret;
+    for(unsigned char i = 0; i < 64; i++) {
+      ret.concat(readOneSensor(i));
+      ret.concat(",");
+    }
+    return ret;
+  }
+
   // This will take 15-20 seconds if the GridEye isn't connected.
   int readValue() {
-      float total = 0;
-      for (int i = 0; i < 64; i++) {
-        int t = (int)(grideye.getPixelTemperature(i) * 9.0 / 5.0 + 32.0);
-        total += t;
-      }
-      mostRecentValue = (int)(total / 64);
+    float total = 0;
+    for (int i = 0; i < 64; i++) {
+      int t = (int)(readOneSensor(i));
+      total += t;
+    }
+    mostRecentValue = (int)(total / 64);
     return mostRecentValue;
   }
 };
@@ -129,6 +142,7 @@ GridEyeSupport gridEyeSupport;
 class Buzzer {
   private:
     const int PIEZO_PIN = 6;
+    const bool ENABLED = false;
   public:
     Buzzer() {
         pinMode(PIEZO_PIN, OUTPUT);
@@ -144,9 +158,11 @@ class Buzzer {
         noTone(PIEZO_PIN);
     }
     void buzzForSeconds(int nSeconds) {
-      this->buzzOn();
-      delay(nSeconds * 1000);
-      this->buzzOff();
+      if (ENABLED) {
+        this->buzzOn();
+        delay(nSeconds * 1000);
+        this->buzzOff();
+      }
     }
 };
 Buzzer buzzer;
@@ -212,7 +228,6 @@ class TemperatureMonitor {
 TemperatureMonitor temperatureMonitor;
 
 void Utils::publish(String s) {
-  return;
   char buf[100];
   int totalSeconds = millis() / 1000;
   int secs = totalSeconds % 60;
@@ -226,18 +241,27 @@ void Utils::publish(String s) {
 }
 
 const String githubRepo("https://github.com/chrisxkeith/arduino-heat-sensor");
-const String githubHash("github commit: to come");
 
 void doDisplay() {
   oledWrapper.drawInt(temperatureMonitor.getValue());
   oledWrapper.drawEdge();
 }
 
+int lastSend = 0;
+const int VALUES_SEND_INTERVAL = 5000;
+void printValues() {
+  int now = millis();
+  if (now - lastSend > VALUES_SEND_INTERVAL) {
+    Utils::publish(gridEyeSupport.getValues());
+    lastSend = now;
+  }
+}
+
 void setup() {
   Serial.begin(57600);
+  delay(1000);
   Utils::publish("Started setup...");
   Utils::publish(githubRepo);
-  Utils::publish(githubHash);
 
   Wire.begin();
   gridEyeSupport.begin();
@@ -246,20 +270,6 @@ void setup() {
   doDisplay();
   buzzer.buzzForSeconds(2);
   Utils::publish("Finished setup...");	
-}
-
-int lastSend = 0;
-void printValues() {
-  int now = millis();
-  if (now - lastSend > 100) { // about every 100 ms
-    for(unsigned char i = 0; i < 64; i++) {
-      Serial.print(gridEyeSupport.grideye.getPixelTemperature(i));
-      Serial.print(",");
-    }
-    // End each frame with a linefeed
-    Serial.println();
-    lastSend = now;
-  }
 }
 
 int lastDisplay = 0;
