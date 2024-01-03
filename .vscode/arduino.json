@@ -2,6 +2,6 @@
     "sketch": "arduino-heat-sensor.ino",
     "output": "build",
     "configuration": "svl_baud=921600,loader=sparkfun_svl",
-    "board": "SparkFun:apollo3:amap3redboard",
-    "port": "COM8"
+    "board": "SparkFun:apollo3:amap3nano",
+    "port": "COM9"
 }
