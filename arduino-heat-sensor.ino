@@ -3,9 +3,17 @@
 #include <U8g2lib.h>
 #include <Wire.h>
 
+#define USE_THERMISTOR false
+
 class Utils {
   public:
     static void publish(String s);
+    static String toString(bool b) {
+      if (b) {
+        return "true";
+      }
+      return "false";
+    }
 };
 
 U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
@@ -167,7 +175,6 @@ class Buzzer {
 };
 Buzzer buzzer;
 
-// #define USE_THERMISTOR
 // #define TEST_DATA
 class TemperatureMonitor {
   private:
@@ -181,7 +188,7 @@ class TemperatureMonitor {
     int       whenCrossedThreshold = 0;     // milliseconds
 
     int getValue() {
-#ifdef USE_THERMISTOR
+#if USE_THERMISTOR
       return thermistorSensor.getValue();
 #else
       gridEyeSupport.readValue();
@@ -264,6 +271,10 @@ class App {
 
     void status() {
       Utils::publish(githubRepo);
+      String v("USE_THERMISTOR: ");
+      v.concat(Utils::toString(USE_THERMISTOR));
+      delay(1000);
+      Utils::publish(v);
     }
 
     void checkSerial() {

@@ -248,9 +248,9 @@ const String githubRepo("https://github.com/chrisxkeith/arduino-heat-sensor");
 void doDisplay();
 #line 252 "C:\\Users\\chris\\Documents\\Github\\arduino-heat-sensor\\arduino-heat-sensor.ino"
 void printValues();
-#line 260 "C:\\Users\\chris\\Documents\\Github\\arduino-heat-sensor\\arduino-heat-sensor.ino"
+#line 320 "C:\\Users\\chris\\Documents\\Github\\arduino-heat-sensor\\arduino-heat-sensor.ino"
 void setup();
-#line 277 "C:\\Users\\chris\\Documents\\Github\\arduino-heat-sensor\\arduino-heat-sensor.ino"
+#line 324 "C:\\Users\\chris\\Documents\\Github\\arduino-heat-sensor\\arduino-heat-sensor.ino"
 void loop();
 #line 245 "C:\\Users\\chris\\Documents\\Github\\arduino-heat-sensor\\arduino-heat-sensor.ino"
 void doDisplay() {
@@ -259,45 +259,80 @@ void doDisplay() {
 }
 
 int lastSend = 0;
-const int SERIAL_SEND_INTERVAL = 5000;
+const int VALUES_SEND_INTERVAL = 5000;
 void printValues() {
   int now = millis();
-  if (now - lastSend > SERIAL_SEND_INTERVAL) {
+  if (now - lastSend > VALUES_SEND_INTERVAL) {
     Utils::publish(gridEyeSupport.getValues());
     lastSend = now;
   }
 }
 
-void setup() {
-  Serial.begin(57600);
-  delay(1000);
-  Utils::publish("Started setup...");
-  Utils::publish(githubRepo);
+class App {
+  private:
+    int lastDisplay = 0;
+    int lastShift = 0;
 
-  Wire.begin();
-  gridEyeSupport.begin();
-  oledWrapper.setup_OLED();
-  delay(3000);
-  doDisplay();
-  buzzer.buzzForSeconds(2);
-  Utils::publish("Finished setup...");	
+    void status() {
+      Utils::publish(githubRepo);
+    }
+
+    void checkSerial() {
+      int now = millis();
+      while (Serial.available() == 0) {
+        if (millis() - now > 500) {
+          return;
+        }
+      }
+      String teststr = Serial.readString();  //read until timeout
+      teststr.trim();                        // remove any \r \n whitespace at the end of the String
+      if (teststr == "?") {
+        status();
+      } else {
+        String msg("Unknown command: ");
+        msg.concat(teststr);
+        Serial.println(msg);
+      }
+    }
+  public:
+    void setup() {
+      Serial.begin(57600);
+      delay(1000);
+      Utils::publish("Started setup...");
+      status();
+
+      Wire.begin();
+      gridEyeSupport.begin();
+      oledWrapper.setup_OLED();
+      delay(3000);
+      doDisplay();
+      buzzer.buzzForSeconds(2);
+      Utils::publish("Finished setup...");	
+    }
+    void loop() {
+      temperatureMonitor.checkTimeAndTemp();
+      const int DISPLAY_RATE_IN_MS = 2000;
+      int thisMS = millis();
+      if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
+        const int SHIFT_RATE = 1000 * 60 * 2; // Shift display every 2 minutes to avoid OLED burn-in.
+        if (thisMS - lastShift > SHIFT_RATE) {
+          oledWrapper.shiftDisplay(2);
+          lastShift = thisMS;
+        }
+        doDisplay();
+        lastDisplay = thisMS;
+      }
+      printValues();
+      checkSerial();
+    }
+};
+App app;
+
+void setup() {
+  app.setup();
 }
 
-int lastDisplay = 0;
-int lastShift = 0;
 void loop() {
-  temperatureMonitor.checkTimeAndTemp();
-  const int DISPLAY_RATE_IN_MS = 2000;
-  int thisMS = millis();
-  if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
-    const int SHIFT_RATE = 1000 * 60 * 2; // Shift display every 2 minutes to avoid OLED burn-in.
-    if (thisMS - lastShift > SHIFT_RATE) {
-      oledWrapper.shiftDisplay(2);
-      lastShift = thisMS;
-    }
-    doDisplay();
-    lastDisplay = thisMS;
-  }
-  printValues();
+  app.loop();
 }
 
