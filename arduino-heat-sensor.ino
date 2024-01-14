@@ -7,6 +7,7 @@
 
 class Utils {
   public:
+    const static bool DO_SERIAL = false;
     static void publish(String s);
     static String toString(bool b) {
       if (b) {
@@ -235,16 +236,18 @@ class TemperatureMonitor {
 TemperatureMonitor temperatureMonitor;
 
 void Utils::publish(String s) {
-  char buf[100];
-  int totalSeconds = millis() / 1000;
-  int secs = totalSeconds % 60;
-  int minutes = (totalSeconds / 60) % 60;
-  int hours = (totalSeconds / 60) / 60;
-  sprintf(buf, "%02u:%02u:%02u", hours, minutes, secs);
-  String s1(buf);
-  s1.concat(" ");
-  s1.concat(s);
-  Serial.println(s1);
+  if (DO_SERIAL) {
+    char buf[100];
+    int totalSeconds = millis() / 1000;
+    int secs = totalSeconds % 60;
+    int minutes = (totalSeconds / 60) % 60;
+    int hours = (totalSeconds / 60) / 60;
+    sprintf(buf, "%02u:%02u:%02u", hours, minutes, secs);
+    String s1(buf);
+    s1.concat(" ");
+    s1.concat(s);
+    Serial.println(s1);
+  }
 }
 
 const String githubRepo("https://github.com/chrisxkeith/arduino-heat-sensor");
@@ -278,35 +281,38 @@ class App {
     }
 
     void checkSerial() {
-      int now = millis();
-      while (Serial.available() == 0) {
-        if (millis() - now > 500) {
-          return;
+      if (Utils::DO_SERIAL) {
+        int now = millis();
+        while (Serial.available() == 0) {
+          if (millis() - now > 500) {
+            return;
+          }
         }
-      }
-      String teststr = Serial.readString();  //read until timeout
-      teststr.trim();                        // remove any \r \n whitespace at the end of the String
-      if (teststr == "?") {
-        status();
-      } else {
-        String msg("Unknown command: ");
-        msg.concat(teststr);
-        Serial.println(msg);
+        String teststr = Serial.readString();  //read until timeout
+        teststr.trim();                        // remove any \r \n whitespace at the end of the String
+        if (teststr == "?") {
+          status();
+        } else {
+          String msg("Unknown command: ");
+          msg.concat(teststr);
+          Serial.println(msg);
+        }
       }
     }
   public:
     void setup() {
-      Serial.begin(57600);
-      delay(1000);
+      if (Utils::DO_SERIAL) {
+        Serial.begin(57600);
+        delay(1000);
+      }
       Utils::publish("Started setup...");
       status();
 
       Wire.begin();
       gridEyeSupport.begin();
       oledWrapper.setup_OLED();
-      delay(3000);
+      delay(1000);
       doDisplay();
-      buzzer.buzzForSeconds(2);
       Utils::publish("Finished setup...");	
     }
     void loop() {
