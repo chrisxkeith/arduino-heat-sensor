@@ -3,12 +3,23 @@
 #include <U8g2lib.h>
 #include <Wire.h>
 
-#define USE_THERMISTOR false
-
 class Utils {
   public:
     const static bool DO_SERIAL = true;
-    static void publish(String s);
+    static void publish(String s) {
+      if (DO_SERIAL) {
+        char buf[100];
+        int totalSeconds = millis() / 1000;
+        int secs = totalSeconds % 60;
+        int minutes = (totalSeconds / 60) % 60;
+        int hours = (totalSeconds / 60) / 60;
+        sprintf(buf, "%02u:%02u:%02u", hours, minutes, secs);
+        String s1(buf);
+        s1.concat(" ");
+        s1.concat(s);
+        Serial.println(s1);
+      }
+    }
     static String toString(bool b) {
       if (b) {
         return "true";
@@ -75,44 +86,6 @@ OLEDWrapper oledWrapper;
 #include <SparkFun_GridEYE_Arduino_Library.h>
 #include <limits.h>
 
-class Sensor {
-  private:
-    int     lastVal;
-  protected:
-    int     pin;
-    String  name;
-    double  factor; // apply to get human-readable values, e.g., degrees F
-
-  public:
-    Sensor(int pin, String name, double factor) {
-        this->pin = pin;
-        this->name = name;
-        this->factor = factor;
-        this->lastVal = INT_MIN;
-        pinMode(pin, INPUT);
-    }
-    
-    String getName() { return name; }
-
-    void sample() {
-        if (pin >= A0 && pin <= A5) {
-            lastVal = analogRead(pin);
-        } else {
-            lastVal = digitalRead(pin);
-        }
-    }
-    
-    int applyFactor(int val) {
-        return val * factor;
-    }
-
-    int getValue() {
-        return applyFactor(lastVal);
-    }
-};
-
-Sensor thermistorSensor(A0, "Stove", 0.036);
-
 class GridEyeSupport {
 public:
   GridEYE grideye;
@@ -149,107 +122,15 @@ public:
 };
 GridEyeSupport gridEyeSupport;
 
-class Buzzer {
-  private:
-    const int PIEZO_PIN = 6;
-    const bool ENABLED = false;
-  public:
-    Buzzer() {
-        pinMode(PIEZO_PIN, OUTPUT);
-    }
-    void buzzOn() {
-      for (int hz = 440; hz < 1000; hz += 25) {
-        tone(PIEZO_PIN, hz, 50);
-        delay(5);
-        for (int i = 3; i <= 7; i++);
-      }    
-    }
-    void buzzOff() {
-        noTone(PIEZO_PIN);
-    }
-    void buzzForSeconds(int nSeconds) {
-      if (ENABLED) {
-        this->buzzOn();
-        delay(nSeconds * 1000);
-        this->buzzOff();
-      }
-    }
-};
-Buzzer buzzer;
-
-// #define TEST_DATA
 class TemperatureMonitor {
-  private:
-#ifdef TEST_DATA
-    const int THRESHOLD = 50;               // farenheit
-#else
-    const int THRESHOLD = 100;              // hit threshold immediately for testing
-#endif
-    int       lastBuzzTime = 0;             // milliseconds
   public:
-    int       whenCrossedThreshold = 0;     // milliseconds
-
     int getValue() {
-#if USE_THERMISTOR
-      return thermistorSensor.getValue();
-#else
       gridEyeSupport.readValue();
       return gridEyeSupport.mostRecentValue;
-#endif
     }
-    
-    void checkTimeAndTemp() {
-      int   now = millis();
-      int   currentTemp = this->getValue();
-      if (currentTemp < this->THRESHOLD) {
-        this->whenCrossedThreshold = 0;
-      } else {
-        if (this->whenCrossedThreshold == 0) {
-          this->whenCrossedThreshold = now;
-        } else {
-#ifdef TEST_DATA
-          int hoursOverThreshold = ((now - this->whenCrossedThreshold) / 1000); // use seconds for testing
-#else
-          int hoursOverThreshold = (((now - this->whenCrossedThreshold) / 1000) / 60) / 60;
-#endif
-          int silentInterval = 0; // seconds, zero is flag for don't buzz.
-          switch (hoursOverThreshold) {
-            case 0:  silentInterval = 0;      break;
-            case 1:  silentInterval = 0;      break;
-            case 2:  silentInterval = 5 * 60; break;
-            case 3:  silentInterval = 60;     break;
-            default: silentInterval = 15;     break;
-          }
-          if (silentInterval > 0) {
-#ifdef TEST_DATA
-            silentInterval = max(silentInterval / 60, 5); // speed up testing
-#endif
-            if (this->lastBuzzTime + (silentInterval * 1000) < now) {
-              buzzer.buzzForSeconds(2);
-              this->lastBuzzTime = millis();
-              Utils::publish("Buzzed at...");
-            }
-          }
-        }
-      }
-    }
+   
 };
 TemperatureMonitor temperatureMonitor;
-
-void Utils::publish(String s) {
-  if (DO_SERIAL) {
-    char buf[100];
-    int totalSeconds = millis() / 1000;
-    int secs = totalSeconds % 60;
-    int minutes = (totalSeconds / 60) % 60;
-    int hours = (totalSeconds / 60) / 60;
-    sprintf(buf, "%02u:%02u:%02u", hours, minutes, secs);
-    String s1(buf);
-    s1.concat(" ");
-    s1.concat(s);
-    Serial.println(s1);
-  }
-}
 
 const String githubRepo("https://github.com/chrisxkeith/arduino-heat-sensor");
 
@@ -275,10 +156,6 @@ class App {
 
     void status() {
       Utils::publish(githubRepo);
-      String v("USE_THERMISTOR: ");
-      v.concat(Utils::toString(USE_THERMISTOR));
-      delay(1000);
-      Utils::publish(v);
     }
 
     void checkSerial() {
@@ -317,7 +194,6 @@ class App {
       Utils::publish("Finished setup...");	
     }
     void loop() {
-      temperatureMonitor.checkTimeAndTemp();
       const int DISPLAY_RATE_IN_MS = 2000;
       int thisMS = millis();
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
