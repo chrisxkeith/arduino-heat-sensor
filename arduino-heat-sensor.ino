@@ -1,32 +1,8 @@
 // Please credit chris.keith@gmail.com .
 
+#define USE_OLED false
+#if USE_OLED
 #include <U8g2lib.h>
-#include <Wire.h>
-
-class Utils {
-  public:
-    const static bool DO_SERIAL = true;
-    static void publish(String s) {
-      if (DO_SERIAL) {
-        char buf[100];
-        int totalSeconds = millis() / 1000;
-        int secs = totalSeconds % 60;
-        int minutes = (totalSeconds / 60) % 60;
-        int hours = (totalSeconds / 60) / 60;
-        sprintf(buf, "%02u:%02u:%02u", hours, minutes, secs);
-        String s1(buf);
-        s1.concat(" ");
-        s1.concat(s);
-        Serial.println(s1);
-      }
-    }
-    static String toString(bool b) {
-      if (b) {
-        return "true";
-      }
-      return "false";
-    }
-};
 
 U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 
@@ -81,6 +57,17 @@ class OLEDWrapper {
       u8g2.setBusClock(400000);
     }
 };
+#else
+class OLEDWrapper {
+  public:
+    void u8g2_prepare(void) {}    
+    void drawEdge() {}    
+    void drawInt(int val) {}
+    void clear() {}
+    void shiftDisplay(int shiftAmount) {}
+    void setup_OLED() {}
+};
+#endif
 OLEDWrapper oledWrapper;
 
 #include <SparkFun_GridEYE_Arduino_Library.h>
@@ -121,6 +108,31 @@ public:
   }
 };
 GridEyeSupport gridEyeSupport;
+
+class Utils {
+  public:
+    const static bool DO_SERIAL = true;
+    static void publish(String s) {
+      if (DO_SERIAL) {
+        char buf[100];
+        int totalSeconds = millis() / 1000;
+        int secs = totalSeconds % 60;
+        int minutes = (totalSeconds / 60) % 60;
+        int hours = (totalSeconds / 60) / 60;
+        sprintf(buf, "%02u:%02u:%02u", hours, minutes, secs);
+        String s1(buf);
+        s1.concat(" ");
+        s1.concat(s);
+        Serial.println(s1);
+      }
+    }
+    static String toString(bool b) {
+      if (b) {
+        return "true";
+      }
+      return "false";
+    }
+};
 
 class TemperatureMonitor {
   public:
@@ -186,7 +198,6 @@ class App {
       Utils::publish("Started setup...");
       status();
 
-      Wire.begin();
       gridEyeSupport.begin();
       oledWrapper.setup_OLED();
       delay(1000);
