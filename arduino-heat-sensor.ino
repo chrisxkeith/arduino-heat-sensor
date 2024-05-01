@@ -7,7 +7,7 @@
 
 class Utils {
   public:
-    const static bool DO_SERIAL = false;
+    const static bool DO_SERIAL = true;
     static void publish(String s);
     static String toString(bool b) {
       if (b) {
@@ -128,10 +128,11 @@ public:
 
   String getValues() {
     String ret;
-    for(unsigned char i = 0; i < 64; i++) {
-      ret.concat(readOneSensor(i));
+    for(unsigned char i = 0; i < 8; i++) {
+      ret.concat(grideye.getPixelTemperature(i));
       ret.concat(",");
     }
+    ret.concat(",...");
     return ret;
   }
 
