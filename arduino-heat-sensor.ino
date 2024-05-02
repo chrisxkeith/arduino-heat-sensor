@@ -1,6 +1,7 @@
 // Please credit chris.keith@gmail.com .
+// REM: Set board type.
 
-#define USE_OLED false
+#define USE_OLED true
 #if USE_OLED
 #include <U8g2lib.h>
 
@@ -89,7 +90,7 @@ public:
   String getValues() {
     String ret;
     for(unsigned char i = 0; i < 8; i++) {
-      ret.concat(grideye.getPixelTemperature(i));
+      ret.concat(readOneSensor(i));
       ret.concat(",");
     }
     ret.concat(",...");
@@ -192,7 +193,7 @@ class App {
   public:
     void setup() {
       if (Utils::DO_SERIAL) {
-        Serial.begin(57600);
+        Serial.begin(115200);
         delay(1000);
       }
       Utils::publish("Started setup...");
