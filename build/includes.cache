@@ -16,13 +16,13 @@
   },
   {
     "Sourcefile": "C:\\Users\\chris\\Documents\\Github\\arduino-heat-sensor\\build\\sketch\\arduino-heat-sensor.ino.cpp",
-    "Include": "Wire.h",
-    "Includepath": "C:\\Users\\chris\\AppData\\Local\\Arduino15\\packages\\SparkFun\\hardware\\apollo3\\1.2.1\\libraries\\Wire\\src"
+    "Include": "SparkFun_GridEYE_Arduino_Library.h",
+    "Includepath": "C:\\Users\\chris\\OneDrive\\Documents\\Arduino\\libraries\\SparkFun_GridEYE_AMG88_Library\\src"
   },
   {
     "Sourcefile": "C:\\Users\\chris\\Documents\\Github\\arduino-heat-sensor\\build\\sketch\\arduino-heat-sensor.ino.cpp",
-    "Include": "SparkFun_GridEYE_Arduino_Library.h",
-    "Includepath": "C:\\Users\\chris\\OneDrive\\Documents\\Arduino\\libraries\\SparkFun_GridEYE_AMG88_Library\\src"
+    "Include": "Wire.h",
+    "Includepath": "C:\\Users\\chris\\AppData\\Local\\Arduino15\\packages\\SparkFun\\hardware\\apollo3\\1.2.1\\libraries\\Wire\\src"
   },
   {
     "Sourcefile": "C:\\Users\\chris\\Documents\\Github\\arduino-heat-sensor\\build\\sketch\\arduino-heat-sensor.ino.cpp",
@@ -625,12 +625,12 @@
     "Includepath": null
   },
   {
-    "Sourcefile": "C:\\Users\\chris\\AppData\\Local\\Arduino15\\packages\\SparkFun\\hardware\\apollo3\\1.2.1\\libraries\\Wire\\src\\Wire.cpp",
+    "Sourcefile": "C:\\Users\\chris\\OneDrive\\Documents\\Arduino\\libraries\\SparkFun_GridEYE_AMG88_Library\\src\\SparkFun_GridEYE_Arduino_Library.cpp",
     "Include": "",
     "Includepath": null
   },
   {
-    "Sourcefile": "C:\\Users\\chris\\OneDrive\\Documents\\Arduino\\libraries\\SparkFun_GridEYE_AMG88_Library\\src\\SparkFun_GridEYE_Arduino_Library.cpp",
+    "Sourcefile": "C:\\Users\\chris\\AppData\\Local\\Arduino15\\packages\\SparkFun\\hardware\\apollo3\\1.2.1\\libraries\\Wire\\src\\Wire.cpp",
     "Include": "",
     "Includepath": null
   },

@@ -1,9 +1,32 @@
 // Please credit chris.keith@gmail.com .
 // REM: Set board type.
 
-#define USE_OLED true
-#if USE_OLED
 #include <U8g2lib.h>
+
+#include <bitset>
+class SuperPixelPatterns {
+  private:
+    const static int NUM_SUPER_PIXELS = 64;
+    const static int SUPER_PIXEL_SIZE = 64;
+    const static int POSSIBLE_PIXEL_VALUES = SUPER_PIXEL_SIZE;
+    std::bitset<NUM_SUPER_PIXELS * POSSIBLE_PIXEL_VALUES * SUPER_PIXEL_SIZE> patterns;
+  public:
+    SuperPixelPatterns() {
+      for (int superPixelIndex = 0; superPixelIndex < NUM_SUPER_PIXELS; superPixelIndex++) {
+        for (int superPixelValue = 0; superPixelValue < POSSIBLE_PIXEL_VALUES; superPixelValue++) {
+          for (int pixelPosition = 0; pixelPosition < SUPER_PIXEL_SIZE; pixelPosition++) {
+            bool bitValue = (rand() % POSSIBLE_PIXEL_VALUES) > (SUPER_PIXEL_SIZE / 2);
+            patterns[superPixelIndex * superPixelValue * pixelPosition] = bitValue;
+          }
+        }
+      }
+    }
+    bool getPixelAt(int superPixelIndex, int superPixelValue, int pixelPosition) {
+      return patterns[superPixelIndex * superPixelValue * pixelPosition];
+    }
+};
+
+#include <float.h>
 
 U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 
@@ -11,6 +34,7 @@ class OLEDWrapper {
   private:
       const int START_BASELINE = 50;
       int   baseLine = START_BASELINE;
+      SuperPixelPatterns superPixelPatterns;
   public:
     void u8g2_prepare(void) {
       u8g2.setFont(u8g2_font_fur49_tn);
@@ -32,7 +56,7 @@ class OLEDWrapper {
           u8g2_prepare();
           u8g2.drawUTF8(2, this->baseLine, String(val).c_str());
           u8g2.setFont(u8g2_font_fur11_tf);
-          u8g2.drawUTF8(6, this->baseLine + 20, "Fahrenheit");
+          u8g2.drawUTF8(6, this->baseLine + 20, "-Fahrenheit-");
       } while( u8g2.nextPage() );
     }
 
@@ -57,18 +81,26 @@ class OLEDWrapper {
       u8g2.begin();
       u8g2.setBusClock(400000);
     }
+
+    void displayGrid(float vals[64]) {
+      float min = FLT_MAX;
+      float max = -FLT_MAX;
+      for (int i = 0; i < 64; i++) {
+        if (vals[i] < min) {
+          min = vals[i];
+        }
+        if (vals[i] > max) {
+          max = vals[i];
+        }        
+      }
+      clear();
+      for (int i = 0; i < 64; i++) {
+        int index = (int)round((vals[i] - min) / 64);
+        // displaySuperPixelAt(i / 64, i % 64, index);
+      }
+      // oled->display();
+    }
 };
-#else
-class OLEDWrapper {
-  public:
-    void u8g2_prepare(void) {}    
-    void drawEdge() {}    
-    void drawInt(int val) {}
-    void clear() {}
-    void shiftDisplay(int shiftAmount) {}
-    void setup_OLED() {}
-};
-#endif
 OLEDWrapper oledWrapper;
 
 #include <SparkFun_GridEYE_Arduino_Library.h>
@@ -87,7 +119,7 @@ public:
     return (grideye.getPixelTemperature(i) * 9.0 / 5.0 + 32.0);
   }
 
-  String getValues() {
+  String getValuesAsString() {
     String ret;
     for(unsigned char i = 0; i < 8; i++) {
       ret.concat(readOneSensor(i));
@@ -157,7 +189,7 @@ const int VALUES_SEND_INTERVAL = 5000;
 void printValues() {
   int now = millis();
   if (now - lastSend > VALUES_SEND_INTERVAL) {
-    Utils::publish(gridEyeSupport.getValues());
+    Utils::publish(gridEyeSupport.getValuesAsString());
     lastSend = now;
   }
 }
@@ -171,6 +203,15 @@ class App {
       Utils::publish(githubRepo);
     }
 
+    void showGrid() {
+      float vals[64];
+      for (int i = 0; i < 64; i++) {
+        vals[i] = gridEyeSupport.readOneSensor(i);
+      }
+      oledWrapper.displayGrid(vals);
+      delay(10000);
+    }
+
     void checkSerial() {
       if (Utils::DO_SERIAL) {
         int now = millis();
@@ -181,8 +222,10 @@ class App {
         }
         String teststr = Serial.readString();  //read until timeout
         teststr.trim();                        // remove any \r \n whitespace at the end of the String
-        if (teststr == "?") {
+        if (teststr.equals("?")) {
           status();
+        } else if (teststr.equals("grid")) {
+          showGrid();
         } else {
           String msg("Unknown command: ");
           msg.concat(teststr);
