@@ -2,11 +2,11 @@
 // REM: Set board type.
 
 #include <U8g2lib.h>
-/*
+
 #include <bitset>
 #include <algorithm>
 #include <iterator>
-#include <random>
+/* #include <random> */
 #include <vector>
 class SuperPixelPatterns {
   private:
@@ -16,7 +16,7 @@ class SuperPixelPatterns {
     std::vector<std::bitset<SUPER_PIXEL_SIZE>> patterns = 
           std::vector<std::bitset<SUPER_PIXEL_SIZE>>(NUM_SUPER_PIXELS);
     std::vector<int> v = std::vector<int>(SUPER_PIXEL_SIZE);
-
+/*
     void shuffle() {
       iota(v.begin(), v.end(), 1);
       std::random_device rd;
@@ -40,8 +40,9 @@ class SuperPixelPatterns {
     bool getPixelAt(int superPixelIndex, int pixelPosition) {
       return patterns[superPixelIndex][pixelPosition];
     }
-};
 */
+};
+
 #include <float.h>
 
 U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
@@ -50,7 +51,7 @@ class OLEDWrapper {
   private:
       const int START_BASELINE = 50;
       int   baseLine = START_BASELINE;
-      // SuperPixelPatterns superPixelPatterns;
+      SuperPixelPatterns superPixelPatterns;
   public:
     void u8g2_prepare(void) {
       u8g2.setFont(u8g2_font_fur49_tn);
