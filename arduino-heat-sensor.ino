@@ -67,19 +67,17 @@ class OLEDWrapper {
     }
     
     void drawInt(int val) {
-      u8g2.firstPage();
-      do {
-          u8g2_prepare();
-          u8g2.drawUTF8(2, this->baseLine, String(val).c_str());
-          u8g2.setFont(u8g2_font_fur11_tf);
-          u8g2.drawUTF8(6, this->baseLine + 20, "-Fahrenheit-");
-      } while( u8g2.nextPage() );
+      u8g2_prepare();
+      u8g2.clearBuffer();
+      u8g2.drawUTF8(2, this->baseLine, String(val).c_str());
+      u8g2.setFont(u8g2_font_fur11_tf);
+      u8g2.drawUTF8(6, this->baseLine + 20, "* Fahrenheit *");
+      u8g2.sendBuffer();
     }
 
     void clear() {
-      u8g2.firstPage();
-      do {
-      } while( u8g2.nextPage() );      
+      u8g2.clearBuffer();
+      u8g2.sendBuffer();
     }
 
     void shiftDisplay(int shiftAmount) {
