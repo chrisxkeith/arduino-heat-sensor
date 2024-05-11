@@ -4,34 +4,34 @@
 #include <U8g2lib.h>
 
 #include <bitset>
-#include <algorithm>
-#include <iterator>
-/* #include <random> */
-#include <vector>
 class SuperPixelPatterns {
   private:
     const static int NUM_SUPER_PIXELS = 64;
     const static int SUPER_PIXEL_SIZE = 64;
     const static int POSSIBLE_PIXEL_VALUES = SUPER_PIXEL_SIZE;
-    std::vector<std::bitset<SUPER_PIXEL_SIZE>> patterns = 
-          std::vector<std::bitset<SUPER_PIXEL_SIZE>>(NUM_SUPER_PIXELS);
-    std::vector<int> v = std::vector<int>(SUPER_PIXEL_SIZE);
-/*
+    std::bitset<SUPER_PIXEL_SIZE> patterns[NUM_SUPER_PIXELS];
+    int shuffledIndices[SUPER_PIXEL_SIZE];
+
     void shuffle() {
-      iota(v.begin(), v.end(), 1);
-      std::random_device rd;
-      std::mt19937 g(rd());  
-      std::shuffle(v.begin(), v.end(), g);
+      for (int i = 0; i < SUPER_PIXEL_SIZE; i++) {
+        shuffledIndices[i] = i;
+      }
+      for (int i = 0; i < SUPER_PIXEL_SIZE; i++) {
+        int rnd = rand() % SUPER_PIXEL_SIZE;
+        int tmp = shuffledIndices[i];
+        shuffledIndices[i] = shuffledIndices[rnd];
+        shuffledIndices[rnd] = tmp;
+      }
     }
   public:
     SuperPixelPatterns() {
       shuffle();
       uint16_t i = 0;
-      for (std::bitset<SUPER_PIXEL_SIZE> superPixel : v) {
+      for (std::bitset<SUPER_PIXEL_SIZE> superPixel : patterns) {
         for (uint16_t c = 0; c < i; c++) {
           // This should reduce flicker by only turning on one pixel when
           // going from, for example, intensity 5 to intensity 6.
-          superPixel[v[c]] = true;
+          superPixel[shuffledIndices[c]] = true;
         }
         i++;
       }
@@ -40,7 +40,6 @@ class SuperPixelPatterns {
     bool getPixelAt(int superPixelIndex, int pixelPosition) {
       return patterns[superPixelIndex][pixelPosition];
     }
-*/
 };
 
 #include <float.h>
