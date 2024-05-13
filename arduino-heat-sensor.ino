@@ -108,11 +108,11 @@ class OLEDWrapper {
         }        
       }
       clear();
+      display("grid to come...");
       for (int i = 0; i < 64; i++) {
         int index = (int)round((vals[i] - min) / 64);
         // displaySuperPixelAt(i / 64, i % 64, index);
       }
-      // oled->display();
     }
 
     void startDisplay(const uint8_t *font) {
@@ -126,6 +126,11 @@ class OLEDWrapper {
     }
     void endDisplay() {
       u8g2.sendBuffer();
+    }
+    void display(String s) {
+      startDisplay(u8g2_font_fur11_tf);
+      display(s, 0, 16);
+      endDisplay();
     }
 };
 OLEDWrapper oledWrapper;
@@ -207,7 +212,7 @@ TemperatureMonitor temperatureMonitor;
 const String configs[] = {
   "Built:",
   "Mon, May 13, 2024",
-  "~ 9:42:50 AM",
+  "~11:58:15 AM",
   "arduino-heat-sensor",
 };
 
