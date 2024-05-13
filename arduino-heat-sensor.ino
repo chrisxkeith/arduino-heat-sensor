@@ -171,7 +171,7 @@ GridEyeSupport gridEyeSupport;
 
 class Utils {
   public:
-    const static bool DO_SERIAL = false;
+    const static bool DO_SERIAL = true;
     static void publish(String s) {
       if (DO_SERIAL) {
         char buf[100];
@@ -241,22 +241,18 @@ class App {
 
     void checkSerial() {
       if (Utils::DO_SERIAL) {
-        int now = millis();
-        while (Serial.available() == 0) {
-          if (millis() - now > 500) {
-            return;
+        if (Serial.available() > 0) {
+          String teststr = Serial.readString();  //read until timeout
+          teststr.trim();                        // remove any \r \n whitespace at the end of the String
+          if (teststr.equals("?")) {
+            status();
+          } else if (teststr.equals("grid")) {
+            showGrid();
+          } else {
+            String msg("Unknown command: ");
+            msg.concat(teststr);
+            Serial.println(msg);
           }
-        }
-        String teststr = Serial.readString();  //read until timeout
-        teststr.trim();                        // remove any \r \n whitespace at the end of the String
-        if (teststr.equals("?")) {
-          status();
-        } else if (teststr.equals("grid")) {
-          showGrid();
-        } else {
-          String msg("Unknown command: ");
-          msg.concat(teststr);
-          Serial.println(msg);
         }
       }
     }
@@ -275,7 +271,7 @@ class App {
       oledWrapper.startDisplay(u8g2_font_fur11_tf);
       oledWrapper.display("Built:", 0, 16);
       oledWrapper.display("Mon, May 13, 2024", 0, 32);
-      oledWrapper.display("9:42:50 AM", 0, 48);
+      oledWrapper.display("~ 9:42:50 AM", 0, 48);
       oledWrapper.endDisplay();
       delay(5000);
       doDisplay();
