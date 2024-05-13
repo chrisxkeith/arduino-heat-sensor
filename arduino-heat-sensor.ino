@@ -71,7 +71,7 @@ class OLEDWrapper {
       u8g2.clearBuffer();
       u8g2.drawUTF8(2, this->baseLine, String(val).c_str());
       u8g2.setFont(u8g2_font_fur11_tf);
-      u8g2.drawUTF8(6, this->baseLine + 20, "* Fahrenheit *");
+      u8g2.drawUTF8(6, this->baseLine + 20, "Fahrenheit");
       u8g2.sendBuffer();
     }
 
@@ -113,6 +113,19 @@ class OLEDWrapper {
         // displaySuperPixelAt(i / 64, i % 64, index);
       }
       // oled->display();
+    }
+
+    void startDisplay(const uint8_t *font) {
+      u8g2_prepare();
+      u8g2.clearBuffer();
+      u8g2.setFont(font);
+    }
+    void display(String s, uint8_t x, uint8_t y) {
+      u8g2.setCursor(x, y);
+      u8g2.print(s.c_str());
+    }
+    void endDisplay() {
+      u8g2.sendBuffer();
     }
 };
 OLEDWrapper oledWrapper;
@@ -158,7 +171,7 @@ GridEyeSupport gridEyeSupport;
 
 class Utils {
   public:
-    const static bool DO_SERIAL = true;
+    const static bool DO_SERIAL = false;
     static void publish(String s) {
       if (DO_SERIAL) {
         char buf[100];
@@ -259,6 +272,12 @@ class App {
       gridEyeSupport.begin();
       oledWrapper.setup_OLED();
       delay(1000);
+      oledWrapper.startDisplay(u8g2_font_fur11_tf);
+      oledWrapper.display("Built:", 0, 16);
+      oledWrapper.display("Mon, May 13, 2024", 0, 32);
+      oledWrapper.display("9:42:50 AM", 0, 48);
+      oledWrapper.endDisplay();
+      delay(5000);
       doDisplay();
       Utils::publish("Finished setup...");	
     }
