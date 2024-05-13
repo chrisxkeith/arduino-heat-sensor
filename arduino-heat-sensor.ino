@@ -204,7 +204,12 @@ class TemperatureMonitor {
 };
 TemperatureMonitor temperatureMonitor;
 
-const String githubRepo("https://github.com/chrisxkeith/arduino-heat-sensor");
+const String configs[] = {
+  "Built:",
+  "Mon, May 13, 2024",
+  "~ 9:42:50 AM",
+  "arduino-heat-sensor",
+};
 
 void doDisplay() {
   oledWrapper.drawInt(temperatureMonitor.getValue());
@@ -227,7 +232,9 @@ class App {
     int lastShift = 0;
 
     void status() {
-      Utils::publish(githubRepo);
+      for (String s : configs) {
+        Utils::publish(s);
+      }
     }
 
     void showGrid() {
@@ -269,9 +276,11 @@ class App {
       oledWrapper.setup_OLED();
       delay(1000);
       oledWrapper.startDisplay(u8g2_font_fur11_tf);
-      oledWrapper.display("Built:", 0, 16);
-      oledWrapper.display("Mon, May 13, 2024", 0, 32);
-      oledWrapper.display("~ 9:42:50 AM", 0, 48);
+      uint16_t baseline = 16;
+      for (String s : configs) {
+        oledWrapper.display(s, 0, baseline);
+        baseline += 16;
+      }
       oledWrapper.endDisplay();
       delay(5000);
       doDisplay();
@@ -289,7 +298,7 @@ class App {
         doDisplay();
         lastDisplay = thisMS;
       }
-      printValues();
+      // printValues(); // ... until it's needed again.
       checkSerial();
     }
 };
