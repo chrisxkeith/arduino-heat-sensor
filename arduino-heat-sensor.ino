@@ -56,14 +56,7 @@ class OLEDWrapper {
       u8g2.setFontDirection(0);
     }
     
-    void drawEdge() {
-      u8g2.drawLine(0, 0, 0, 95);
-      u8g2.drawLine(0, 95, 127, 95);  
-      u8g2.drawLine(127, 95, 127, 0);  
-      u8g2.drawLine(127, 0, 0, 0);  
-    }
-    
-    void drawInt(int val) {
+     void drawInt(int val) {
       u8g2_prepare();
       u8g2.clearBuffer();
       u8g2.drawUTF8(2, this->baseLine, String(val).c_str());
@@ -237,17 +230,6 @@ const String configs[] = {
 
 void doDisplay() {
   oledWrapper.drawInt(temperatureMonitor.getValue());
-  oledWrapper.drawEdge();
-}
-
-int lastSend = 0;
-const int VALUES_SEND_INTERVAL = 5000;
-void printValues() {
-  int now = millis();
-  if (now - lastSend > VALUES_SEND_INTERVAL) {
-    Utils::publish(gridEyeSupport.getValuesAsString());
-    lastSend = now;
-  }
 }
 
 class App {
@@ -329,7 +311,6 @@ class App {
         doDisplay();
         lastDisplay = thisMS;
       }
-      // printValues(); // ... until it's needed again.
       checkSerial();
     }
 };
