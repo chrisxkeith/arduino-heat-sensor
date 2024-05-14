@@ -1,6 +1,7 @@
 {
     "C_Cpp.default.compilerPath": "C:\\Users\\chris\\AppData\\Local\\Arduino15\\packages\\SparkFun\\tools\\arm-none-eabi-gcc\\8-2018-q4-major\\bin\\arm-none-eabi-g++",
     "files.associations": {
-        "bitset": "cpp"
+        "bitset": "cpp",
+        "random": "cpp"
     }
 }

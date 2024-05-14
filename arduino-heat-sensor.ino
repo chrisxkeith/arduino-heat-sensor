@@ -8,7 +8,6 @@ class SuperPixelPatterns {
   private:
     const static int NUM_SUPER_PIXELS = 64;
     const static int SUPER_PIXEL_SIZE = 64;
-    const static int POSSIBLE_PIXEL_VALUES = SUPER_PIXEL_SIZE;
     std::bitset<SUPER_PIXEL_SIZE> patterns[NUM_SUPER_PIXELS];
     int shuffledIndices[SUPER_PIXEL_SIZE];
 
@@ -26,16 +25,14 @@ class SuperPixelPatterns {
   public:
     SuperPixelPatterns() {
       shuffle();
-      uint16_t i = 0;
-      for (std::bitset<SUPER_PIXEL_SIZE> superPixel : patterns) {
-        for (uint16_t c = 0; c < i; c++) {
+      for (uint16_t superPixelIndex = 0; superPixelIndex < NUM_SUPER_PIXELS; superPixelIndex++) {
+        std::bitset<SUPER_PIXEL_SIZE> superPixel = patterns[superPixelIndex];
+        for (uint16_t subPixelIndex = 0; subPixelIndex < superPixelIndex; subPixelIndex++) {
           // This should reduce flicker by only turning on one pixel when
           // going from, for example, intensity 5 to intensity 6.
-          superPixel[shuffledIndices[c]] = true;
+          superPixel[shuffledIndices[subPixelIndex]] = true;
         }
-        i++;
       }
-
     }
     bool getPixelAt(int superPixelIndex, int pixelPosition) {
       return patterns[superPixelIndex][pixelPosition];
@@ -96,6 +93,16 @@ class OLEDWrapper {
       u8g2.setBusClock(400000);
     }
 
+    void drawSuperPixel(uint16_t superPixelIndex, uint16_t startX, uint16_t startY) {
+      for (uint16_t xi = 0; xi < 8; xi++) {
+        for (uint16_t yi = 0; yi < 8; yi++) {
+          if (superPixelPatterns.getPixelAt(superPixelIndex, xi + yi * 8)) {       
+            u8g2.drawPixel(startX + xi, startY + yi);
+          }
+        }
+      }
+    }
+
     void displayGrid(float vals[64]) {
       float min = FLT_MAX;
       float max = -FLT_MAX;
@@ -108,11 +115,23 @@ class OLEDWrapper {
         }        
       }
       clear();
-      display("grid to come...");
+      display("grid to come..."); delay(2000);
       for (int i = 0; i < 64; i++) {
-        int index = (int)round((vals[i] - min) / 64);
-        // displaySuperPixelAt(i / 64, i % 64, index);
+        uint16_t superPixelIndex = (int)round((vals[i] - min) / 64);
+        uint16_t startX = (i % 64) * 8;
+        uint16_t startY = (i / 64) * 8;
+        drawSuperPixel(superPixelIndex, startX, startY);
       }
+      u8g2.sendBuffer();
+    }
+
+    void displayOneSuperPixel(uint16_t superPixelIndex) {
+      clear();
+      u8g2_prepare();
+      u8g2.clearBuffer();
+      u8g2.setDrawColor(1);
+      drawSuperPixel(superPixelIndex, 0, 0);
+      u8g2.sendBuffer();
     }
 
     void startDisplay(const uint8_t *font) {
@@ -211,8 +230,8 @@ TemperatureMonitor temperatureMonitor;
 
 const String configs[] = {
   "Built:",
-  "Mon, May 13, 2024",
-  "~11:58:15 AM",
+  "Tue, May 14, 2024",
+  "~9:37:45 AM",
   "arduino-heat-sensor",
 };
 
@@ -248,7 +267,14 @@ class App {
         vals[i] = gridEyeSupport.readOneSensor(i);
       }
       oledWrapper.displayGrid(vals);
-      delay(10000);
+    }
+
+    void showReferenceGrid() {
+      float vals[64];
+      for (int i = 0; i < 64; i++) {
+        vals[i] = (float)i;
+      }
+      oledWrapper.displayGrid(vals);
     }
 
     void checkSerial() {
@@ -259,7 +285,7 @@ class App {
           if (teststr.equals("?")) {
             status();
           } else if (teststr.equals("grid")) {
-            showGrid();
+            showReferenceGrid();
           } else {
             String msg("Unknown command: ");
             msg.concat(teststr);
