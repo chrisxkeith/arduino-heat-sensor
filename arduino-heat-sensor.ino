@@ -126,32 +126,12 @@ class OLEDWrapper {
       for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
         uint16_t superPixelIndex = (uint16_t)round((vals[i] - min) / range * 
                                     SuperPixelPatterns::NUM_SUPER_PIXELS);
-        uint16_t startX = (i % SuperPixelPatterns::NUM_SUPER_PIXELS) * 
+        uint16_t startX = (i % SuperPixelPatterns::HORIZONTAL_COUNT) * 
                                     SuperPixelPatterns::HORIZONTAL_SIZE;
-        uint16_t startY = (i / SuperPixelPatterns::NUM_SUPER_PIXELS) *
+        uint16_t startY = (i / SuperPixelPatterns::VERTICAL_COUNT) *
                                     SuperPixelPatterns::VERTICAL_SIZE;
-        if (i < 24) {
-          String s("displayGrid, i: ");
-          s.concat(i);
-          s.concat(",  superPixelIndex: ");
-          s.concat(superPixelIndex);
-          s.concat(",  startX: ");
-          s.concat(startX);
-          s.concat(",  startY: ");
-          s.concat(startY);
-          Utils::publish(s);
-        }
         drawSuperPixel(superPixelIndex, startX, startY);
       }
-      u8g2.sendBuffer();
-    }
-
-    void displayOneSuperPixel(uint16_t superPixelIndex) {
-      clear();
-      u8g2_prepare();
-      u8g2.clearBuffer();
-      u8g2.setDrawColor(1);
-      drawSuperPixel(superPixelIndex, 0, 0);
       u8g2.sendBuffer();
     }
 
@@ -252,10 +232,6 @@ const String configs[] = {
   "arduino-heat-sensor",
 };
 
-void doDisplay() {
-  oledWrapper.drawInt(temperatureMonitor.getValue());
-}
-
 class App {
   private:
     int lastDisplay = 0;
@@ -290,12 +266,12 @@ class App {
           teststr.trim();                        // remove any \r \n whitespace at the end of the String
           if (teststr.equals("?")) {
             status();
-          } else if (teststr.equals("pixel")) {
-            oledWrapper.displayOneSuperPixel(32);
           } else if (teststr.equals("refgrid")) {
             showReferenceGrid();
           } else if (teststr.equals("grid")) {
             showGrid();
+          } else if (teststr.equals("temp")) {
+            oledWrapper.drawInt(temperatureMonitor.getValue());
           } else {
             String msg("Unknown command: ");
             msg.concat(teststr);
@@ -309,6 +285,7 @@ class App {
       }
     }
   public:
+#define SHOW_GRID false
     void setup() {
       if (Utils::DO_SERIAL) {
         Serial.begin(115200);
@@ -328,10 +305,17 @@ class App {
       }
       oledWrapper.endDisplay();
       delay(5000);
-      doDisplay();
+#if SHOW_GRID
+      showGrid();
+#else
+      oledWrapper.drawInt(temperatureMonitor.getValue());
+#endif
       Utils::publish("Finished setup...");
     }
     void loop() {
+#if SHOW_GRID
+      showGrid();
+#else
       const int DISPLAY_RATE_IN_MS = 2000;
       int thisMS = millis();
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
@@ -340,9 +324,10 @@ class App {
           oledWrapper.shiftDisplay(2);
           lastShift = thisMS;
         }
-        doDisplay();
+        oledWrapper.drawInt(temperatureMonitor.getValue());
         lastDisplay = thisMS;
       }
+#endif
       checkSerial();
     }
 };
