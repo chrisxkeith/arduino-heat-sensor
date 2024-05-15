@@ -12,9 +12,14 @@ class Utils {
 
 #include <bitset>
 class SuperPixelPatterns {
+  public:
+    const static uint16_t HORIZONTAL_COUNT = 8;
+    const static uint16_t VERTICAL_COUNT = 8;
+    const static uint16_t NUM_SUPER_PIXELS = HORIZONTAL_COUNT * VERTICAL_COUNT;
+    const static uint16_t HORIZONTAL_SIZE = 16;
+    const static uint16_t VERTICAL_SIZE = 16;
+    const static uint16_t SUPER_PIXEL_SIZE = HORIZONTAL_SIZE * VERTICAL_SIZE;
   private:
-    const static int NUM_SUPER_PIXELS = 64;
-    const static int SUPER_PIXEL_SIZE = 64;
     std::bitset<SUPER_PIXEL_SIZE> patterns[NUM_SUPER_PIXELS];
     int shuffledIndices[SUPER_PIXEL_SIZE];
 
@@ -93,19 +98,19 @@ class OLEDWrapper {
     }
 
     void drawSuperPixel(uint16_t superPixelIndex, uint16_t startX, uint16_t startY) {
-      for (uint16_t xi = 0; xi < 8; xi++) {
-        for (uint16_t yi = 0; yi < 8; yi++) {
-          if (superPixelPatterns.getPixelAt(superPixelIndex, xi + yi * 8)) {       
+      for (uint16_t xi = 0; xi < SuperPixelPatterns::HORIZONTAL_SIZE; xi++) {
+        for (uint16_t yi = 0; yi < SuperPixelPatterns::VERTICAL_SIZE; yi++) {
+          if (superPixelPatterns.getPixelAt(superPixelIndex, xi + yi * SuperPixelPatterns::VERTICAL_COUNT)) {       
             u8g2.drawPixel(startX + xi, startY + yi);
           }
         }
       }
     }
 
-    void displayGrid(float vals[64]) {
+    void displayGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
       float min = FLT_MAX;
       float max = -FLT_MAX;
-      for (int i = 0; i < 64; i++) {
+      for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
         if (vals[i] < min) {
           min = vals[i];
         }
@@ -113,11 +118,29 @@ class OLEDWrapper {
           max = vals[i];
         }        
       }
+      float range = max - min;
       clear();
-      for (int i = 0; i < 64; i++) {
-        uint16_t superPixelIndex = (int)round((vals[i] - min) / 64);
-        uint16_t startX = (i % 64) * 8;
-        uint16_t startY = (i / 64) * 8;
+      u8g2_prepare();
+      u8g2.clearBuffer();
+      u8g2.setDrawColor(1);
+      for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
+        uint16_t superPixelIndex = (uint16_t)round((vals[i] - min) / range * 
+                                    SuperPixelPatterns::NUM_SUPER_PIXELS);
+        uint16_t startX = (i % SuperPixelPatterns::NUM_SUPER_PIXELS) * 
+                                    SuperPixelPatterns::HORIZONTAL_SIZE;
+        uint16_t startY = (i / SuperPixelPatterns::NUM_SUPER_PIXELS) *
+                                    SuperPixelPatterns::VERTICAL_SIZE;
+        if (i < 24) {
+          String s("displayGrid, i: ");
+          s.concat(i);
+          s.concat(",  superPixelIndex: ");
+          s.concat(superPixelIndex);
+          s.concat(",  startX: ");
+          s.concat(startX);
+          s.concat(",  startY: ");
+          s.concat(startY);
+          Utils::publish(s);
+        }
         drawSuperPixel(superPixelIndex, startX, startY);
       }
       u8g2.sendBuffer();
@@ -224,8 +247,8 @@ TemperatureMonitor temperatureMonitor;
 
 const String configs[] = {
   "Built:",
-  "Tue, May 14, 2024",
-  "~9:37:45 AM",
+  "Wed, May 15, 2024",
+  "~10:11:26 AM",
   "arduino-heat-sensor",
 };
 
@@ -268,7 +291,7 @@ class App {
           if (teststr.equals("?")) {
             status();
           } else if (teststr.equals("pixel")) {
-            oledWrapper.displayOneSuperPixel(0);
+            oledWrapper.displayOneSuperPixel(32);
           } else if (teststr.equals("refgrid")) {
             showReferenceGrid();
           } else if (teststr.equals("grid")) {
@@ -276,9 +299,12 @@ class App {
           } else {
             String msg("Unknown command: ");
             msg.concat(teststr);
-            Serial.println(msg);
+            Utils::publish(msg);
           }
-          delay(2000);
+          delay(5000);
+          String msg("Command done: ");
+          msg.concat(teststr);
+          Utils::publish(msg);
          }
       }
     }
