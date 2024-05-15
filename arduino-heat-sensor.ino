@@ -3,6 +3,13 @@
 
 #include <U8g2lib.h>
 
+class Utils {
+  public:
+    const static bool DO_SERIAL = true;
+    static void publish(String s);
+    static String toString(bool b);
+};
+
 #include <bitset>
 class SuperPixelPatterns {
   private:
@@ -26,11 +33,10 @@ class SuperPixelPatterns {
     SuperPixelPatterns() {
       shuffle();
       for (uint16_t superPixelIndex = 0; superPixelIndex < NUM_SUPER_PIXELS; superPixelIndex++) {
-        std::bitset<SUPER_PIXEL_SIZE> superPixel = patterns[superPixelIndex];
         for (uint16_t subPixelIndex = 0; subPixelIndex < superPixelIndex; subPixelIndex++) {
           // This should reduce flicker by only turning on one pixel when
           // going from, for example, intensity 5 to intensity 6.
-          superPixel[shuffledIndices[subPixelIndex]] = true;
+          patterns[superPixelIndex][shuffledIndices[subPixelIndex]] = true;
         }
       }
     }
@@ -47,8 +53,8 @@ class OLEDWrapper {
   private:
       const int START_BASELINE = 50;
       int   baseLine = START_BASELINE;
-      SuperPixelPatterns superPixelPatterns;
   public:
+    SuperPixelPatterns superPixelPatterns;
     void u8g2_prepare(void) {
       u8g2.setFont(u8g2_font_fur49_tn);
       u8g2.setFontRefHeightExtendedText();
@@ -108,7 +114,6 @@ class OLEDWrapper {
         }        
       }
       clear();
-      display("grid to come..."); delay(2000);
       for (int i = 0; i < 64; i++) {
         uint16_t superPixelIndex = (int)round((vals[i] - min) / 64);
         uint16_t startX = (i % 64) * 8;
@@ -186,30 +191,26 @@ public:
 };
 GridEyeSupport gridEyeSupport;
 
-class Utils {
-  public:
-    const static bool DO_SERIAL = true;
-    static void publish(String s) {
-      if (DO_SERIAL) {
-        char buf[100];
-        int totalSeconds = millis() / 1000;
-        int secs = totalSeconds % 60;
-        int minutes = (totalSeconds / 60) % 60;
-        int hours = (totalSeconds / 60) / 60;
-        sprintf(buf, "%02u:%02u:%02u", hours, minutes, secs);
-        String s1(buf);
-        s1.concat(" ");
-        s1.concat(s);
-        Serial.println(s1);
-      }
-    }
-    static String toString(bool b) {
-      if (b) {
-        return "true";
-      }
-      return "false";
-    }
-};
+void Utils::publish(String s) {
+  if (DO_SERIAL) {
+    char buf[100];
+    int totalSeconds = millis() / 1000;
+    int secs = totalSeconds % 60;
+    int minutes = (totalSeconds / 60) % 60;
+    int hours = (totalSeconds / 60) / 60;
+    sprintf(buf, "%02u:%02u:%02u", hours, minutes, secs);
+    String s1(buf);
+    s1.concat(" ");
+    s1.concat(s);
+    Serial.println(s1);
+  }
+}
+String Utils::toString(bool b) {
+  if (b) {
+    return "true";
+  }
+  return "false";
+}
 
 class TemperatureMonitor {
   public:
@@ -266,14 +267,19 @@ class App {
           teststr.trim();                        // remove any \r \n whitespace at the end of the String
           if (teststr.equals("?")) {
             status();
-          } else if (teststr.equals("grid")) {
+          } else if (teststr.equals("pixel")) {
+            oledWrapper.displayOneSuperPixel(0);
+          } else if (teststr.equals("refgrid")) {
             showReferenceGrid();
+          } else if (teststr.equals("grid")) {
+            showGrid();
           } else {
             String msg("Unknown command: ");
             msg.concat(teststr);
             Serial.println(msg);
           }
-        }
+          delay(2000);
+         }
       }
     }
   public:
@@ -297,7 +303,7 @@ class App {
       oledWrapper.endDisplay();
       delay(5000);
       doDisplay();
-      Utils::publish("Finished setup...");	
+      Utils::publish("Finished setup...");
     }
     void loop() {
       const int DISPLAY_RATE_IN_MS = 2000;
