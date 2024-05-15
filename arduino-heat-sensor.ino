@@ -284,6 +284,43 @@ class App {
          }
       }
     }
+
+    void drawPixelTest(void) {
+      uint16_t x, y, w2, h2;
+      u8g2.setColorIndex(1);
+      w2 = u8g2.getWidth();
+      h2 = u8g2.getHeight();
+      for( y = 0; y < h2; y++ ) {
+        for( x = 0; x < w2; x++ ) {
+          u8g2.drawPixel(x,y);
+        }
+      }
+    }
+
+    void dpTest() {
+      u8g2.clearBuffer();
+      drawPixelTest();
+      u8g2.sendBuffer();
+      int colorIndex = 0;
+      for (uint16_t numRuns = 0; numRuns < 8; numRuns++) {
+        u8g2.setColorIndex(colorIndex);
+        for (uint16_t y = 0; y < 16; y++ ) {
+          for (uint16_t x = 0; x < 16; x++ ) {
+              u8g2.drawPixel(x, y);
+          }
+        }
+        u8g2.sendBuffer();
+        String s("colorIndex: ");
+        s.concat(colorIndex);
+        Utils::publish(s);
+        colorIndex++;
+        if (colorIndex > 2) {
+          colorIndex = 0;
+        }
+        delay(10000);
+      }
+    }
+
   public:
 #define SHOW_GRID false
     void setup() {
@@ -313,6 +350,7 @@ class App {
       Utils::publish("Finished setup...");
     }
     void loop() {
+//      dpTest(); // save for later.
 #if SHOW_GRID
       showGrid();
 #else
