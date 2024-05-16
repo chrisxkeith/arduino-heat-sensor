@@ -21,27 +21,13 @@ class SuperPixelPatterns {
     const static uint16_t SUPER_PIXEL_SIZE = HORIZONTAL_SIZE * VERTICAL_SIZE;
   private:
     std::bitset<SUPER_PIXEL_SIZE> patterns[NUM_SUPER_PIXELS];
-    int shuffledIndices[SUPER_PIXEL_SIZE];
 
-    void shuffle() {
-      for (int i = 0; i < SUPER_PIXEL_SIZE; i++) {
-        shuffledIndices[i] = i;
-      }
-      for (int i = 0; i < SUPER_PIXEL_SIZE; i++) {
-        int rnd = rand() % SUPER_PIXEL_SIZE;
-        int tmp = shuffledIndices[i];
-        shuffledIndices[i] = shuffledIndices[rnd];
-        shuffledIndices[rnd] = tmp;
-      }
-    }
   public:
     SuperPixelPatterns() {
-      shuffle();
-      for (uint16_t superPixelIndex = 0; superPixelIndex < NUM_SUPER_PIXELS; superPixelIndex++) {
-        for (uint16_t subPixelIndex = 0; subPixelIndex < superPixelIndex; subPixelIndex++) {
-          // This should reduce flicker by only turning on one pixel when
-          // going from, for example, intensity 5 to intensity 6.
-          patterns[superPixelIndex][shuffledIndices[subPixelIndex]] = true;
+      for (int superPixelIndex = 0; superPixelIndex < NUM_SUPER_PIXELS; superPixelIndex++) {
+        for (int pixelPosition = 0; pixelPosition < SUPER_PIXEL_SIZE; pixelPosition++) {
+          bool bitValue = (rand() % NUM_SUPER_PIXELS) < superPixelIndex;
+          patterns[superPixelIndex][pixelPosition] = bitValue;
         }
       }
     }
@@ -227,8 +213,8 @@ TemperatureMonitor temperatureMonitor;
 
 const String configs[] = {
   "Built:",
-  "Wed, May 15, 2024",
-  "~10:11:26 AM",
+  "Thu, May 16, 2024",
+  "~11:30:09 AM",
   "arduino-heat-sensor",
 };
 
