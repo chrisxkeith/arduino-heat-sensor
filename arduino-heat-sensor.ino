@@ -211,11 +211,17 @@ class TemperatureMonitor {
 };
 TemperatureMonitor temperatureMonitor;
 
+#define SHOW_GRID false
 const String configs[] = {
   "Built:",
-  "Thu, May 16, 2024",
-  "~11:30:09 AM",
+  "Fri, May 17, 2024",
+  "~9:01:32 AM",
   "arduino-heat-sensor",
+#if SHOW_GRID
+  "showing grid"
+#else
+  "showing temperature"
+#endif
 };
 
 class App {
@@ -306,9 +312,16 @@ class App {
         delay(10000);
       }
     }
+    void display() {
+#if SHOW_GRID
+      showGrid();
+#else
+      oledWrapper.drawInt(temperatureMonitor.getValue());
+#endif
+    }
+
 
   public:
-#define SHOW_GRID false
     void setup() {
       if (Utils::DO_SERIAL) {
         Serial.begin(115200);
@@ -328,19 +341,15 @@ class App {
       }
       oledWrapper.endDisplay();
       delay(5000);
-#if SHOW_GRID
-      showGrid();
-#else
-      oledWrapper.drawInt(temperatureMonitor.getValue());
-#endif
+      display();
       Utils::publish("Finished setup...");
     }
     void loop() {
-//      dpTest(); // save for later.
 #if SHOW_GRID
-      showGrid();
+      const int DISPLAY_RATE_IN_MS = 5000;
 #else
       const int DISPLAY_RATE_IN_MS = 2000;
+#endif
       int thisMS = millis();
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
         const int SHIFT_RATE = 1000 * 60 * 2; // Shift display every 2 minutes to avoid OLED burn-in.
@@ -348,10 +357,9 @@ class App {
           oledWrapper.shiftDisplay(2);
           lastShift = thisMS;
         }
-        oledWrapper.drawInt(temperatureMonitor.getValue());
+        display();
         lastDisplay = thisMS;
       }
-#endif
       checkSerial();
     }
 };
