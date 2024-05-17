@@ -341,7 +341,6 @@ class App {
       }
       oledWrapper.endDisplay();
       delay(5000);
-      display();
       Utils::publish("Finished setup...");
     }
     void loop() {
