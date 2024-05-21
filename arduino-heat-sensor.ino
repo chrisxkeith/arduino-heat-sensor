@@ -93,6 +93,52 @@ class OLEDWrapper {
       }
     }
 
+    void superPixel(int xStart, int yStart, int pixelVal, int pixelIndex) {
+      if (pixelVal < 0) {
+        pixelVal = 0;
+      } else if (pixelVal >= SuperPixelPatterns::SUPER_PIXEL_SIZE) {
+        pixelVal = SuperPixelPatterns::SUPER_PIXEL_SIZE - 1;
+      }
+      int pixelIndexInSuperPixel = 0;
+      for (int xi = xStart; xi < xStart + SuperPixelPatterns::HORIZONTAL_SIZE; xi++) {
+        for (int yi = yStart; yi < yStart + SuperPixelPatterns::VERTICAL_SIZE; yi++) {
+            int r = (rand() % (SuperPixelPatterns::SUPER_PIXEL_SIZE - 2)) + 1;
+            if (r < pixelVal) { // lower value maps to white pixel.
+              u8g2.drawPixel(xi, yi);
+            }
+        }
+      }
+    }
+
+    void displayArray(int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
+      clear();
+      u8g2_prepare();
+      u8g2.clearBuffer();
+      u8g2.setDrawColor(1);
+      for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
+        int x = (i % SuperPixelPatterns::HORIZONTAL_COUNT) * SuperPixelPatterns::HORIZONTAL_SIZE;
+        int y = (i / SuperPixelPatterns::VERTICAL_COUNT) * SuperPixelPatterns::VERTICAL_SIZE;
+        // This (admittedly confusing) switcheroo of x and y axes is to make the orientation
+        // of the sensor (with logo reading correctly) match the orientation of the OLED.
+        superPixel(y, x, pixelVals[i], i);
+      }
+      u8g2.sendBuffer();
+    }
+
+    void displayDynamicGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
+      // For showing hands/fingers. Stove burner temps will be different.
+      const long   MIN_TEMP_IN_F = 70;   // degrees F that will display as non-black superpixels.
+      const long   MAX_TEMP_IN_F = 90;
+
+      int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS];
+      for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
+        long t = (long)round(vals[i]);
+        pixelVals[i] = map(t, MIN_TEMP_IN_F, MAX_TEMP_IN_F, 0, SuperPixelPatterns::SUPER_PIXEL_SIZE);
+        
+      }
+      displayArray(pixelVals);
+    }
+
     void displayGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
       float min = FLT_MAX;
       float max = -FLT_MAX;
@@ -211,21 +257,21 @@ class TemperatureMonitor {
 };
 TemperatureMonitor temperatureMonitor;
 
-#define SHOW_GRID false
-const String configs[] = {
-  "Built:",
-  "Fri, May 17, 2024",
-  "~9:01:32 AM",
-  "arduino-heat-sensor",
-#if SHOW_GRID
-  "showing grid"
-#else
-  "showing temperature"
-#endif
-};
-
 class App {
   private:
+#define SHOW_GRID false
+    const String configs[5] = {
+      "Built:",
+      "Tue, May 21, 2024",
+      "~8:30:54 AM",
+      "arduino-heat-sensor",
+#if SHOW_GRID
+      "showing grid"
+ #else
+      "showing temperature"
+#endif
+    };
+
     int lastDisplay = 0;
     int lastShift = 0;
 
@@ -240,7 +286,7 @@ class App {
       for (int i = 0; i < 64; i++) {
         vals[i] = gridEyeSupport.readOneSensor(i);
       }
-      oledWrapper.displayGrid(vals);
+      oledWrapper.displayDynamicGrid(vals);
     }
 
     void showReferenceGrid() {
