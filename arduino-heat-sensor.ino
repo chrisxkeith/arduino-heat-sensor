@@ -45,6 +45,10 @@ class OLEDWrapper {
       const int START_BASELINE = 50;
       int   baseLine = START_BASELINE;
   public:
+    // For showing hands/fingers. Stove burner temps will be different.
+    static const long   MIN_TEMP_IN_F = 70;   // degrees F that will display as non-black superpixels.
+    static const long   MAX_TEMP_IN_F = 90;
+
     SuperPixelPatterns superPixelPatterns;
     void u8g2_prepare(void) {
       u8g2.setFont(u8g2_font_fur49_tn);
@@ -126,10 +130,6 @@ class OLEDWrapper {
     }
 
     void displayDynamicGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
-      // For showing hands/fingers. Stove burner temps will be different.
-      const long   MIN_TEMP_IN_F = 70;   // degrees F that will display as non-black superpixels.
-      const long   MAX_TEMP_IN_F = 90;
-
       int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS];
       for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
         long t = (long)round(vals[i]);
@@ -260,11 +260,12 @@ TemperatureMonitor temperatureMonitor;
 class App {
   private:
 #define SHOW_GRID false
-    const String configs[5] = {
-      "Built:",
+    String configs[6] = {
       "Tue, May 21, 2024",
       "~8:30:54 AM",
       "arduino-heat-sensor",
+      String(OLEDWrapper::MIN_TEMP_IN_F),
+      String(OLEDWrapper::MAX_TEMP_IN_F),
 #if SHOW_GRID
       "showing grid"
  #else
