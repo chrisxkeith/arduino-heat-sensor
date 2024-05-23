@@ -46,8 +46,8 @@ class OLEDWrapper {
       int   baseLine = START_BASELINE;
   public:
     // For showing hands/fingers. Stove burner temps will be different.
-    static const long   MIN_TEMP_IN_F = 70;   // degrees F that will display as non-black superpixels.
-    static const long   MAX_TEMP_IN_F = 90;
+    static const long   MIN_TEMP_IN_F = 80;   // degrees F that will display as black superpixel.
+    static const long   MAX_TEMP_IN_F = 90;   // degrees F that will display as white superpixel.
 
     SuperPixelPatterns superPixelPatterns;
     void u8g2_prepare(void) {
