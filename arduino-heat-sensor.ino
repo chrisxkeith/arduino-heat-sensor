@@ -106,19 +106,22 @@ class OLEDWrapper {
       int pixelIndexInSuperPixel = 0;
       for (int xi = xStart; xi < xStart + SuperPixelPatterns::HORIZONTAL_SIZE; xi++) {
         for (int yi = yStart; yi < yStart + SuperPixelPatterns::VERTICAL_SIZE; yi++) {
+            int drawColor;
             int r = (rand() % (SuperPixelPatterns::SUPER_PIXEL_SIZE - 2)) + 1;
             if (r < pixelVal) { // lower value maps to white pixel.
-              u8g2.drawPixel(xi, yi);
+              drawColor= 1;
+            } else {
+              drawColor= 0;
             }
+            u8g2.setDrawColor(drawColor);
+            u8g2.drawPixel(xi, yi);
         }
       }
     }
 
     void displayArray(int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
-      clear();
       u8g2_prepare();
       u8g2.clearBuffer();
-      u8g2.setDrawColor(1);
       for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
         int x = (i % SuperPixelPatterns::HORIZONTAL_COUNT) * SuperPixelPatterns::HORIZONTAL_SIZE;
         int y = (i / SuperPixelPatterns::VERTICAL_COUNT) * SuperPixelPatterns::VERTICAL_SIZE;
@@ -259,7 +262,7 @@ TemperatureMonitor temperatureMonitor;
 
 class App {
   private:
-#define SHOW_GRID false
+#define SHOW_GRID true
     String configs[6] = {
       "Tue, May 21, 2024",
       "~8:30:54 AM",
@@ -392,7 +395,7 @@ class App {
     }
     void loop() {
 #if SHOW_GRID
-      const int DISPLAY_RATE_IN_MS = 5000;
+      const int DISPLAY_RATE_IN_MS = 1;
 #else
       const int DISPLAY_RATE_IN_MS = 2000;
 #endif
