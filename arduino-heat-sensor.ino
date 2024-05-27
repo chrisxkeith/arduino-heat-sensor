@@ -81,6 +81,83 @@ class Blurrer {
         }
       }
     }
+
+    void blur(float r, float* vals, int valsLength, int pixelHeight, int pixelWidth) {
+      buildBlurKernel(r);
+      
+      int* r2 = new int[valsLength];
+      int yi = 0;
+      int ym = 0;
+      int ymi = 0;
+
+      for (int y = 0; y < pixelHeight; y++) {
+        for (int x = 0; x < pixelWidth; x++) {
+          int sum, cr;
+          int read, ri, bk0;
+          cr = sum = 0;
+          read = x - blurRadius;
+          if (read < 0) {
+            bk0 = -read;
+            read = 0;
+          } else {
+            if (read >= pixelWidth) {
+              break;
+            }
+            bk0 = 0;
+          }
+          for (int i = bk0; i < blurKernelSize; i++) {
+            if (read >= pixelWidth) {
+              break;
+            }
+            int c = vals[read + yi];
+            int* bm = &blurMult[i];
+            cr += bm[(c & 1 /* RED_MASK */) >> 16];
+            sum += blurKernel[i];
+            read++;
+          }
+          ri = yi + x;
+          r2[ri] = cr / sum;
+        }
+        yi += pixelWidth;
+      }
+      yi = 0;
+      ym = -blurRadius;
+      ymi = ym * pixelWidth;
+
+      for (int y = 0; y < pixelHeight; y++) {
+        for (int x = 0; x < pixelWidth; x++) {
+          int sum, cr;
+          int read, ri, bk0;
+          cr = sum = 0;
+          if (ym < 0) {
+            bk0 = ri = -ym;
+            read = x;
+          } else {
+            if (ym >= pixelHeight) {
+              break;
+            }
+            bk0 = 0;
+            ri = ym;
+            read = x + ymi;
+          }
+          for (int i = bk0; i < blurKernelSize; i++) {
+            if (ri >= pixelHeight) {
+              break;
+            }
+            int* bm = &blurMult[i];
+            cr += bm[r2[read]];
+            sum += blurKernel[i];
+            ri++;
+            read += pixelWidth;
+          }
+          vals[x + yi] = 0; // 0xff000000 | (cr/sum)<<16 | (cg/sum)<<8 | (cb/sum);
+        }
+        yi += pixelWidth;
+        ymi += pixelWidth;
+        ym++;
+      }
+    }
+
     void diagnostics() {
       String s("blurRadius: ");
       s.concat(blurRadius);
