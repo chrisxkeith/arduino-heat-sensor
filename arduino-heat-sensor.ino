@@ -40,6 +40,39 @@ class SuperPixelPatterns {
 
 U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 
+// https://stackoverflow.com/questions/42186498/gaussian-blur-image-processing-c
+class Blurrer {
+  private:
+    static float accessPixel(float * arr, int col, int row, int k, int width, int height) {
+        float kernel[3][3] = {  1, 2, 1,
+                                2, 4, 2,
+                                1, 2, 1 };
+        float sum = 0;
+        float sumKernel = 0;
+
+        for (int j = -1; j <= 1; j++) {
+            for (int i = -1; i <= 1; i++) {
+                if ((row + j) >= 0 && (row + j) < height && (col + i) >= 0 && (col + i) < width) {
+                    float color = arr[(row + j) * 3 * width + (col + i) * 3 + k];
+                    sum += color * kernel[i + 1][j + 1];
+                    sumKernel += kernel[i + 1][j + 1];
+                }
+            }
+        }
+        return sum / sumKernel;
+    }
+  public:
+    static void guassian_blur2D(float * arr, float * result, int width, int height) {
+        for (int row = 0; row < height; row++) {
+            for (int col = 0; col < width; col++) {
+                for (int k = 0; k < 3; k++) {
+                    result[3 * row * width + 3 * col + k] = accessPixel(arr, col, row, k, width, height);
+                }
+            }
+        }
+    }
+};
+
 class OLEDWrapper {
   private:
       const int START_BASELINE = 50;
@@ -125,14 +158,15 @@ class OLEDWrapper {
       for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
         int x = (i % SuperPixelPatterns::HORIZONTAL_COUNT) * SuperPixelPatterns::HORIZONTAL_SIZE;
         int y = (i / SuperPixelPatterns::VERTICAL_COUNT) * SuperPixelPatterns::VERTICAL_SIZE;
-        // This (admittedly confusing) switcheroo of x and y axes is to make the orientation
-        // of the sensor (with logo reading correctly) match the orientation of the OLED.
         superPixel(y, x, pixelVals[i], i);
       }
       u8g2.sendBuffer();
     }
 
     void displayDynamicGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
+      // float blurredVals[SuperPixelPatterns::NUM_SUPER_PIXELS];
+      // Blurrer::guassian_blur2D(vals, blurredVals,
+      //                          SuperPixelPatterns::HORIZONTAL_COUNT, SuperPixelPatterns::VERTICAL_COUNT);
       int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS];
       for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
         long t = (long)round(vals[i]);
@@ -264,8 +298,8 @@ class App {
   private:
 #define SHOW_GRID true
     String configs[6] = {
-      "Tue, May 21, 2024",
-      "~8:30:54 AM",
+      "Mon, May 27, 2024",
+      "~9:50:58 AM",
       "arduino-heat-sensor",
       String(OLEDWrapper::MIN_TEMP_IN_F),
       String(OLEDWrapper::MAX_TEMP_IN_F),
