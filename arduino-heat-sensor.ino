@@ -40,10 +40,75 @@ class SuperPixelPatterns {
 
 U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 
-// https://stackoverflow.com/questions/42186498/gaussian-blur-image-processing-c
 class Blurrer {
+  public:
+    int blurRadius = 0;
+    int blurKernelSize = 0;
+    int* blurKernel;
+    int* blurMult;
+
+    void buildBlurKernel(float r) {
+      int radius = (int) (r * 3.5f);
+      if (radius < 1) radius = 1;
+      if (radius > 248) radius = 248;
+      if (blurRadius != radius) {
+        blurRadius = radius;
+        blurKernelSize = 1 + blurRadius << 1;
+        blurKernel = new int[blurKernelSize];
+        blurMult = new int[blurKernelSize * 256];
+
+        int bk;
+        int bki;
+        int* bm;
+        int* bmi;
+
+        for (int i = 1, radiusi = radius - 1; i < radius; i++) {
+          bki = radiusi * radiusi;
+          blurKernel[radiusi] = bki;
+          blurKernel[radius + i] = blurKernel[radiusi];
+          bm = &blurMult[radius + i];
+          bmi = &blurMult[radiusi--];
+          for (int j = 0; j < 256; j++) {
+            bmi[j] = bki * j;
+            bm[j] = bmi[j];
+          }
+        }
+        blurKernel[radius] = radius * radius;
+        bk = blurKernel[radius];
+        bm = &blurMult[radius];
+        for (int j = 0; j < 256; j++) {
+          bm[j] = bk * j;
+        }
+      }
+    }
+    void diagnostics() {
+      String s("blurRadius: ");
+      s.concat(blurRadius);
+      Utils::publish(s);
+      String s2("blurKernelSize: ");
+      s2.concat(blurKernelSize);
+      Utils::publish(s2);
+
+      int blurMultSize = blurKernelSize * 256;
+      String s9("blurMultSize:");
+      s9.concat(blurMultSize);
+      Utils::publish(s9);
+
+      String s3("blurKernel: ");
+      for (int i = 0; i < blurKernelSize; i++ ) {
+        s3.concat(blurKernel[i]);
+        s3.concat(" ");
+      }
+      Utils::publish(s3);
+/*      String s4("blurMult: ");
+      for (int i = 0; i < blurKernelSize; i++ ) {
+        s3.concat(blurMult[i]);
+        s3.concat(" ");
+      }
+      Utils::publish(s3); */
+    }
   private:
-    static float accessPixel(float * arr, int col, int row, int k, int width, int height) {
+    float accessPixel(float * arr, int col, int row, int k, int width, int height) {
         float kernel[3][3] = {  1, 2, 1,
                                 2, 4, 2,
                                 1, 2, 1 };
@@ -62,7 +127,7 @@ class Blurrer {
         return sum / sumKernel;
     }
   public:
-    static void guassian_blur2D(float * arr, float * result, int width, int height) {
+    void guassian_blur2D(float * arr, float * result, int width, int height) {
         for (int row = 0; row < height; row++) {
             for (int col = 0; col < width; col++) {
                 for (int k = 0; k < 3; k++) {
@@ -140,8 +205,8 @@ class OLEDWrapper {
       for (int xi = xStart; xi < xStart + SuperPixelPatterns::HORIZONTAL_SIZE; xi++) {
         for (int yi = yStart; yi < yStart + SuperPixelPatterns::VERTICAL_SIZE; yi++) {
             int drawColor;
-            int r = (rand() % (SuperPixelPatterns::SUPER_PIXEL_SIZE - 2)) + 1;
-            if (r < pixelVal) { // lower value maps to white pixel.
+            int r = (rand() % (SuperPixelPatterns::SUPER_PIXEL_SIZE - 2)) + 1; // TODO: try influencing by values of neighboring superpixels
+            if (r < pixelVal) {
               drawColor= 1;
             } else {
               drawColor= 0;
@@ -163,10 +228,44 @@ class OLEDWrapper {
       u8g2.sendBuffer();
     }
 
+    void displayBlurredArray(int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
+      float vals[ SuperPixelPatterns::NUM_SUPER_PIXELS * 
+                  SuperPixelPatterns::HORIZONTAL_SIZE * 
+                  SuperPixelPatterns::VERTICAL_SIZE];
+      float blurredVals[SuperPixelPatterns::NUM_SUPER_PIXELS * 
+                        SuperPixelPatterns::HORIZONTAL_SIZE * 
+                        SuperPixelPatterns::VERTICAL_SIZE];
+      // Fill local buffer
+      Blurrer* b = new Blurrer;
+      b->guassian_blur2D(vals, blurredVals,
+                                SuperPixelPatterns::HORIZONTAL_COUNT * 
+                                    SuperPixelPatterns::HORIZONTAL_SIZE, 
+                                SuperPixelPatterns::VERTICAL_COUNT * 
+                                    SuperPixelPatterns::VERTICAL_SIZE);
+      u8g2_prepare();
+      u8g2.clearBuffer();
+      int drawColor;
+      long threshold = (long)round((MAX_TEMP_IN_F - MIN_TEMP_IN_F) / 2 + MIN_TEMP_IN_F);
+      for (int xi = 0; xi < SuperPixelPatterns::HORIZONTAL_SIZE * 
+                      SuperPixelPatterns::HORIZONTAL_COUNT; xi++) {
+        for (int yi = 0; yi < SuperPixelPatterns::VERTICAL_SIZE *
+                      SuperPixelPatterns::VERTICAL_COUNT; yi++) {
+          long t = (long)round(blurredVals[xi * yi]);
+          long r = map(t, MIN_TEMP_IN_F, MAX_TEMP_IN_F, 0, 
+                                SuperPixelPatterns::SUPER_PIXEL_SIZE);
+          if (r > threshold) {
+            drawColor = 1;
+          } else {
+            drawColor = 0;
+          }
+          u8g2.setDrawColor(drawColor);
+          u8g2.drawPixel(xi, yi);
+        }
+      }
+      u8g2.sendBuffer();
+    }
+
     void displayDynamicGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
-      // float blurredVals[SuperPixelPatterns::NUM_SUPER_PIXELS];
-      // Blurrer::guassian_blur2D(vals, blurredVals,
-      //                          SuperPixelPatterns::HORIZONTAL_COUNT, SuperPixelPatterns::VERTICAL_COUNT);
       int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS];
       for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
         long t = (long)round(vals[i]);
@@ -426,6 +525,9 @@ class App {
       oledWrapper.endDisplay();
       delay(5000);
       Utils::publish("Finished setup...");
+      Blurrer b;
+      b.buildBlurKernel(2.0);
+      b.diagnostics();
     }
     void loop() {
 #if SHOW_GRID
