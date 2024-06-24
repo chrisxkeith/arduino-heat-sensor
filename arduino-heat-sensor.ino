@@ -53,9 +53,15 @@ class Blurrer {
       if (radius > 248) radius = 248;
       if (blurRadius != radius) {
         blurRadius = radius;
-        blurKernelSize = 1 + blurRadius << 1;
+        blurKernelSize = (1 + blurRadius) << 1;
         blurKernel = new int[blurKernelSize];
+        for (int i = 0; i < blurKernelSize; i++) {
+          blurKernel[i] = 0;
+        }
         blurMult = new int[blurKernelSize * 256];
+        for (int i = 0; i < blurKernelSize * 256; i++) {
+          blurMult[i] = 0;
+        }
 
         int bk;
         int bki;
@@ -474,8 +480,8 @@ class App {
   private:
 #define SHOW_GRID true
     String configs[6] = {
-      "Mon, May 27, 2024",
-      "~9:50:58 AM",
+      "~ Mon, 24 Jun 2024 ", // date -R
+      "08:15:04 -0700",
       "arduino-heat-sensor",
       String(OLEDWrapper::MIN_TEMP_IN_F),
       String(OLEDWrapper::MAX_TEMP_IN_F),
