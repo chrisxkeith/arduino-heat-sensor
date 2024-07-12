@@ -618,6 +618,14 @@ class App {
 
 
   public:
+    App() {
+      configs[3].remove(0);
+      configs[3].concat("min: ");
+      configs[3].concat(OLEDWrapper::MIN_TEMP_IN_F);
+      configs[4].remove(0);
+      configs[4].concat("max: ");
+      configs[4].concat(OLEDWrapper::MAX_TEMP_IN_F);
+    }
     void setup() {
       if (Utils::DO_SERIAL) {
         Serial.begin(115200);
