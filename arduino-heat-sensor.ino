@@ -525,6 +525,23 @@ class App {
       oledWrapper.displayGrid(vals);
     }
 
+    void showTestGrids() {
+      const int NUM_TESTDATA = 1;
+      float d1[] = {75,76,77,77,76,77,77,77,76,76,76,76,76,77,77,77,75,75,75,76,76,76,77,77,76,76,76,76,75,76,77,78,76,75,76,76,76,76,77,77,76,76,76,76,76,76,77,77,75,75,75,76,76,76,76,77,76,74,76,76,76,76,76,78};
+      float* testData[NUM_TESTDATA] = {
+        d1
+      };
+      String testDataNames[NUM_TESTDATA] = {
+        "base"
+      };
+      for (int i = 0; i < NUM_TESTDATA; i++) {
+        oledWrapper.display(testDataNames[i]);
+        delay(3000);
+        oledWrapper.displayGrid(testData[i]);
+        delay(3000);
+      }
+    }
+
     void checkSerial() {
       if (Utils::DO_SERIAL) {
         if (Serial.available() > 0) {
@@ -540,6 +557,8 @@ class App {
             oledWrapper.drawInt(temperatureMonitor.getValue());
           } else if (teststr.equals("values")) {
             Utils::publish(gridEyeSupport.getValuesAsString());
+          } else if (teststr.equals("test")) {
+            showTestGrids();
           } else {
             String msg("Unknown command: ");
             msg.concat(teststr);
@@ -619,10 +638,10 @@ class App {
       oledWrapper.endDisplay();
       delay(5000);
       Utils::publish("Finished setup...");
-      Blurrer b;
+/*      Blurrer b;
       b.buildBlurKernel(2.0);
       b.diagnostics();
-    }
+*/    }
     void loop() {
 #if SHOW_GRID
       const int DISPLAY_RATE_IN_MS = 1;
