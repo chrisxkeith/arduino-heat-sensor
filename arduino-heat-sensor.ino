@@ -488,15 +488,15 @@ class App {
   private:
 #define SHOW_GRID true
     String configs[6] = {
-      "~ Fri, 12 Jul 2024 ", // date -R
-      "09:51:55 -0700",
+      "~ Fri, 12 Jul 2024 ",
+      "09:51:55 -0700", // date -R
       "arduino-heat-sensor",
       String(OLEDWrapper::MIN_TEMP_IN_F),
       String(OLEDWrapper::MAX_TEMP_IN_F),
 #if SHOW_GRID
       "showing grid"
  #else
-      "showing temperature"
+      "showing temp"
 #endif
     };
 
