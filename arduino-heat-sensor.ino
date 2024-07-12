@@ -424,11 +424,19 @@ public:
 
   String getValuesAsString() {
     String ret;
-    for(unsigned char i = 0; i < 8; i++) {
-      ret.concat(readOneSensor(i));
-      ret.concat(",");
+    for(unsigned char i = 0; i < 64; i++) {
+      char buf[80];
+      int len = snprintf(buf, 80, "%2.0f", readOneSensor(i));
+      if (len < 0) {
+        ret.concat("error formatting value");
+        break;
+      } else {
+        ret.concat(String(buf));
+        if (i < 63) {
+          ret.concat(",");
+        }
+      }
     }
-    ret.concat(",...");
     return ret;
   }
 
@@ -480,8 +488,8 @@ class App {
   private:
 #define SHOW_GRID true
     String configs[6] = {
-      "~ Mon, 24 Jun 2024 ", // date -R
-      "08:15:04 -0700",
+      "~ Fri, 12 Jul 2024 ", // date -R
+      "09:51:55 -0700",
       "arduino-heat-sensor",
       String(OLEDWrapper::MIN_TEMP_IN_F),
       String(OLEDWrapper::MAX_TEMP_IN_F),
@@ -530,9 +538,12 @@ class App {
             showGrid();
           } else if (teststr.equals("temp")) {
             oledWrapper.drawInt(temperatureMonitor.getValue());
+          } else if (teststr.equals("values")) {
+            Utils::publish(gridEyeSupport.getValuesAsString());
           } else {
             String msg("Unknown command: ");
             msg.concat(teststr);
+            msg.concat(", expected refgrid, grid, temp, values");
             Utils::publish(msg);
           }
           delay(5000);
