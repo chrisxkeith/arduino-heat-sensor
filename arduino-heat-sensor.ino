@@ -486,10 +486,10 @@ TemperatureMonitor temperatureMonitor;
 
 class App {
   private:
-#define SHOW_GRID true
+#define SHOW_GRID false
     String configs[6] = {
-      "~ Fri, 12 Jul 2024 ",
-      "09:51:55 -0700", // date -R
+      "~ Thu, 22 Aug 2024 ",
+      "10:01:41 -0700", // date -R
       "arduino-heat-sensor",
       String(OLEDWrapper::MIN_TEMP_IN_F),
       String(OLEDWrapper::MAX_TEMP_IN_F),
