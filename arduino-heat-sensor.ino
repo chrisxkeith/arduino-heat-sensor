@@ -487,10 +487,9 @@ TemperatureMonitor temperatureMonitor;
 class App {
   private:
 #define SHOW_GRID false
-    String configs[6] = {
-      "~ Thu, 22 Aug 2024 ",
-      "10:01:41 -0700", // date -R
-      "arduino-heat-sensor",
+    String configs[5] = {
+      "~ Sun, 25 Aug 2024 13:38:27 -0700", // date -R
+      "https://github.com/chrisxkeith/arduino-heat-sensor",
       String(OLEDWrapper::MIN_TEMP_IN_F),
       String(OLEDWrapper::MAX_TEMP_IN_F),
 #if SHOW_GRID
@@ -620,12 +619,12 @@ class App {
 
   public:
     App() {
+      configs[2].remove(0);
+      configs[2].concat("min: ");
+      configs[2].concat(OLEDWrapper::MIN_TEMP_IN_F);
       configs[3].remove(0);
-      configs[3].concat("min: ");
-      configs[3].concat(OLEDWrapper::MIN_TEMP_IN_F);
-      configs[4].remove(0);
-      configs[4].concat("max: ");
-      configs[4].concat(OLEDWrapper::MAX_TEMP_IN_F);
+      configs[3].concat("max: ");
+      configs[3].concat(OLEDWrapper::MAX_TEMP_IN_F);
     }
     void setup() {
       if (Utils::DO_SERIAL) {
