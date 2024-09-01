@@ -38,7 +38,16 @@ class SuperPixelPatterns {
 
 #include <float.h>
 
+// #define USE_128_X_128
+
+#ifdef USE_128_X_128
 U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
+#else
+#include <Wire.h>
+#include <SparkFun_Qwiic_OLED.h> //http://librarymanager/All#SparkFun_Qwiic_OLED
+#include <res/qw_fnt_8x16.h>
+Qwiic1in3OLED u8g2; // 128x64
+#endif
 
 class Blurrer {
   public:
@@ -221,6 +230,7 @@ class Blurrer {
     }
 };
 
+#ifdef USE_128_X_128
 class OLEDWrapper {
   private:
       const int START_BASELINE = 50;
@@ -240,16 +250,16 @@ class OLEDWrapper {
     
      void drawInt(int val) {
       u8g2_prepare();
-      u8g2.clearBuffer();
+      u8g2.erase();
       u8g2.drawUTF8(2, this->baseLine, String(val).c_str());
       u8g2.setFont(u8g2_font_fur11_tf);
       u8g2.drawUTF8(6, this->baseLine + 20, "Fahrenheit");
-      u8g2.sendBuffer();
+      u8g2.display();
     }
 
     void clear() {
-      u8g2.clearBuffer();
-      u8g2.sendBuffer();
+      u8g2.erase();
+      u8g2.display();
     }
 
     void shiftDisplay(int shiftAmount) {
@@ -272,7 +282,7 @@ class OLEDWrapper {
       for (uint16_t xi = 0; xi < SuperPixelPatterns::HORIZONTAL_SIZE; xi++) {
         for (uint16_t yi = 0; yi < SuperPixelPatterns::VERTICAL_SIZE; yi++) {
           if (superPixelPatterns.getPixelAt(superPixelIndex, xi + yi * SuperPixelPatterns::VERTICAL_COUNT)) {       
-            u8g2.drawPixel(startX + xi, startY + yi);
+            u8g2.pixel(startX + xi, startY + yi);
           }
         }
       }
@@ -295,20 +305,20 @@ class OLEDWrapper {
               drawColor= 0;
             }
             u8g2.setDrawColor(drawColor);
-            u8g2.drawPixel(xi, yi);
+            u8g2.pixel(xi, yi);
         }
       }
     }
 
     void displayArray(int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
       u8g2_prepare();
-      u8g2.clearBuffer();
+      u8g2.erase();
       for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
         int x = (i % SuperPixelPatterns::HORIZONTAL_COUNT) * SuperPixelPatterns::HORIZONTAL_SIZE;
         int y = (i / SuperPixelPatterns::VERTICAL_COUNT) * SuperPixelPatterns::VERTICAL_SIZE;
         superPixel(y, x, pixelVals[i], i);
       }
-      u8g2.sendBuffer();
+      u8g2.display();
     }
 
     void displayBlurredArray(int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
@@ -326,7 +336,7 @@ class OLEDWrapper {
                                 SuperPixelPatterns::VERTICAL_COUNT * 
                                     SuperPixelPatterns::VERTICAL_SIZE);
       u8g2_prepare();
-      u8g2.clearBuffer();
+      u8g2.erase();
       int drawColor;
       long threshold = (long)round((MAX_TEMP_IN_F - MIN_TEMP_IN_F) / 2 + MIN_TEMP_IN_F);
       for (int xi = 0; xi < SuperPixelPatterns::HORIZONTAL_SIZE * 
@@ -342,10 +352,10 @@ class OLEDWrapper {
             drawColor = 0;
           }
           u8g2.setDrawColor(drawColor);
-          u8g2.drawPixel(xi, yi);
+          u8g2.pixel(xi, yi);
         }
       }
-      u8g2.sendBuffer();
+      u8g2.display();
     }
 
     void displayDynamicGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
@@ -372,7 +382,7 @@ class OLEDWrapper {
       float range = max - min;
       clear();
       u8g2_prepare();
-      u8g2.clearBuffer();
+      u8g2.erase();
       u8g2.setDrawColor(1);
       for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
         uint16_t superPixelIndex = (uint16_t)round((vals[i] - min) / range * 
@@ -383,12 +393,12 @@ class OLEDWrapper {
                                     SuperPixelPatterns::VERTICAL_SIZE;
         drawSuperPixel(superPixelIndex, startX, startY);
       }
-      u8g2.sendBuffer();
+      u8g2.display();
     }
 
     void startDisplay(const uint8_t *font) {
       u8g2_prepare();
-      u8g2.clearBuffer();
+      u8g2.erase();
       u8g2.setFont(font);
     }
     void display(String s, uint8_t x, uint8_t y) {
@@ -396,7 +406,7 @@ class OLEDWrapper {
       u8g2.print(s.c_str());
     }
     void endDisplay() {
-      u8g2.sendBuffer();
+      u8g2.display();
     }
     void display(String s) {
       startDisplay(u8g2_font_fur11_tf);
@@ -404,6 +414,55 @@ class OLEDWrapper {
       endDisplay();
     }
 };
+#else
+class OLEDWrapper {
+  public:
+    static const long   MIN_TEMP_IN_F = 80;   // degrees F that will display as black superpixel.
+    static const long   MAX_TEMP_IN_F = 90;   // degrees F that will display as white superpixel.
+    
+    void setup_OLED() {
+      Wire.begin();
+      if (!u8g2.begin()) {
+        Serial.println("u8g2.begin() failed! Stopping");
+        while (true) { ; }
+      }
+      u8g2.erase();
+    }
+    void drawInt(int val) {
+    }
+    void clear() {
+      u8g2.erase();
+    }
+    void shiftDisplay(int shiftAmount) {
+    }
+    void drawSuperPixel(uint16_t superPixelIndex, uint16_t startX, uint16_t startY) {
+    }
+    void superPixel(int xStart, int yStart, int pixelVal, int pixelIndex) {
+    }
+    void displayArray(int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
+    }
+    void displayBlurredArray(int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
+    }
+    void displayDynamicGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
+    }
+    void displayGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
+    }
+    void startDisplay(const uint8_t *font) {
+    }
+    void display(String s, uint8_t x, uint8_t y) {
+      u8g2.setFont(QW_FONT_8X16);
+      u8g2.text(x, y, s);
+    }
+    void endDisplay() {
+      u8g2.display();
+    }
+    void display(String s) {
+      u8g2.setFont(QW_FONT_8X16);
+      u8g2.text(48, 0, s);
+    }
+
+};
+#endif
 OLEDWrapper oledWrapper;
 
 #include <SparkFun_GridEYE_Arduino_Library.h>
@@ -487,15 +546,20 @@ TemperatureMonitor temperatureMonitor;
 class App {
   private:
 #define SHOW_GRID false
-    String configs[5] = {
+    String configs[6] = {
       "~ Sun, 25 Aug 2024 13:38:27 -0700", // date -R
       "https://github.com/chrisxkeith/arduino-heat-sensor",
       String(OLEDWrapper::MIN_TEMP_IN_F),
       String(OLEDWrapper::MAX_TEMP_IN_F),
 #if SHOW_GRID
-      "showing grid"
- #else
-      "showing temp"
+      "showing grid",
+#else
+      "showing temp",
+#endif
+#ifdef USE_128_X_128
+      "USE_128_X_128"
+#else
+      "not USE_128_X_128"
 #endif
     };
 
@@ -575,29 +639,29 @@ class App {
 
     void drawPixelTest(void) {
       uint16_t x, y, w2, h2;
-      u8g2.setColorIndex(1);
+      u8g2.setColor(1);
       w2 = u8g2.getWidth();
       h2 = u8g2.getHeight();
       for( y = 0; y < h2; y++ ) {
         for( x = 0; x < w2; x++ ) {
-          u8g2.drawPixel(x,y);
+          u8g2.pixel(x,y);
         }
       }
     }
 
     void dpTest() {
-      u8g2.clearBuffer();
+      u8g2.erase();
       drawPixelTest();
-      u8g2.sendBuffer();
+      u8g2.display();
       int colorIndex = 0;
       for (uint16_t numRuns = 0; numRuns < 8; numRuns++) {
-        u8g2.setColorIndex(colorIndex);
+        u8g2.setColor(colorIndex);
         for (uint16_t y = 0; y < 16; y++ ) {
           for (uint16_t x = 0; x < 16; x++ ) {
-              u8g2.drawPixel(x, y);
+              u8g2.pixel(x, y);
           }
         }
-        u8g2.sendBuffer();
+        u8g2.display();
         String s("colorIndex: ");
         s.concat(colorIndex);
         Utils::publish(s);
@@ -616,6 +680,14 @@ class App {
 #endif
     }
 
+  void testOLED() {
+    Wire.begin();
+    u8g2.begin();
+    u8g2.erase();
+    u8g2.setFont(QW_FONT_8X16);
+    u8g2.text(48,0,"ABcd");
+    u8g2.display();
+  }
 
   public:
     App() {
