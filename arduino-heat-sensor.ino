@@ -16,8 +16,8 @@ class SuperPixelPatterns {
     const static uint16_t HORIZONTAL_COUNT = 8;
     const static uint16_t VERTICAL_COUNT = 8;
     const static uint16_t NUM_SUPER_PIXELS = HORIZONTAL_COUNT * VERTICAL_COUNT;
-    const static uint16_t HORIZONTAL_SIZE = 16;
-    const static uint16_t VERTICAL_SIZE = 16;
+    const static uint16_t HORIZONTAL_SIZE = 8;
+    const static uint16_t VERTICAL_SIZE = 8;
     const static uint16_t SUPER_PIXEL_SIZE = HORIZONTAL_SIZE * VERTICAL_SIZE;
   private:
     std::bitset<SUPER_PIXEL_SIZE> patterns[NUM_SUPER_PIXELS];
@@ -289,36 +289,9 @@ class OLEDWrapper {
     }
 
     void superPixel(int xStart, int yStart, int pixelVal, int pixelIndex) {
-      if (pixelVal < 0) {
-        pixelVal = 0;
-      } else if (pixelVal >= SuperPixelPatterns::SUPER_PIXEL_SIZE) {
-        pixelVal = SuperPixelPatterns::SUPER_PIXEL_SIZE - 1;
-      }
-      int pixelIndexInSuperPixel = 0;
-      for (int xi = xStart; xi < xStart + SuperPixelPatterns::HORIZONTAL_SIZE; xi++) {
-        for (int yi = yStart; yi < yStart + SuperPixelPatterns::VERTICAL_SIZE; yi++) {
-            int drawColor;
-            int r = (rand() % (SuperPixelPatterns::SUPER_PIXEL_SIZE - 2)) + 1; // TODO: try influencing by values of neighboring superpixels
-            if (r < pixelVal) {
-              drawColor= 1;
-            } else {
-              drawColor= 0;
-            }
-            u8g2.setDrawColor(drawColor);
-            u8g2.pixel(xi, yi);
-        }
-      }
     }
 
     void displayArray(int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
-      u8g2_prepare();
-      u8g2.erase();
-      for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
-        int x = (i % SuperPixelPatterns::HORIZONTAL_COUNT) * SuperPixelPatterns::HORIZONTAL_SIZE;
-        int y = (i / SuperPixelPatterns::VERTICAL_COUNT) * SuperPixelPatterns::VERTICAL_SIZE;
-        superPixel(y, x, pixelVals[i], i);
-      }
-      u8g2.display();
     }
 
     void displayBlurredArray(int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
@@ -359,13 +332,6 @@ class OLEDWrapper {
     }
 
     void displayDynamicGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
-      int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS];
-      for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
-        long t = (long)round(vals[i]);
-        pixelVals[i] = map(t, MIN_TEMP_IN_F, MAX_TEMP_IN_F, 0, SuperPixelPatterns::SUPER_PIXEL_SIZE);
-        
-      }
-      displayArray(pixelVals);
     }
 
     void displayGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
@@ -439,12 +405,44 @@ class OLEDWrapper {
     void drawSuperPixel(uint16_t superPixelIndex, uint16_t startX, uint16_t startY) {
     }
     void superPixel(int xStart, int yStart, int pixelVal, int pixelIndex) {
+      if (pixelVal < 0) {
+        pixelVal = 0;
+      } else if (pixelVal >= SuperPixelPatterns::SUPER_PIXEL_SIZE) {
+        pixelVal = SuperPixelPatterns::SUPER_PIXEL_SIZE - 1;
+      }
+      int pixelIndexInSuperPixel = 0;
+      for (int xi = xStart; xi < xStart + SuperPixelPatterns::HORIZONTAL_SIZE; xi++) {
+        for (int yi = yStart; yi < yStart + SuperPixelPatterns::VERTICAL_SIZE; yi++) {
+            int drawColor;
+            int r = (rand() % (SuperPixelPatterns::SUPER_PIXEL_SIZE - 2)) + 1;
+            if (r < pixelVal) {
+              drawColor = COLOR_WHITE;
+            } else {
+              drawColor = COLOR_BLACK;
+            }
+            u8g2.pixel(xi, yi, drawColor);
+        }
+      }
     }
     void displayArray(int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
+      u8g2.erase();
+      for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
+        int x = (i % SuperPixelPatterns::HORIZONTAL_COUNT) * SuperPixelPatterns::HORIZONTAL_SIZE;
+        int y = (i / SuperPixelPatterns::VERTICAL_COUNT) * SuperPixelPatterns::VERTICAL_SIZE;
+        superPixel(y, x, pixelVals[i], i);
+      }
+      u8g2.display();
     }
     void displayBlurredArray(int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
     }
     void displayDynamicGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
+      int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS];
+      for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
+        long t = (long)round(vals[i]);
+        pixelVals[i] = map(t, MIN_TEMP_IN_F, MAX_TEMP_IN_F, 0, SuperPixelPatterns::SUPER_PIXEL_SIZE);
+        
+      }
+      displayArray(pixelVals);
     }
     void displayGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
     }
@@ -500,7 +498,7 @@ public:
     return ret;
   }
 
-  // This will take 15-20 seconds if the GridEye isn't connected.
+  // This will timeout after 15-20 seconds if the GridEye isn't connected.
   int readValue() {
     float total = 0;
     for (int i = 0; i < 64; i++) {
