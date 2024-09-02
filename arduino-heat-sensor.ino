@@ -545,12 +545,12 @@ TemperatureMonitor temperatureMonitor;
 
 class App {
   private:
-#define SHOW_GRID false
+#define SHOW_GRID true
     String configs[6] = {
-      "~ Sun, 25 Aug 2024 13:38:27 -0700", // date -R
-      "https://github.com/chrisxkeith/arduino-heat-sensor",
       String(OLEDWrapper::MIN_TEMP_IN_F),
       String(OLEDWrapper::MAX_TEMP_IN_F),
+      "Build:2024Sep02",
+      "https://github.com/chrisxkeith/arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
 #else
@@ -679,24 +679,14 @@ class App {
       oledWrapper.drawInt(temperatureMonitor.getValue());
 #endif
     }
-
-  void testOLED() {
-    Wire.begin();
-    u8g2.begin();
-    u8g2.erase();
-    u8g2.setFont(QW_FONT_8X16);
-    u8g2.text(48,0,"ABcd");
-    u8g2.display();
-  }
-
   public:
     App() {
-      configs[2].remove(0);
-      configs[2].concat("min: ");
-      configs[2].concat(OLEDWrapper::MIN_TEMP_IN_F);
-      configs[3].remove(0);
-      configs[3].concat("max: ");
-      configs[3].concat(OLEDWrapper::MAX_TEMP_IN_F);
+      configs[0].remove(0);
+      configs[0].concat("min: ");
+      configs[0].concat(OLEDWrapper::MIN_TEMP_IN_F);
+      configs[1].remove(0);
+      configs[1].concat("max: ");
+      configs[1].concat(OLEDWrapper::MAX_TEMP_IN_F);
     }
     void setup() {
       if (Utils::DO_SERIAL) {
@@ -711,10 +701,7 @@ class App {
       delay(1000);
       oledWrapper.startDisplay(u8g2_font_fur11_tf);
       uint16_t baseline = 16;
-      for (String s : configs) {
-        oledWrapper.display(s, 0, baseline);
-        baseline += 16;
-      }
+      oledWrapper.display(configs[2], 0, baseline);
       oledWrapper.endDisplay();
       delay(5000);
       Utils::publish("Finished setup...");
