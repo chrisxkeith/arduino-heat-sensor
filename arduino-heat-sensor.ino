@@ -426,12 +426,13 @@ class OLEDWrapper {
         Serial.println("u8g2.begin() failed! Stopping");
         while (true) { ; }
       }
-      u8g2.erase();
+      clear();
     }
     void drawInt(int val) {
     }
     void clear() {
       u8g2.erase();
+      u8g2.display();
     }
     void shiftDisplay(int shiftAmount) {
     }
@@ -704,6 +705,7 @@ class App {
       oledWrapper.display(configs[2], 0, baseline);
       oledWrapper.endDisplay();
       delay(5000);
+      oledWrapper.clear();
       Utils::publish("Finished setup...");
 /*      Blurrer b;
       b.buildBlurKernel(2.0);
