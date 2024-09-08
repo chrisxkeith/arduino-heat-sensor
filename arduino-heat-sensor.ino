@@ -55,187 +55,6 @@ U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 Qwiic1in3OLED u8g2; // 128x64
 #endif
 
-class Blurrer {
-  public:
-    int blurRadius = 0;
-    int blurKernelSize = 0;
-    int* blurKernel;
-    int* blurMult;
-
-    void buildBlurKernel(float r) {
-      int radius = (int) (r * 3.5f);
-      if (radius < 1) radius = 1;
-      if (radius > 248) radius = 248;
-      if (blurRadius != radius) {
-        blurRadius = radius;
-        blurKernelSize = (1 + blurRadius) << 1;
-        blurKernel = new int[blurKernelSize];
-        for (int i = 0; i < blurKernelSize; i++) {
-          blurKernel[i] = 0;
-        }
-        blurMult = new int[blurKernelSize * 256];
-        for (int i = 0; i < blurKernelSize * 256; i++) {
-          blurMult[i] = 0;
-        }
-
-        int bk;
-        int bki;
-        int* bm;
-        int* bmi;
-
-        for (int i = 1, radiusi = radius - 1; i < radius; i++) {
-          bki = radiusi * radiusi;
-          blurKernel[radiusi] = bki;
-          blurKernel[radius + i] = blurKernel[radiusi];
-          bm = &blurMult[radius + i];
-          bmi = &blurMult[radiusi--];
-          for (int j = 0; j < 256; j++) {
-            bmi[j] = bki * j;
-            bm[j] = bmi[j];
-          }
-        }
-        blurKernel[radius] = radius * radius;
-        bk = blurKernel[radius];
-        bm = &blurMult[radius];
-        for (int j = 0; j < 256; j++) {
-          bm[j] = bk * j;
-        }
-      }
-    }
-
-    void blur(float r, float* vals, int valsLength, int pixelHeight, int pixelWidth) {
-      buildBlurKernel(r);
-      
-      int* r2 = new int[valsLength];
-      int yi = 0;
-      int ym = 0;
-      int ymi = 0;
-
-      for (int y = 0; y < pixelHeight; y++) {
-        for (int x = 0; x < pixelWidth; x++) {
-          int sum, cr;
-          int read, ri, bk0;
-          cr = sum = 0;
-          read = x - blurRadius;
-          if (read < 0) {
-            bk0 = -read;
-            read = 0;
-          } else {
-            if (read >= pixelWidth) {
-              break;
-            }
-            bk0 = 0;
-          }
-          for (int i = bk0; i < blurKernelSize; i++) {
-            if (read >= pixelWidth) {
-              break;
-            }
-            int c = vals[read + yi];
-            int* bm = &blurMult[i];
-            cr += bm[(c & 1 /* RED_MASK */) >> 16];
-            sum += blurKernel[i];
-            read++;
-          }
-          ri = yi + x;
-          r2[ri] = cr / sum;
-        }
-        yi += pixelWidth;
-      }
-      yi = 0;
-      ym = -blurRadius;
-      ymi = ym * pixelWidth;
-
-      for (int y = 0; y < pixelHeight; y++) {
-        for (int x = 0; x < pixelWidth; x++) {
-          int sum, cr;
-          int read, ri, bk0;
-          cr = sum = 0;
-          if (ym < 0) {
-            bk0 = ri = -ym;
-            read = x;
-          } else {
-            if (ym >= pixelHeight) {
-              break;
-            }
-            bk0 = 0;
-            ri = ym;
-            read = x + ymi;
-          }
-          for (int i = bk0; i < blurKernelSize; i++) {
-            if (ri >= pixelHeight) {
-              break;
-            }
-            int* bm = &blurMult[i];
-            cr += bm[r2[read]];
-            sum += blurKernel[i];
-            ri++;
-            read += pixelWidth;
-          }
-          vals[x + yi] = 0; // 0xff000000 | (cr/sum)<<16 | (cg/sum)<<8 | (cb/sum);
-        }
-        yi += pixelWidth;
-        ymi += pixelWidth;
-        ym++;
-      }
-    }
-
-    void diagnostics() {
-      String s("blurRadius: ");
-      s.concat(blurRadius);
-      Utils::publish(s);
-      String s2("blurKernelSize: ");
-      s2.concat(blurKernelSize);
-      Utils::publish(s2);
-
-      int blurMultSize = blurKernelSize * 256;
-      String s9("blurMultSize:");
-      s9.concat(blurMultSize);
-      Utils::publish(s9);
-
-      String s3("blurKernel: ");
-      for (int i = 0; i < blurKernelSize; i++ ) {
-        s3.concat(blurKernel[i]);
-        s3.concat(" ");
-      }
-      Utils::publish(s3);
-/*      String s4("blurMult: ");
-      for (int i = 0; i < blurKernelSize; i++ ) {
-        s3.concat(blurMult[i]);
-        s3.concat(" ");
-      }
-      Utils::publish(s3); */
-    }
-  private:
-    float accessPixel(float * arr, int col, int row, int k, int width, int height) {
-        float kernel[3][3] = {  1, 2, 1,
-                                2, 4, 2,
-                                1, 2, 1 };
-        float sum = 0;
-        float sumKernel = 0;
-
-        for (int j = -1; j <= 1; j++) {
-            for (int i = -1; i <= 1; i++) {
-                if ((row + j) >= 0 && (row + j) < height && (col + i) >= 0 && (col + i) < width) {
-                    float color = arr[(row + j) * 3 * width + (col + i) * 3 + k];
-                    sum += color * kernel[i + 1][j + 1];
-                    sumKernel += kernel[i + 1][j + 1];
-                }
-            }
-        }
-        return sum / sumKernel;
-    }
-  public:
-    void guassian_blur2D(float * arr, float * result, int width, int height) {
-        for (int row = 0; row < height; row++) {
-            for (int col = 0; col < width; col++) {
-                for (int k = 0; k < 3; k++) {
-                    result[3 * row * width + 3 * col + k] = accessPixel(arr, col, row, k, width, height);
-                }
-            }
-        }
-    }
-};
-
 #ifdef USE_128_X_128
 class OLEDWrapper {
   private:
@@ -247,42 +66,6 @@ class OLEDWrapper {
     static const long   MAX_TEMP_IN_F = 90;   // degrees F that will display as white superpixel.
 
     SuperPixelPatterns superPixelPatterns;
-    void u8g2_prepare(void) {
-      u8g2.setFont(u8g2_font_fur49_tn);
-      u8g2.setFontRefHeightExtendedText();
-      u8g2.setDrawColor(1);
-      u8g2.setFontDirection(0);
-    }
-    
-     void drawInt(int val) {
-      u8g2_prepare();
-      u8g2.erase();
-      u8g2.drawUTF8(2, this->baseLine, String(val).c_str());
-      u8g2.setFont(u8g2_font_fur11_tf);
-      u8g2.drawUTF8(6, this->baseLine + 20, "Fahrenheit");
-      u8g2.display();
-    }
-
-    void clear() {
-      u8g2.erase();
-      u8g2.display();
-    }
-
-    void shiftDisplay(int shiftAmount) {
-      this->baseLine += shiftAmount;
-      if (this->baseLine > 70) {
-        this->baseLine = START_BASELINE;
-      }
-    }
-
-    void setup_OLED() {
-      pinMode(10, OUTPUT);
-      pinMode(9, OUTPUT);
-      digitalWrite(10, 0);
-      digitalWrite(9, 0);
-      u8g2.begin();
-      u8g2.setBusClock(400000);
-    }
 
     void drawSuperPixel(uint16_t superPixelIndex, uint16_t startX, uint16_t startY) {
       for (uint16_t xi = 0; xi < SuperPixelPatterns::HORIZONTAL_SIZE; xi++) {
@@ -292,52 +75,6 @@ class OLEDWrapper {
           }
         }
       }
-    }
-
-    void superPixel(int xStart, int yStart, int pixelVal, int pixelIndex) {
-    }
-
-    void displayArray(int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
-    }
-
-    void displayBlurredArray(int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
-      float vals[ SuperPixelPatterns::NUM_SUPER_PIXELS * 
-                  SuperPixelPatterns::HORIZONTAL_SIZE * 
-                  SuperPixelPatterns::VERTICAL_SIZE];
-      float blurredVals[SuperPixelPatterns::NUM_SUPER_PIXELS * 
-                        SuperPixelPatterns::HORIZONTAL_SIZE * 
-                        SuperPixelPatterns::VERTICAL_SIZE];
-      // Fill local buffer
-      Blurrer* b = new Blurrer;
-      b->guassian_blur2D(vals, blurredVals,
-                                SuperPixelPatterns::HORIZONTAL_COUNT * 
-                                    SuperPixelPatterns::HORIZONTAL_SIZE, 
-                                SuperPixelPatterns::VERTICAL_COUNT * 
-                                    SuperPixelPatterns::VERTICAL_SIZE);
-      u8g2_prepare();
-      u8g2.erase();
-      int drawColor;
-      long threshold = (long)round((MAX_TEMP_IN_F - MIN_TEMP_IN_F) / 2 + MIN_TEMP_IN_F);
-      for (int xi = 0; xi < SuperPixelPatterns::HORIZONTAL_SIZE * 
-                      SuperPixelPatterns::HORIZONTAL_COUNT; xi++) {
-        for (int yi = 0; yi < SuperPixelPatterns::VERTICAL_SIZE *
-                      SuperPixelPatterns::VERTICAL_COUNT; yi++) {
-          long t = (long)round(blurredVals[xi * yi]);
-          long r = map(t, MIN_TEMP_IN_F, MAX_TEMP_IN_F, 0, 
-                                SuperPixelPatterns::SUPER_PIXEL_SIZE);
-          if (r > threshold) {
-            drawColor = 1;
-          } else {
-            drawColor = 0;
-          }
-          u8g2.setDrawColor(drawColor);
-          u8g2.pixel(xi, yi);
-        }
-      }
-      u8g2.display();
-    }
-
-    void displayDynamicGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
     }
 
     void displayGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
@@ -367,27 +104,12 @@ class OLEDWrapper {
       }
       u8g2.display();
     }
-
-    void startDisplay(const uint8_t *font) {
-      u8g2_prepare();
-      u8g2.erase();
-      u8g2.setFont(font);
-    }
-    void display(String s, uint8_t x, uint8_t y) {
-      u8g2.setCursor(x, y);
-      u8g2.print(s.c_str());
-    }
-    void endDisplay() {
-      u8g2.display();
-    }
-    void display(String s) {
-      startDisplay(u8g2_font_fur11_tf);
-      display(s, 0, 16);
-      endDisplay();
-    }
 };
 #else
 class OLEDWrapper {
+  private:
+      const int START_BASELINE = 20;
+      int   baseLine = START_BASELINE;
   public:
     static const long   MIN_TEMP_IN_F = 80;   // degrees F that will display as black superpixel.
     static const long   MAX_TEMP_IN_F = 90;   // degrees F that will display as white superpixel.
@@ -401,14 +123,17 @@ class OLEDWrapper {
       clear();
     }
     void drawInt(int val) {
+      display(String(val));
     }
     void clear() {
       u8g2.erase();
       u8g2.display();
     }
     void shiftDisplay(int shiftAmount) {
-    }
-    void drawSuperPixel(uint16_t superPixelIndex, uint16_t startX, uint16_t startY) {
+        baseLine += shiftAmount;
+        if (baseLine > 64) {
+          baseLine = START_BASELINE;
+        }
     }
     void superPixel(int xStart, int yStart, int pixelVal, int pixelIndex) {
       if (pixelVal < 0) {
@@ -439,8 +164,6 @@ class OLEDWrapper {
       }
       u8g2.display();
     }
-    void displayBlurredArray(int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
-    }
     void displayDynamicGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
       int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS];
       for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
@@ -449,10 +172,6 @@ class OLEDWrapper {
         
       }
       displayArray(pixelVals);
-    }
-    void displayGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
-    }
-    void startDisplay(const uint8_t *font) {
     }
     void display(String s, uint8_t x, uint8_t y) {
       u8g2.setFont(QW_FONT_8X16);
@@ -554,7 +273,7 @@ class App {
     String configs[6] = {
       String(OLEDWrapper::MIN_TEMP_IN_F),
       String(OLEDWrapper::MAX_TEMP_IN_F),
-      "Build:2024Sep02",
+      "Build:2024Sep08",
       "https://github.com/chrisxkeith/arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
@@ -590,7 +309,7 @@ class App {
       for (int i = 0; i < 64; i++) {
         vals[i] = (float)i;
       }
-      oledWrapper.displayGrid(vals);
+      oledWrapper.displayDynamicGrid(vals);
     }
 
     void showTestGrids() {
@@ -606,7 +325,7 @@ class App {
       for (int i = 0; i < NUM_TESTDATA; i++) {
         oledWrapper.display(testDataNames[i]);
         delay(3000);
-        oledWrapper.displayGrid(testData[i]);
+        oledWrapper.displayDynamicGrid(testData[i]);
         delay(3000);
       }
     }
@@ -704,17 +423,13 @@ class App {
       gridEyeSupport.begin();
       oledWrapper.setup_OLED();
       delay(1000);
-      oledWrapper.startDisplay(u8g2_font_fur11_tf);
       uint16_t baseline = 16;
       oledWrapper.display(configs[2], 0, baseline);
       oledWrapper.endDisplay();
       delay(5000);
       oledWrapper.clear();
       Utils::publish("Finished setup...");
-/*      Blurrer b;
-      b.buildBlurKernel(2.0);
-      b.diagnostics();
-*/    }
+    }
     void loop() {
 #if SHOW_GRID
       const int DISPLAY_RATE_IN_MS = 1;
