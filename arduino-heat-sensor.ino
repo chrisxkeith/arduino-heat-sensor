@@ -1,6 +1,12 @@
 // Please credit chris.keith@gmail.com .
 // REM: Set board type.
 
+// Thank you: https://github.com/ragnraok/android-image-filter
+#include "./GaussianBlurFilter.h"
+
+GaussianBlurOptions gbh(1.0); 
+GaussianBlurFilter gaussianBlurFilter(0, 0, 0, gbh);
+
 #include <U8g2lib.h>
 
 class Utils {
