@@ -304,12 +304,12 @@ class App {
       oledWrapper.displayDynamicGrid(vals);
     }
 
-    void showReferenceGrid() {
-      float vals[64];
+    void displayArray() {
+      int vals[64];
       for (int i = 0; i < 64; i++) {
-        vals[i] = (float)i;
+        vals[i] = i;
       }
-      oledWrapper.displayDynamicGrid(vals);
+      oledWrapper.displayArray(vals);
     }
 
     void showTestGrids() {
@@ -337,8 +337,8 @@ class App {
           teststr.trim();                        // remove any \r \n whitespace at the end of the String
           if (teststr.equals("?")) {
             status();
-          } else if (teststr.equals("refgrid")) {
-            showReferenceGrid();
+          } else if (teststr.equals("displayArray")) {
+            displayArray();
           } else if (teststr.equals("grid")) {
             showGrid();
           } else if (teststr.equals("temp")) {
