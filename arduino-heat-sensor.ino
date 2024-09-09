@@ -131,7 +131,7 @@ class OLEDWrapper {
     }
     void shiftDisplay(int shiftAmount) {
         baseLine += shiftAmount;
-        if (baseLine > 64) {
+        if (baseLine > 63) {
           baseLine = START_BASELINE;
         }
     }
@@ -273,7 +273,7 @@ class App {
     String configs[6] = {
       String(OLEDWrapper::MIN_TEMP_IN_F),
       String(OLEDWrapper::MAX_TEMP_IN_F),
-      "Build:2024Sep08",
+      "Build:2024Sep09",
       "https://github.com/chrisxkeith/arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
@@ -296,7 +296,7 @@ class App {
       }
     }
 
-    void showGrid() {
+    void displayGrid() {
       float vals[64];
       for (int i = 0; i < 64; i++) {
         vals[i] = gridEyeSupport.readOneSensor(i);
@@ -304,7 +304,7 @@ class App {
       oledWrapper.displayDynamicGrid(vals);
     }
 
-    void displayArray() {
+    void displayRef() {
       int vals[64];
       for (int i = 0; i < 64; i++) {
         vals[i] = i;
@@ -312,15 +312,30 @@ class App {
       oledWrapper.displayArray(vals);
     }
 
-    void showTestGrids() {
-      const int NUM_TESTDATA = 2;
-      float d1[] = {75,76,77,77,76,77,77,77,76,76,76,76,76,77,77,77,75,75,75,76,76,76,77,77,76,76,76,76,75,76,77,78,76,75,76,76,76,76,77,77,76,76,76,76,76,76,77,77,75,75,75,76,76,76,76,77,76,74,76,76,76,76,76,78};
-      float d2[] = {80,81,80,81,84,96,98,90,81,82,82,83,86,135,133,94,83,83,83,85,87,98,107,91,87,90,90,87,90,100,95,90,95,134,144,101,113,146,132,95,98,137,131,105,123,137,128,95,90,98,104,92,98,116,100,92,86,89,86,86,87,90,89,88};
+    void displayContrastGrid() {
+      int ref[] = { 0, 1, 2, 3, 4, 5, 6, 7,
+                    7, 6, 5, 4, 3, 2, 1, 0,
+                    1, 2, 3, 4, 5, 6, 7, 0,
+                    7, 6, 5, 4, 3, 2, 1, 0,
+                    2, 3, 4, 5, 6, 7, 0, 1,
+                    7, 6, 5, 4, 3, 2, 1, 0,
+                    3, 4, 5, 6, 7, 0, 1, 2,
+                    7, 6, 5, 4, 3, 2, 1, 0
+                  };
+      for (int i = 0; i < 64; i++) {
+        ref[i] *= 8;
+      }
+      oledWrapper.displayArray(ref);
+    }
+
+    void displayTestGrids() {
+      const int NUM_TESTDATA = 1;
+      float d1[] = {80,81,80,81,84,96,98,90,81,82,82,83,86,135,133,94,83,83,83,85,87,98,107,91,87,90,90,87,90,100,95,90,95,134,144,101,113,146,132,95,98,137,131,105,123,137,128,95,90,98,104,92,98,116,100,92,86,89,86,86,87,90,89,88};
       float* testData[NUM_TESTDATA] = {
-        d1, d2
+        d1
       };
       String testDataNames[NUM_TESTDATA] = {
-        "base", "3burners"
+        "3burners"
       };
       for (int i = 0; i < NUM_TESTDATA; i++) {
         oledWrapper.display(testDataNames[i]);
@@ -337,16 +352,18 @@ class App {
           teststr.trim();                        // remove any \r \n whitespace at the end of the String
           if (teststr.equals("?")) {
             status();
-          } else if (teststr.equals("displayArray")) {
-            displayArray();
+          } else if (teststr.equals("ref")) {
+            displayRef();
           } else if (teststr.equals("grid")) {
-            showGrid();
+            displayGrid();
           } else if (teststr.equals("temp")) {
             oledWrapper.drawInt(temperatureMonitor.getValue());
           } else if (teststr.equals("values")) {
             Utils::publish(gridEyeSupport.getValuesAsString());
-          } else if (teststr.equals("test")) {
-            showTestGrids();
+          } else if (teststr.equals("testgrids")) {
+            displayTestGrids();
+          } else if (teststr.equals("contrastgrid")) {
+            displayContrastGrid();
           } else {
             String msg("Unknown command: ");
             msg.concat(teststr);
@@ -398,7 +415,7 @@ class App {
     }
     void display() {
 #if SHOW_GRID
-      showGrid();
+      displayGrid();
 #else
       oledWrapper.drawInt(temperatureMonitor.getValue());
 #endif
