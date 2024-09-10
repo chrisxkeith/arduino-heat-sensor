@@ -175,6 +175,7 @@ class OLEDWrapper {
       u8g2.display();
     }
     void displayBlurredArray(int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
+      unsigned long then = millis();
       int bitMap[ SuperPixelPatterns::HORIZONTAL_COUNT * SuperPixelPatterns::HORIZONTAL_SIZE *
                   SuperPixelPatterns::VERTICAL_COUNT * SuperPixelPatterns::VERTICAL_SIZE *
                   4 // AlphaRGB
@@ -200,14 +201,23 @@ class OLEDWrapper {
         }
       }
       u8g2.display();
+      unsigned long ms = millis() - then;
+      String msg("milliseconds for displayBlurredArray: ");
+      msg.concat(ms);
+      Serial.println(msg);
     }
     void blur(int* bitMap) {
+      unsigned long then = millis();
       GaussianBlurOptions gbh(12.0);
       GaussianBlurFilter gaussianBlurFilter(bitMap,
                               SuperPixelPatterns::HORIZONTAL_COUNT * SuperPixelPatterns::HORIZONTAL_SIZE,
                               SuperPixelPatterns::VERTICAL_COUNT * SuperPixelPatterns::VERTICAL_SIZE,
                               gbh);
       gaussianBlurFilter.procImage();
+      unsigned long ms = millis() - then;
+      String msg("milliseconds for blur: ");
+      msg.concat(ms);
+      Serial.println(msg);
     }
     void displayDynamicGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
       int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS];
@@ -318,7 +328,7 @@ class App {
     String configs[6] = {
       String(OLEDWrapper::MIN_TEMP_IN_F),
       String(OLEDWrapper::MAX_TEMP_IN_F),
-      "Build:2024Sep09",
+      "Build:2024Sep10",
       "https://github.com/chrisxkeith/arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
