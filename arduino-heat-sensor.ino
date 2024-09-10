@@ -4,9 +4,6 @@
 // Thank you: https://github.com/ragnraok/android-image-filter
 #include "./GaussianBlurFilter.h"
 
-GaussianBlurOptions gbh(1.0); 
-GaussianBlurFilter gaussianBlurFilter(0, 0, 0, gbh);
-
 #include <U8g2lib.h>
 
 class Utils {
@@ -135,13 +132,12 @@ class OLEDWrapper {
           baseLine = START_BASELINE;
         }
     }
-    void superPixel(int xStart, int yStart, int pixelVal, int pixelIndex) {
+    void superPixel(int xStart, int yStart, int pixelVal, int pixelIndex, int* bitMap) {
       if (pixelVal < 0) {
         pixelVal = 0;
       } else if (pixelVal >= SuperPixelPatterns::SUPER_PIXEL_SIZE) {
         pixelVal = SuperPixelPatterns::SUPER_PIXEL_SIZE - 1;
       }
-      int pixelIndexInSuperPixel = 0;
       for (int xi = xStart; xi < xStart + SuperPixelPatterns::HORIZONTAL_SIZE; xi++) {
         for (int yi = yStart; yi < yStart + SuperPixelPatterns::VERTICAL_SIZE; yi++) {
             int drawColor;
@@ -151,7 +147,21 @@ class OLEDWrapper {
             } else {
               drawColor = COLOR_BLACK;
             }
-            u8g2.pixel(xi, yi, drawColor);
+            if (bitMap == NULL) {
+              u8g2.pixel(xi, yi, drawColor);
+            } else {
+              int v;
+              if (drawColor == COLOR_WHITE) {
+                v = 0;
+              } else {
+                v = 255;
+              }
+              int indexInBitmap = yi * SuperPixelPatterns::VERTICAL_SIZE + xi;
+              bitMap[indexInBitmap++] = 255;
+              bitMap[indexInBitmap++] = v;
+              bitMap[indexInBitmap++] = v;
+              bitMap[indexInBitmap] = v;
+            }
         }
       }
     }
@@ -160,9 +170,44 @@ class OLEDWrapper {
       for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
         int x = (i % SuperPixelPatterns::HORIZONTAL_COUNT) * SuperPixelPatterns::HORIZONTAL_SIZE;
         int y = (i / SuperPixelPatterns::VERTICAL_COUNT) * SuperPixelPatterns::VERTICAL_SIZE;
-        superPixel(y, x, pixelVals[i], i);
+        superPixel(y, x, pixelVals[i], i, NULL);
       }
       u8g2.display();
+    }
+    void displayBlurredArray(int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
+      int bitMap[ SuperPixelPatterns::HORIZONTAL_COUNT * SuperPixelPatterns::HORIZONTAL_SIZE *
+                  SuperPixelPatterns::VERTICAL_COUNT * SuperPixelPatterns::VERTICAL_SIZE *
+                  4 // AlphaRGB
+      ];
+      for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
+        int x = (i % SuperPixelPatterns::HORIZONTAL_COUNT) * SuperPixelPatterns::HORIZONTAL_SIZE;
+        int y = (i / SuperPixelPatterns::VERTICAL_COUNT) * SuperPixelPatterns::VERTICAL_SIZE;
+        superPixel(y, x, pixelVals[i], i, bitMap);
+      }
+      blur(bitMap);
+      u8g2.erase();
+      for (int xi = 0; xi < SuperPixelPatterns::HORIZONTAL_COUNT * SuperPixelPatterns::HORIZONTAL_SIZE; xi++) {
+        for (int yi = 0; yi < SuperPixelPatterns::VERTICAL_SIZE * SuperPixelPatterns::VERTICAL_SIZE; yi++) {
+          int indexInBitmap = yi * SuperPixelPatterns::VERTICAL_SIZE + xi + 1;
+          int totalColorSaturation = bitMap[indexInBitmap] + bitMap[indexInBitmap + 1] + bitMap[indexInBitmap + 2];
+          int drawColor;
+          if (totalColorSaturation > 768 / 2) {
+            drawColor = COLOR_WHITE;
+          } else {
+            drawColor = COLOR_BLACK;
+          }
+          u8g2.pixel(xi, yi, drawColor);
+        }
+      }
+      u8g2.display();
+    }
+    void blur(int* bitMap) {
+      GaussianBlurOptions gbh(12.0);
+      GaussianBlurFilter gaussianBlurFilter(bitMap,
+                              SuperPixelPatterns::HORIZONTAL_COUNT * SuperPixelPatterns::HORIZONTAL_SIZE,
+                              SuperPixelPatterns::VERTICAL_COUNT * SuperPixelPatterns::VERTICAL_SIZE,
+                              gbh);
+      gaussianBlurFilter.procImage();
     }
     void displayDynamicGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
       int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS];

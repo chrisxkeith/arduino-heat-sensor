@@ -60,8 +60,6 @@ int* GaussianBlurFilter::procImage() {
 	int index = 0;
 	int bound = maskSize / 2;
 
-	// long startTime = getCurrentTime();
-
 	for (int row = bound; row < height - bound; row++) {
 		for (int col = bound; col < width - bound; col++) {
 			index = 0;
@@ -83,12 +81,6 @@ int* GaussianBlurFilter::procImage() {
 			pixels[row * width + col] = RGB2Color(int(sumR), int(sumG), int(sumB));
 		}
 	}
-
-	// long endTime = getCurrentTime();
-
-	// LOGI("guassian blur use %ld ms, maskSize: %d, sigma: %f", endTime - startTime, maskSize, sigma);
-
 	delete [] tempPixels;
-
 	return this->pixels;
 }
