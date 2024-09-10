@@ -370,7 +370,7 @@ class App {
       for (int i = 0; i < 64; i++) {
         ref[i] *= 8;
       }
-      oledWrapper.displayArray(ref);
+      oledWrapper.displayBlurredArray(ref);
     }
 
     void displayTestGrids() {
