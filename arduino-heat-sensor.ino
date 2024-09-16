@@ -206,6 +206,35 @@ class OLEDWrapper {
       msg.concat(ms);
       Serial.println(msg);
     }
+
+    // ??? use int array instead of bitset?
+    void quickBlurOneBit(int targetBitmap[64][64], int bitX, int bitY, float factors[16], int sourceBitmap[64][64]) {
+      // add vertical factors
+      float accum = 0.0f;
+      int minIndex = max(bitY - 16, 0);
+      int maxIndex = min(bitY + 16, 63);
+      for (int i = minIndex; i <= maxIndex; i++) {
+        if (sourceBitmap[ bitX ][ i ] == 1) {
+          accum += factors[ i ];
+        }
+      }
+      // add horizontal factors
+      minIndex = max(bitX - 16, 0);
+      maxIndex = min(bitX + 16, 63);
+      for (int i = minIndex; i <= maxIndex; i++) {
+        if (sourceBitmap[ i ][ bitY ] == 1) {
+          accum += factors[ i ];
+        }
+      } 
+      float v = accum / 32.0f;
+      if (v > 0.5) {
+        targetBitmap[ bitX ][ bitY ] = 1;
+      } else {
+        targetBitmap[ bitX ][ bitY ] = 0;
+      }
+    }
+
+
     void blur(int* bitMap) {
       unsigned long then = millis();
       GaussianBlurOptions gbh(12.0);
