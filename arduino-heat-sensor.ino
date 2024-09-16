@@ -13,6 +13,25 @@ class Utils {
     static String toString(bool b);
 };
 
+class Timer {
+  private:
+    String        msg;
+    unsigned long start;
+  public:
+    Timer(String msg) {
+      this->msg = msg;
+      start = millis();
+    }
+    ~Timer() {
+      unsigned long ms = millis() - start;
+      String msg("milliseconds for ");
+      msg.concat(this->msg);
+      msg.concat(" ");
+      msg.concat(ms);
+      Serial.println(msg);
+    }
+};
+
 #include <bitset>
 class SuperPixelPatterns {
   public:
@@ -207,7 +226,6 @@ class OLEDWrapper {
       Serial.println(msg);
     }
 
-    // ??? use int array instead of bitset?
     void quickBlurOneBit(int targetBitmap[64][64], int bitX, int bitY, float factors[16], int sourceBitmap[64][64]) {
       // add vertical factors
       float accum = 0.0f;
@@ -236,17 +254,17 @@ class OLEDWrapper {
 
 
     void blur(int* bitMap) {
-      unsigned long then = millis();
-      GaussianBlurOptions gbh(12.0);
-      GaussianBlurFilter gaussianBlurFilter(bitMap,
-                              SuperPixelPatterns::HORIZONTAL_COUNT * SuperPixelPatterns::HORIZONTAL_SIZE,
-                              SuperPixelPatterns::VERTICAL_COUNT * SuperPixelPatterns::VERTICAL_SIZE,
-                              gbh);
-      gaussianBlurFilter.procImage();
-      unsigned long ms = millis() - then;
-      String msg("milliseconds for blur: ");
-      msg.concat(ms);
-      Serial.println(msg);
+      GaussianBlurFilter* gaussianBlurFilter = NULL;
+      {
+        Timer t1("kernel");
+        GaussianBlurOptions gbh(6.0);
+        gaussianBlurFilter = new GaussianBlurFilter(bitMap,
+                                SuperPixelPatterns::HORIZONTAL_COUNT * SuperPixelPatterns::HORIZONTAL_SIZE,
+                                SuperPixelPatterns::VERTICAL_COUNT * SuperPixelPatterns::VERTICAL_SIZE,
+                                gbh);
+      }
+      Timer t2("procImage");
+      gaussianBlurFilter->procImage();
     }
     void displayDynamicGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
       int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS];
@@ -357,7 +375,7 @@ class App {
     String configs[6] = {
       String(OLEDWrapper::MIN_TEMP_IN_F),
       String(OLEDWrapper::MAX_TEMP_IN_F),
-      "Build:2024Sep10",
+      "Build:2024Sep16",
       "https://github.com/chrisxkeith/arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
@@ -459,42 +477,6 @@ class App {
           msg.concat(teststr);
           Utils::publish(msg);
          }
-      }
-    }
-
-    void drawPixelTest(void) {
-      uint16_t x, y, w2, h2;
-      u8g2.setColor(1);
-      w2 = u8g2.getWidth();
-      h2 = u8g2.getHeight();
-      for( y = 0; y < h2; y++ ) {
-        for( x = 0; x < w2; x++ ) {
-          u8g2.pixel(x,y);
-        }
-      }
-    }
-
-    void dpTest() {
-      u8g2.erase();
-      drawPixelTest();
-      u8g2.display();
-      int colorIndex = 0;
-      for (uint16_t numRuns = 0; numRuns < 8; numRuns++) {
-        u8g2.setColor(colorIndex);
-        for (uint16_t y = 0; y < 16; y++ ) {
-          for (uint16_t x = 0; x < 16; x++ ) {
-              u8g2.pixel(x, y);
-          }
-        }
-        u8g2.display();
-        String s("colorIndex: ");
-        s.concat(colorIndex);
-        Utils::publish(s);
-        colorIndex++;
-        if (colorIndex > 2) {
-          colorIndex = 0;
-        }
-        delay(10000);
       }
     }
     void display() {
