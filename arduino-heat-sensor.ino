@@ -265,6 +265,7 @@ class OLEDWrapper {
       }
       Timer t2("procImage");
       gaussianBlurFilter->procImage();
+      delete gaussianBlurFilter;
     }
     void displayDynamicGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
       int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS];
@@ -469,8 +470,9 @@ class App {
           } else {
             String msg("Unknown command: ");
             msg.concat(teststr);
-            msg.concat(", expected refgrid, grid, temp, values");
+            msg.concat(". Expected ref, grid, temp, values, testgrids, contrastgrid");
             Utils::publish(msg);
+            return;
           }
           delay(5000);
           String msg("Command done: ");
