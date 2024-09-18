@@ -26,7 +26,7 @@ class Timer {
       unsigned long ms = millis() - start;
       String msg("milliseconds for ");
       msg.concat(this->msg);
-      msg.concat(" ");
+      msg.concat(": ");
       msg.concat(ms);
       Serial.println(msg);
     }
@@ -251,13 +251,11 @@ class OLEDWrapper {
         targetBitmap[ bitX ][ bitY ] = 0;
       }
     }
-
-
     void blur(int* bitMap) {
+      GaussianBlurOptions gbh(6.0);
       GaussianBlurFilter* gaussianBlurFilter = NULL;
       {
         Timer t1("kernel");
-        GaussianBlurOptions gbh(6.0);
         gaussianBlurFilter = new GaussianBlurFilter(bitMap,
                                 SuperPixelPatterns::HORIZONTAL_COUNT * SuperPixelPatterns::HORIZONTAL_SIZE,
                                 SuperPixelPatterns::VERTICAL_COUNT * SuperPixelPatterns::VERTICAL_SIZE,
@@ -376,7 +374,7 @@ class App {
     String configs[6] = {
       String(OLEDWrapper::MIN_TEMP_IN_F),
       String(OLEDWrapper::MAX_TEMP_IN_F),
-      "Build:2024Sep16",
+      "Build:2024Sep18",
       "https://github.com/chrisxkeith/arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
@@ -399,7 +397,9 @@ class App {
       }
     }
 
+    // Read, blur and display should be < 400 ms.
     void displayGrid() {
+      // Timer t("displayGrid()");
       float vals[64];
       for (int i = 0; i < 64; i++) {
         vals[i] = gridEyeSupport.readOneSensor(i);
