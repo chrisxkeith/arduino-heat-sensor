@@ -27,7 +27,7 @@ public:
 		kernel = NULL;
 	}
 	int* procImage();
-private:
+
 	double sigma;
 	double *kernel;
 	int kernelSum;

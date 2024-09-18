@@ -126,10 +126,43 @@ class OLEDWrapper {
   private:
       const int START_BASELINE = 20;
       int   baseLine = START_BASELINE;
+      GaussianBlurFilter* gaussianBlurFilter = NULL;
   public:
     static const long   MIN_TEMP_IN_F = 80;   // degrees F that will display as black superpixel.
     static const long   MAX_TEMP_IN_F = 90;   // degrees F that will display as white superpixel.
     
+    void dumpFilter() {
+      String s("gaussianBlurFilter->sigma: ");
+      s.concat(gaussianBlurFilter->sigma);
+      Utils::publish(s);
+      s.remove(0);
+      s.concat("gaussianBlurFilter->kernelSum: ");
+      s.concat(gaussianBlurFilter->kernelSum);
+      Utils::publish(s);
+      s.remove(0);
+      s.concat("gaussianBlurFilter->maskSize: ");
+      s.concat(gaussianBlurFilter->maskSize);
+      Utils::publish(s);
+      for (int x = 0; x < gaussianBlurFilter->maskSize; x++) {
+        s.remove(0);
+        for (int y = 0; y < gaussianBlurFilter->maskSize; y++) {
+          s.concat(gaussianBlurFilter->kernel[x + y * gaussianBlurFilter->maskSize]);
+          s.concat(" ");
+        }
+        Utils::publish(s);
+      }
+    }
+    void setupBlurFilter() {
+      {
+        Timer t1("setupBlurFilter()");
+        GaussianBlurOptions gbh(6.0);
+        gaussianBlurFilter = new GaussianBlurFilter(NULL,
+                                SuperPixelPatterns::HORIZONTAL_COUNT * SuperPixelPatterns::HORIZONTAL_SIZE,
+                                SuperPixelPatterns::VERTICAL_COUNT * SuperPixelPatterns::VERTICAL_SIZE,
+                                gbh);
+      }
+      dumpFilter();
+    }
     void setup_OLED() {
       Wire.begin();
       if (!u8g2.begin()) {
@@ -252,18 +285,12 @@ class OLEDWrapper {
       }
     }
     void blur(int* bitMap) {
-      GaussianBlurOptions gbh(6.0);
-      GaussianBlurFilter* gaussianBlurFilter = NULL;
-      {
-        Timer t1("kernel");
-        gaussianBlurFilter = new GaussianBlurFilter(bitMap,
-                                SuperPixelPatterns::HORIZONTAL_COUNT * SuperPixelPatterns::HORIZONTAL_SIZE,
-                                SuperPixelPatterns::VERTICAL_COUNT * SuperPixelPatterns::VERTICAL_SIZE,
-                                gbh);
-      }
-      Timer t2("procImage");
+      Timer t2("blur(int* bitMap)");
+      gaussianBlurFilter->setPixels(bitMap,
+                              SuperPixelPatterns::HORIZONTAL_COUNT * SuperPixelPatterns::HORIZONTAL_SIZE,
+                              SuperPixelPatterns::VERTICAL_COUNT * SuperPixelPatterns::VERTICAL_SIZE
+                              );
       gaussianBlurFilter->procImage();
-      delete gaussianBlurFilter;
     }
     void displayDynamicGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
       int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS];
@@ -507,6 +534,7 @@ class App {
 
       gridEyeSupport.begin();
       oledWrapper.setup_OLED();
+      oledWrapper.setupBlurFilter();
       delay(1000);
       uint16_t baseline = 16;
       oledWrapper.display(configs[2], 0, baseline);
