@@ -155,7 +155,7 @@ class OLEDWrapper {
     void setupBlurFilter() {
       {
         Timer t1("setupBlurFilter()");
-        GaussianBlurOptions gbh(6.0);
+        GaussianBlurOptions gbh(2.0);
         gaussianBlurFilter = new GaussianBlurFilter(NULL,
                                 SuperPixelPatterns::HORIZONTAL_COUNT * SuperPixelPatterns::HORIZONTAL_SIZE,
                                 SuperPixelPatterns::VERTICAL_COUNT * SuperPixelPatterns::VERTICAL_SIZE,
@@ -165,6 +165,7 @@ class OLEDWrapper {
     }
     void setup_OLED() {
       Wire.begin();
+      delay(1000); // try to avoid failure.
       if (!u8g2.begin()) {
         Serial.println("u8g2.begin() failed! Stopping");
         while (true) { ; }
