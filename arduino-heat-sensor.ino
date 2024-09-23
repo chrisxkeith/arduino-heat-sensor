@@ -165,7 +165,7 @@ class OLEDWrapper {
     }
     void setup_OLED() {
       Wire.begin();
-      delay(1000); // try to avoid failure.
+      delay(2000); // try to avoid u8g2.begin() failure.
       if (!u8g2.begin()) {
         Serial.println("u8g2.begin() failed! Stopping");
         while (true) { ; }
@@ -277,8 +277,9 @@ class OLEDWrapper {
         if (sourceBitmap[ i ][ bitY ] == 1) {
           accum += factors[ i ];
         }
-      } 
-      float v = accum / 32.0f;
+      }
+      // Maximum value is 1's all the way across.
+      float v = accum / gaussianBlurFilter->maskSize;
       if (v > 0.5) {
         targetBitmap[ bitX ][ bitY ] = 1;
       } else {

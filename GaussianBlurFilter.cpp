@@ -16,7 +16,9 @@
 GaussianBlurFilter::GaussianBlurFilter(int *_pixels, int _width, int _height, GaussianBlurOptions options):
 	ImageFilter(_pixels, _width, _height),
 	sigma(options.sigma),
-	kernelSum(0) {
+	kernel(NULL),
+	kernelSum(0),
+	maskSize(1) {
 
 	// pre-calculate kernel
 	int ksize = ceil(sigma * 3 + 1);
