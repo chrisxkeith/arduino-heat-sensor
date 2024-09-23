@@ -39,7 +39,6 @@ GaussianBlurFilter::GaussianBlurFilter(int *_pixels, int _width, int _height, Ga
 		}
 	}
 	if (sum <= 0.0) {
-		return;
 	}
 	// normalize
 	for (int i = 0; i < ksize; i++) {

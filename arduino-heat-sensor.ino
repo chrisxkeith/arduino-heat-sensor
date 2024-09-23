@@ -402,7 +402,7 @@ class App {
     String configs[6] = {
       String(OLEDWrapper::MIN_TEMP_IN_F),
       String(OLEDWrapper::MAX_TEMP_IN_F),
-      "Build:2024Sep18",
+      "Build 2024Sep23",
       "https://github.com/chrisxkeith/arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",

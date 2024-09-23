@@ -30,7 +30,7 @@ public:
 
 	double sigma;
 	double *kernel;
-	int kernelSum;
+	double kernelSum;
 	int maskSize;
 };
 
