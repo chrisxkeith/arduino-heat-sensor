@@ -495,9 +495,9 @@ class App {
           } else if (teststr.equals("contrastgrid")) {
             displayContrastGrid();
           } else {
-            String msg("Unknown command: ");
+            String msg("Unknown command: '");
             msg.concat(teststr);
-            msg.concat(". Expected ref, grid, temp, values, testgrids, contrastgrid");
+            msg.concat("'. Expected ref, grid, temp, values, testgrids, contrastgrid");
             Utils::publish(msg);
             return;
           }
