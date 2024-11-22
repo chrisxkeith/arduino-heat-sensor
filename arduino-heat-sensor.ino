@@ -154,20 +154,20 @@ class OLEDWrapper {
     }
     void setupBlurFilter() {
       {
-        Timer t1("setupBlurFilter()");
+        //; Timer t1("setupBlurFilter()");
         GaussianBlurOptions gbh(2.0);
         gaussianBlurFilter = new GaussianBlurFilter(NULL,
                                 SuperPixelPatterns::HORIZONTAL_COUNT * SuperPixelPatterns::HORIZONTAL_SIZE,
                                 SuperPixelPatterns::VERTICAL_COUNT * SuperPixelPatterns::VERTICAL_SIZE,
                                 gbh);
       }
-      dumpFilter();
+      // dumpFilter();
     }
     void setup_OLED() {
       Wire.begin();
       delay(2000); // try to avoid u8g2.begin() failure.
       if (!u8g2.begin()) {
-        Serial.println("u8g2.begin() failed! Stopping");
+        Serial.println("u8g2.begin() failed! Stopping. Try power down/up instead of just restart.");
         while (true) { ; }
       }
       clear();
@@ -400,10 +400,8 @@ TemperatureMonitor temperatureMonitor;
 class App {
   private:
 #define SHOW_GRID true
-    String configs[6] = {
-      String(OLEDWrapper::MIN_TEMP_IN_F),
-      String(OLEDWrapper::MAX_TEMP_IN_F),
-      "Build 2024Sep23",
+    String configs[4] = {
+      "Build 2024Nov22",
       "https://github.com/chrisxkeith/arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
@@ -519,12 +517,6 @@ class App {
     }
   public:
     App() {
-      configs[0].remove(0);
-      configs[0].concat("min: ");
-      configs[0].concat(OLEDWrapper::MIN_TEMP_IN_F);
-      configs[1].remove(0);
-      configs[1].concat("max: ");
-      configs[1].concat(OLEDWrapper::MAX_TEMP_IN_F);
     }
     void setup() {
       if (Utils::DO_SERIAL) {
@@ -539,7 +531,7 @@ class App {
       oledWrapper.setupBlurFilter();
       delay(1000);
       uint16_t baseline = 16;
-      oledWrapper.display(configs[2], 0, baseline);
+      oledWrapper.display(configs[0], 0, baseline);
       oledWrapper.endDisplay();
       delay(5000);
       oledWrapper.clear();
