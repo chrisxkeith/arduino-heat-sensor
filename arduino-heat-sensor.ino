@@ -62,7 +62,7 @@ class SuperPixelPatterns {
 
 #include <float.h>
 
-#define USE_128_X_128
+// #define USE_128_X_128
 
 #ifdef USE_128_X_128
 U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
@@ -70,6 +70,7 @@ U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 #include <Wire.h>
 #include <SparkFun_Qwiic_OLED.h> //http://librarymanager/All#SparkFun_Qwiic_OLED
 #include <res/qw_fnt_8x16.h>
+#include <res/qw_fnt_largenum.h>
 Qwiic1in3OLED u8g2; // 128x64
 #endif
 
@@ -136,7 +137,7 @@ class OLEDWrapper {
       u8g2.begin();
       u8g2.setBusClock(400000);
     }
-    void drawInt(int val) {
+    void showTemp(int val) {
       u8g2_prepare();
       u8g2.clearBuffer();
       u8g2.drawUTF8(2, this->baseLine, String(val).c_str());
@@ -153,7 +154,6 @@ class OLEDWrapper {
       u8g2_prepare();
       u8g2.clearBuffer();
       u8g2.setFont(font);
-
     }
     void endDisplay() {
       u8g2.sendBuffer();
@@ -214,11 +214,22 @@ class OLEDWrapper {
       }
       clear();
     }
-    void drawInt(int val) {
-      display(String(val));
+    void showTemp(int val) {
+      u8g2.erase();
+      u8g2.setFont(QW_FONT_LARGENUM);
+      u8g2.text(0, 0, String(val).c_str());
+      display("Farenheit", 0, FONT_LARGENUM_HEIGHT);
+      endDisplay();
     }
     void clear() {
       u8g2.erase();
+      u8g2.display();
+    }
+    void display(String s, uint8_t x, uint8_t y) {
+      u8g2.setFont(QW_FONT_8X16);
+      u8g2.text(x, y, s);
+    }
+    void endDisplay() {
       u8g2.display();
     }
     void shiftDisplay(int shiftAmount) {
@@ -226,6 +237,8 @@ class OLEDWrapper {
         if (baseLine > 63) {
           baseLine = START_BASELINE;
         }
+    }
+    void startDisplay(const uint8_t *font) {
     }
     void superPixel(int xStart, int yStart, int pixelVal, int pixelIndex, int* bitMap) {
       if (pixelVal < 0) {
@@ -345,18 +358,6 @@ class OLEDWrapper {
       }
       displayArray(pixelVals);
     }
-    void display(String s, uint8_t x, uint8_t y) {
-      u8g2.setFont(QW_FONT_8X16);
-      u8g2.text(x, y, s);
-    }
-    void endDisplay() {
-      u8g2.display();
-    }
-    void display(String s) {
-      u8g2.setFont(QW_FONT_8X16);
-      u8g2.text(48, 0, s);
-    }
-
 };
 #endif
 OLEDWrapper oledWrapper;
@@ -483,7 +484,7 @@ class App {
   private:
 #define SHOW_GRID false
     String configs[4] = {
-      "~ 2024Nov24 12:39", // date +"%Y%b%d %H:%M"
+      "~2024Nov24:13:53", // date +"%Y%b%d:%H:%M"
       "https://github.com/chrisxkeith/arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
@@ -573,7 +574,7 @@ class App {
           } else if (teststr.equals("ref")) {
             displayRef();
           } else if (teststr.equals("temp")) {
-            oledWrapper.drawInt(temperatureMonitor.getValue());
+            oledWrapper.showTemp(temperatureMonitor.getValue());
           } else if (teststr.equals("testgrids")) {
             displayTestGrids();
           } else if (teststr.equals("values")) {
@@ -595,7 +596,7 @@ class App {
 #if SHOW_GRID
       displayGrid();
 #else
-      oledWrapper.drawInt(temperatureMonitor.getValue());
+      oledWrapper.showTemp(temperatureMonitor.getValue());
 #endif
     }
   public:
