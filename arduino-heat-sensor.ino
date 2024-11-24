@@ -9,6 +9,8 @@
 class Utils {
   public:
     const static bool DO_SERIAL = true;
+    static String msToString(unsigned long ms);
+    static void publishWithSep(String s, String sep);
     static void publish(String s);
     static String toString(bool b);
 };
@@ -366,19 +368,59 @@ public:
 };
 GridEyeSupport gridEyeSupport;
 
-void Utils::publish(String s) {
+#include <map>
+class SavedValues {
+  private:
+    const static int      NUM_SAVED_VALS = 60 * 6; // 6 hours @ one every minute
+    std::map<String, int> savedValues;
+    unsigned long         lastSavedTimeStamp = 0;
+  public:
+    void doSaveValue() {
+      unsigned long now = millis();
+      savedValues[Utils::msToString(now)] = gridEyeSupport.readValue();
+      lastSavedTimeStamp = now;
+    }
+    void saveValue() {
+      if (savedValues.size() < NUM_SAVED_VALS) {
+        unsigned long now = millis();
+        if (now - lastSavedTimeStamp > 1000 * 60) { // every minute, roughly
+          doSaveValue();
+        }
+      }
+    }
+    void dumpHistory() {
+      for(std::map<String, int>::iterator it = savedValues.begin();
+          it != savedValues.end();
+          it++) {
+        String s(it->first);
+        s.concat(",");
+        s.concat(it->second);
+        Serial.println(s);
+      }
+    }
+};
+SavedValues savedValues;
+
+String Utils::msToString(unsigned long ms) {
+  int totalSeconds = ms / 1000;
+  int secs = totalSeconds % 60;
+  int minutes = (totalSeconds / 60) % 60;
+  int hours = (totalSeconds / 60) / 60;
+
+  char buf[100];
+  sprintf(buf, "%02u:%02u:%02u", hours, minutes, secs);
+  return String(buf);
+}
+void Utils::publishWithSep(String s, String sep) {
   if (DO_SERIAL) {
-    char buf[100];
-    int totalSeconds = millis() / 1000;
-    int secs = totalSeconds % 60;
-    int minutes = (totalSeconds / 60) % 60;
-    int hours = (totalSeconds / 60) / 60;
-    sprintf(buf, "%02u:%02u:%02u", hours, minutes, secs);
-    String s1(buf);
-    s1.concat(" ");
+    String s1(msToString(millis()));
+    s1.concat(sep);
     s1.concat(s);
     Serial.println(s1);
   }
+}
+void Utils::publish(String s) {
+  publishWithSep(s, " ");
 }
 String Utils::toString(bool b) {
   if (b) {
@@ -401,7 +443,7 @@ class App {
   private:
 #define SHOW_GRID true
     String configs[4] = {
-      "Build 2024Nov22",
+      "Build 2024Nov23",
       "https://github.com/chrisxkeith/arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
@@ -482,26 +524,27 @@ class App {
           teststr.trim();                        // remove any \r \n whitespace at the end of the String
           if (teststr.equals("?")) {
             status();
-          } else if (teststr.equals("ref")) {
-            displayRef();
-          } else if (teststr.equals("grid")) {
-            displayGrid();
-          } else if (teststr.equals("temp")) {
-            oledWrapper.drawInt(temperatureMonitor.getValue());
-          } else if (teststr.equals("values")) {
-            Utils::publish(gridEyeSupport.getValuesAsString());
-          } else if (teststr.equals("testgrids")) {
-            displayTestGrids();
           } else if (teststr.equals("contrastgrid")) {
             displayContrastGrid();
+          } else if (teststr.equals("grid")) {
+            displayGrid();
+          } else if (teststr.equals("history")) {
+            savedValues.dumpHistory();
+          } else if (teststr.equals("ref")) {
+            displayRef();
+          } else if (teststr.equals("temp")) {
+            oledWrapper.drawInt(temperatureMonitor.getValue());
+          } else if (teststr.equals("testgrids")) {
+            displayTestGrids();
+          } else if (teststr.equals("values")) {
+            Utils::publish(gridEyeSupport.getValuesAsString());
           } else {
             String msg("Unknown command: '");
             msg.concat(teststr);
-            msg.concat("'. Expected ref, grid, temp, values, testgrids, contrastgrid");
+            msg.concat("'. Expected contrastgrid, grid, history, ref, temp, testgrids or values");
             Utils::publish(msg);
             return;
           }
-          delay(5000);
           String msg("Command done: ");
           msg.concat(teststr);
           Utils::publish(msg);
@@ -536,6 +579,7 @@ class App {
       oledWrapper.endDisplay();
       delay(5000);
       oledWrapper.clear();
+      savedValues.doSaveValue();
       Utils::publish("Finished setup...");
     }
     void loop() {
@@ -554,6 +598,7 @@ class App {
         display();
         lastDisplay = thisMS;
       }
+      savedValues.saveValue();
       checkSerial();
     }
 };
