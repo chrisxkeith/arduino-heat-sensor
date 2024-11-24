@@ -409,9 +409,9 @@ class App {
       "showing temp",
 #endif
 #ifdef USE_128_X_128
-      "USE_128_X_128"
+      "Using 128x128"
 #else
-      "not USE_128_X_128"
+      "Using 128x64"
 #endif
     };
 
@@ -531,7 +531,8 @@ class App {
       oledWrapper.setupBlurFilter();
       delay(1000);
       uint16_t baseline = 16;
-      oledWrapper.display(configs[0], 0, baseline);
+      oledWrapper.display(configs[0], 0, 0);
+      oledWrapper.display(configs[3], 0, baseline);
       oledWrapper.endDisplay();
       delay(5000);
       oledWrapper.clear();
