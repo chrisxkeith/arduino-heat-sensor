@@ -62,7 +62,7 @@ class SuperPixelPatterns {
 
 #include <float.h>
 
-// #define USE_128_X_128
+#define USE_128_X_128
 
 #ifdef USE_128_X_128
 U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
@@ -89,7 +89,7 @@ class OLEDWrapper {
       for (uint16_t xi = 0; xi < SuperPixelPatterns::HORIZONTAL_SIZE; xi++) {
         for (uint16_t yi = 0; yi < SuperPixelPatterns::VERTICAL_SIZE; yi++) {
           if (superPixelPatterns.getPixelAt(superPixelIndex, xi + yi * SuperPixelPatterns::VERTICAL_COUNT)) {       
-            u8g2.pixel(startX + xi, startY + yi);
+//            u8g2.pixel(startX + xi, startY + yi);
           }
         }
       }
@@ -107,10 +107,10 @@ class OLEDWrapper {
         }        
       }
       float range = max - min;
-      clear();
-      u8g2_prepare();
-      u8g2.erase();
-      u8g2.setDrawColor(1);
+ //     clear();
+ //     u8g2_prepare();
+ //     u8g2.erase();
+ //     u8g2.setDrawColor(1);
       for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
         uint16_t superPixelIndex = (uint16_t)round((vals[i] - min) / range * 
                                     SuperPixelPatterns::NUM_SUPER_PIXELS);
@@ -121,6 +121,46 @@ class OLEDWrapper {
         drawSuperPixel(superPixelIndex, startX, startY);
       }
       u8g2.display();
+    }
+    void u8g2_prepare(void) {
+      u8g2.setFont(u8g2_font_fur49_tn);
+      u8g2.setFontRefHeightExtendedText();
+      u8g2.setDrawColor(1);
+      u8g2.setFontDirection(0);
+    }
+    void setup_OLED() {
+      pinMode(10, OUTPUT);
+      pinMode(9, OUTPUT);
+      digitalWrite(10, 0);
+      digitalWrite(9, 0);
+      u8g2.begin();
+      u8g2.setBusClock(400000);
+    }
+    void drawInt(int val) {
+      u8g2_prepare();
+      u8g2.clearBuffer();
+      u8g2.drawUTF8(2, this->baseLine, String(val).c_str());
+      u8g2.setFont(u8g2_font_fur11_tf);
+      u8g2.drawUTF8(6, this->baseLine + 20, "Fahrenheit");
+      u8g2.sendBuffer();
+    }
+    void clear() {
+      u8g2.clearBuffer();
+      u8g2.sendBuffer();
+    }
+    void setupBlurFilter() {}
+    void startDisplay(const uint8_t *font) {
+      u8g2_prepare();
+      u8g2.clearBuffer();
+      u8g2.setFont(font);
+
+    }
+    void endDisplay() {
+      u8g2.sendBuffer();
+    }
+    void shiftDisplay(int shiftAmount) {}
+    void display(String s, int x, int y) {
+      u8g2.drawUTF8(x, y, s.c_str());
     }
 };
 #else
@@ -441,7 +481,7 @@ TemperatureMonitor temperatureMonitor;
 
 class App {
   private:
-#define SHOW_GRID true
+#define SHOW_GRID false
     String configs[4] = {
       "Build 2024Nov23",
       "https://github.com/chrisxkeith/arduino-heat-sensor",
@@ -473,7 +513,7 @@ class App {
       for (int i = 0; i < 64; i++) {
         vals[i] = gridEyeSupport.readOneSensor(i);
       }
-      oledWrapper.displayDynamicGrid(vals);
+//      oledWrapper.displayDynamicGrid(vals);
     }
 
     void displayRef() {
@@ -481,7 +521,7 @@ class App {
       for (int i = 0; i < 64; i++) {
         vals[i] = i;
       }
-      oledWrapper.displayArray(vals);
+//      oledWrapper.displayArray(vals);
     }
 
     void displayContrastGrid() {
@@ -497,7 +537,7 @@ class App {
       for (int i = 0; i < 64; i++) {
         ref[i] *= 8;
       }
-      oledWrapper.displayBlurredArray(ref);
+//      oledWrapper.displayBlurredArray(ref);
     }
 
     void displayTestGrids() {
@@ -510,9 +550,9 @@ class App {
         "3burners"
       };
       for (int i = 0; i < NUM_TESTDATA; i++) {
-        oledWrapper.display(testDataNames[i]);
+//        oledWrapper.display(testDataNames[i]);
         delay(3000);
-        oledWrapper.displayDynamicGrid(testData[i]);
+//        oledWrapper.displayDynamicGrid(testData[i]);
         delay(3000);
       }
     }
@@ -573,9 +613,12 @@ class App {
       oledWrapper.setup_OLED();
       oledWrapper.setupBlurFilter();
       delay(1000);
-      uint16_t baseline = 16;
-      oledWrapper.display(configs[0], 0, 0);
-      oledWrapper.display(configs[3], 0, baseline);
+      oledWrapper.startDisplay(u8g2_font_fur11_tf);
+      uint16_t baseline = 0;
+      for (String s : configs) {
+        oledWrapper.display(s, 0, baseline);
+        baseline += 16;
+      }
       oledWrapper.endDisplay();
       delay(5000);
       oledWrapper.clear();
