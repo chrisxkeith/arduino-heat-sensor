@@ -483,7 +483,7 @@ class App {
   private:
 #define SHOW_GRID false
     String configs[4] = {
-      "Build 2024Nov23",
+      "~ 2024Nov24 12:39", // date +"%Y%b%d %H:%M"
       "https://github.com/chrisxkeith/arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
@@ -614,7 +614,7 @@ class App {
       oledWrapper.setupBlurFilter();
       delay(1000);
       oledWrapper.startDisplay(u8g2_font_fur11_tf);
-      uint16_t baseline = 0;
+      uint16_t baseline = 16;
       for (String s : configs) {
         oledWrapper.display(s, 0, baseline);
         baseline += 16;
