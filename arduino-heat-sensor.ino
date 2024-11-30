@@ -62,7 +62,7 @@ class SuperPixelPatterns {
 
 #include <float.h>
 
-// #define USE_128_X_128
+#define USE_128_X_128
 
 #ifdef USE_128_X_128
 U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
