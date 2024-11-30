@@ -1,5 +1,9 @@
 // Please credit chris.keith@gmail.com .
 
+#include <Wire.h>
+#include <vector>
+#include <set>
+
 class Utils {
   public:
     const static bool DO_SERIAL = true;
@@ -7,6 +11,45 @@ class Utils {
     static void publishWithSep(String s, String sep);
     static void publish(String s);
     static String toString(bool b);
+
+    // Modified from https://playground.arduino.cc/Main/I2cScanner/
+    static void scanI2C() {
+      Wire.begin();
+    
+      Serial.println("I2C: Scanning for devices...");    
+      std::vector<byte> foundDevices;
+      std::set<byte> errors;
+      for( byte address = 1; address < 127; address++ ) {
+        // The i2c_scanner uses the return value of
+        // the Write.endTransmisstion to see if
+        // a device did acknowledge to the address.
+        Wire.beginTransmission(address);
+        byte error = Wire.endTransmission();
+    
+        if (error == 0) {
+          foundDevices.push_back(address);
+        } else {
+          errors.insert(error);
+        }    
+      }
+      Serial.print("I2C: Devices found at: ");
+      for (byte b : foundDevices) {
+        Serial.print("0x");
+        if (b < 16) {
+          Serial.print("0");
+        }
+        Serial.print(b, HEX);
+        Serial.print(" ");
+      }
+      Serial.println("");
+      String ss("I2C: Error numbers returned: ");
+      std::set<byte>::iterator itr;
+      for (itr = errors.begin(); itr != errors.end(); itr++) {
+        ss.concat(*itr);
+        ss.concat(" ");
+      }
+      Serial.println(ss);
+    }
 };
 
 class Timer {
@@ -28,9 +71,7 @@ class Timer {
     }
 };
 
-#include <Wire.h>
 #include <SparkFun_Qwiic_OpenLog_Arduino_Library.h>
-#include <vector>
 
 class DataLogger {
   private:
@@ -531,7 +572,7 @@ class App {
   private:
 #define SHOW_GRID false
     String configs[4] = {
-      "~2024Nov24:13:53", // date +"%Y%b%d:%H:%M"
+      "~2024Nov30:13:38", // date +"%Y%b%d:%H:%M"
       "https://github.com/chrisxkeith/arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
@@ -671,6 +712,7 @@ class App {
       delay(5000);
       oledWrapper.clear();
       savedValues.doSaveValue();
+      Utils::scanI2C();
       // datalogger.test();
       Utils::publish("Finished setup...");
     }
