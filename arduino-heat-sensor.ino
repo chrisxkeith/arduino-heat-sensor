@@ -1,10 +1,4 @@
 // Please credit chris.keith@gmail.com .
-// REM: Set board type.
-
-// Thank you: https://github.com/ragnraok/android-image-filter
-#include "./GaussianBlurFilter.h"
-
-#include <U8g2lib.h>
 
 class Utils {
   public:
@@ -34,6 +28,55 @@ class Timer {
     }
 };
 
+#include <Wire.h>
+#include <SparkFun_Qwiic_OpenLog_Arduino_Library.h>
+#include <vector>
+
+class DataLogger {
+  private:
+     OpenLog    openLog;
+     String     fileName;
+  public:
+    DataLogger(String fileName) {
+      Wire.begin();
+      openLog.begin();
+      this->fileName = fileName;
+    }
+    void writeFile(std::vector<String> lines) {
+      if (openLog.size(this->fileName) > 0) {
+        if (openLog.removeFile(this->fileName) != 0) {
+          String s("Unable to remove: ");
+          s.concat(this->fileName);
+          Serial.println(s);
+          return;
+        };
+      }
+      if (!openLog.append(this->fileName)) {
+          String s("Unable to append: ");
+          s.concat(this->fileName);
+          Serial.println(s);
+          return;
+      }
+      for (const String &s : lines) {
+        if (s.length() > 0) {
+          if (openLog.println(s) == 0) {
+            String err("Error writing string: ");
+            err.concat(s);
+            Serial.println(err);
+            return;
+          }
+        }
+      }
+    }
+    void test() {
+      std::vector<String>  example;
+      example.push_back(String("test"));
+      this->fileName = "test.txt";
+      writeFile(example);
+    }
+};
+// DataLogger datalogger("heatdata.txt");
+
 #include <bitset>
 class SuperPixelPatterns {
   public:
@@ -61,6 +104,7 @@ class SuperPixelPatterns {
 };
 
 #include <float.h>
+#include <U8g2lib.h>
 
 #define USE_128_X_128
 
@@ -164,6 +208,9 @@ class OLEDWrapper {
     }
 };
 #else
+// Thank you: https://github.com/ragnraok/android-image-filter
+// #include "./GaussianBlurFilter.h"
+
 class OLEDWrapper {
   private:
       const int START_BASELINE = 20;
@@ -624,6 +671,7 @@ class App {
       delay(5000);
       oledWrapper.clear();
       savedValues.doSaveValue();
+      // datalogger.test();
       Utils::publish("Finished setup...");
     }
     void loop() {

@@ -1,11 +1,11 @@
 {
-  "additionalFiles": "..\\..\\..,..\\..\\..,..\\..\\..,..\\..",
+  "additionalFiles": "../../..,../../..,../../..,../..,../..,../..,../..,../..",
   "builtInToolsFolders": "",
   "compiler.optimization_flags": "",
   "customBuildProperties": "",
-  "fqbn": "SparkFun:apollo3:amap3nano:svl_baud=921600,loader=sparkfun_svl",
-  "hardwareFolders": "C:\\Users\\chris\\AppData\\Local\\Arduino15\\packages",
-  "otherLibrariesFolders": "C:\\Users\\chris\\OneDrive\\Documents\\Arduino\\libraries",
+  "fqbn": "SparkFun:apollo3:amap3nano:svl_baud=115200,loader=sparkfun_svl",
+  "hardwareFolders": "/home/ck/.arduino15/packages",
+  "otherLibrariesFolders": "/home/ck/Arduino/libraries",
   "runtime.ide.version": "10607",
-  "sketchLocation": "C:\\Users\\chris\\Documents\\Github\\arduino-heat-sensor"
+  "sketchLocation": "/home/ck/Documents/github/arduino-heat-sensor"
 }
