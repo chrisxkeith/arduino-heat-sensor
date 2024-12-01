@@ -116,7 +116,7 @@ class DataLogger {
       writeFile(example);
     }
 };
-// DataLogger datalogger("heatdata.txt");
+DataLogger* datalogger = nullptr;
 
 #include <bitset>
 class SuperPixelPatterns {
@@ -697,7 +697,7 @@ class App {
       }
       Utils::publish("Started setup...");
       status();
-
+      datalogger = new DataLogger("heatdata.txt");
       gridEyeSupport.begin();
       oledWrapper.setup_OLED();
       oledWrapper.setupBlurFilter();
@@ -713,7 +713,7 @@ class App {
       oledWrapper.clear();
       savedValues.doSaveValue();
       Utils::scanI2C();
-      // datalogger.test();
+      // datalogger->test();
       Utils::publish("Finished setup...");
     }
     void loop() {
