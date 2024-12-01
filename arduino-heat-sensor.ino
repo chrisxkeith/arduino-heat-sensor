@@ -85,9 +85,12 @@ class DataLogger {
     }
     void writeFile(std::vector<String> lines) {
       if (openLog.size(this->fileName) > 0) {
-        if (openLog.removeFile(this->fileName) != 0) {
+        uint32_t retCode = openLog.removeFile(this->fileName); 
+        if (retCode != 1) {
           String s("Unable to remove: ");
           s.concat(this->fileName);
+          s.concat(", return code: ");
+          s.concat(retCode);
           Serial.println(s);
           return;
         };
@@ -104,14 +107,15 @@ class DataLogger {
             String err("Error writing string: ");
             err.concat(s);
             Serial.println(err);
-            return;
+            break;
           }
         }
       }
+      openLog.syncFile();
     }
     void test() {
       std::vector<String>  example;
-      example.push_back(String("test"));
+      example.push_back(String("Some junk text to test the DataLogger"));
       this->fileName = "test.txt";
       writeFile(example);
     }
