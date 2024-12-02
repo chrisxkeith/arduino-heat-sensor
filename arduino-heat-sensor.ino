@@ -113,11 +113,51 @@ class DataLogger {
       }
       openLog.syncFile();
     }
+    void readFile(std::vector<String*> lines) {
+      long sizeOfFile = openLog.size(this->fileName);
+      if (sizeOfFile > 0) {
+        byte* buf = new byte[sizeOfFile];
+        if (buf == nullptr) {
+          String s("Failed to alloc buf of size: ");
+          s.concat(sizeOfFile);
+          Serial.println(s);
+          return;
+        }
+        openLog.read(buf, (uint16_t)sizeOfFile, this->fileName);
+        const byte CR = 13;
+        const byte LF = 10;
+        String line;
+        for (int x = 0; x < sizeOfFile ; x++) {
+          byte b = buf[x];
+          if (b == CR) {
+            continue;
+          }
+          if (b == LF) {
+            lines.push_back(new String(line));
+            line.remove(0);
+            continue;
+          }
+          line.concat((char)b);      
+        }
+      }
+    }
     void test() {
+      randomSeed(analogRead(0));
+      String lineToWrite("Some junk text to test the DataLogger - ");
+      lineToWrite.concat(random(10000));
       std::vector<String>  example;
-      example.push_back(String("Some junk text to test the DataLogger"));
+      example.push_back(lineToWrite);
       this->fileName = "test.txt";
       writeFile(example);
+      std::vector<String*> linesRead;
+      readFile(linesRead);
+      String msg("Read the line: ");
+      if (linesRead.size() == 0) {
+        msg.concat("[no line!]");
+      } else {
+        msg.concat(*linesRead.at(0));
+      }
+      Serial.println(msg);
     }
 };
 DataLogger* datalogger = nullptr;
@@ -576,7 +616,7 @@ class App {
   private:
 #define SHOW_GRID false
     String configs[4] = {
-      "~2024Nov30:13:38", // date +"%Y%b%d:%H:%M"
+      "~2024Dec01:16:16", // date +"%Y%b%d:%H:%M"
       "https://github.com/chrisxkeith/arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
