@@ -139,6 +139,7 @@ class DataLogger {
           }
           line.concat((char)b);      
         }
+        delete buf;
       }
     }
     void test() {
@@ -757,7 +758,7 @@ class App {
       oledWrapper.clear();
       savedValues.doSaveValue();
       Utils::scanI2C();
-      // datalogger->test();
+      datalogger->test();
       Utils::publish("Finished setup...");
     }
     void loop() {
