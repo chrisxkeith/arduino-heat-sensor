@@ -113,34 +113,40 @@ class DataLogger {
       }
       openLog.syncFile();
     }
-    void readFile(std::vector<String*> lines) {
+    void readFile(std::vector<String*>* lines) {
       long sizeOfFile = openLog.size(this->fileName);
-      if (sizeOfFile > 0) {
-        byte* buf = new byte[sizeOfFile];
-        if (buf == nullptr) {
-          String s("Failed to alloc buf of size: ");
-          s.concat(sizeOfFile);
-          Serial.println(s);
-          return;
-        }
-        openLog.read(buf, (uint16_t)sizeOfFile, this->fileName);
-        const byte CR = 13;
-        const byte LF = 10;
-        String line;
-        for (int x = 0; x < sizeOfFile ; x++) {
-          byte b = buf[x];
-          if (b == CR) {
-            continue;
-          }
-          if (b == LF) {
-            lines.push_back(new String(line));
-            line.remove(0);
-            continue;
-          }
-          line.concat((char)b);      
-        }
-        delete buf;
+      if (sizeOfFile <= 0) {
+        String s("openLog.size returned: ");
+        s.concat(sizeOfFile);
+        s.concat(" for file: ");
+        s.concat(this->fileName);
+        Serial.println(s);
+        return;
       }
+      byte* buf = new byte[sizeOfFile];
+      if (buf == nullptr) {
+        String s("Failed to alloc buf of size: ");
+        s.concat(sizeOfFile);
+        Serial.println(s);
+        return;
+      }
+      openLog.read(buf, (uint16_t)sizeOfFile, this->fileName);
+      const byte CR = 13;
+      const byte LF = 10;
+      String line;
+      for (int x = 0; x < sizeOfFile ; x++) {
+        byte b = buf[x];
+        if (b == CR) {
+          continue;
+        }
+        if (b == LF) {
+          lines->push_back(new String(line));
+          line.remove(0);
+          continue;
+        }
+        line.concat((char)b);      
+      }
+      delete buf;
     }
     void test() {
       randomSeed(analogRead(0));
@@ -149,9 +155,13 @@ class DataLogger {
       std::vector<String>  example;
       example.push_back(lineToWrite);
       this->fileName = "test.txt";
+      String m("About to write line: ");
+      m.concat(lineToWrite);
+      Serial.println(m);
       writeFile(example);
+      delay(5000);
       std::vector<String*> linesRead;
-      readFile(linesRead);
+      readFile(&linesRead);
       String msg("Read the line: ");
       if (linesRead.size() == 0) {
         msg.concat("[no line!]");
