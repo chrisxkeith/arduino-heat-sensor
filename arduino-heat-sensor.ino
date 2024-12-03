@@ -627,7 +627,7 @@ class App {
   private:
 #define SHOW_GRID false
     String configs[4] = {
-      "~2024Dec01:16:16", // date +"%Y%b%d:%H:%M"
+      "~2024Dec03:09:22", // date +"%Y%b%d:%H:%M"
       "https://github.com/chrisxkeith/arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
@@ -752,7 +752,7 @@ class App {
       }
       Utils::publish("Started setup...");
       status();
-      datalogger = new DataLogger("heatdata.txt");
+//      datalogger = new DataLogger("heatdata.txt");
       gridEyeSupport.begin();
       oledWrapper.setup_OLED();
       oledWrapper.setupBlurFilter();
@@ -768,7 +768,7 @@ class App {
       oledWrapper.clear();
       savedValues.doSaveValue();
       Utils::scanI2C();
-      datalogger->test();
+//      datalogger->test();
       Utils::publish("Finished setup...");
     }
     void loop() {
