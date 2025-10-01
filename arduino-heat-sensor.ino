@@ -742,19 +742,12 @@ class App {
       oledWrapper.showTemp(temperatureMonitor.getValue());
 #endif
     }
-  public:
-    App() {
-    }
-    void setup() {
-      if (Utils::DO_SERIAL) {
-        Serial.begin(115200);
-        delay(1000);
-      }
+    void extraSetupStart() {
       Utils::publish("Started setup...");
       status();
 //      datalogger = new DataLogger("heatdata.txt");
-      gridEyeSupport.begin();
-      oledWrapper.setup_OLED();
+    }
+    void extraSetupFinish() {
       oledWrapper.setupBlurFilter();
       delay(1000);
       oledWrapper.startDisplay(u8g2_font_fur11_tf);
@@ -769,7 +762,19 @@ class App {
       savedValues.doSaveValue();
       Utils::scanI2C();
 //      datalogger->test();
-      Utils::publish("Finished setup...");
+      Utils::publish("Finished setup...");    }
+  public:
+    App() {
+    }
+    void setup() {
+      if (Utils::DO_SERIAL) {
+        Serial.begin(115200);
+        delay(1000);
+      }
+      // extraSetupStart();
+      gridEyeSupport.begin();
+      oledWrapper.setup_OLED();
+      // extraSetupFinish();
     }
     void loop() {
 #if SHOW_GRID
