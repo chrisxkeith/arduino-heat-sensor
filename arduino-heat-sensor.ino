@@ -219,6 +219,13 @@ class OLEDWrapper {
   private:
       const int START_BASELINE = 50;
       int   baseLine = START_BASELINE;
+      int getHeight() {
+        return 96; // ??? why does u8g2.getHeight() return 128 ???
+      }
+      int getWidth() {
+        return u8g2.getWidth();
+      }
+
   public:
     // For showing hands/fingers. Stove burner temps will be different.
     static const long   MIN_TEMP_IN_F = 80;   // degrees F that will display as black superpixel.
@@ -277,6 +284,16 @@ class OLEDWrapper {
       u8g2.begin();
       u8g2.setBusClock(400000);
     }
+    void showMessages(String s[], int nStrings) {
+      u8g2_prepare();
+      u8g2.clearBuffer();
+      u8g2.drawFrame(0, 0, getWidth(), getHeight());
+      u8g2.setFont(u8g2_font_fur11_tf);
+      for (int i = 0; i < nStrings; i++) {
+        display(s[i], 0, 16 + (i * 16));
+      }
+      u8g2.sendBuffer();
+    } 
     void showTemp(int val) {
       u8g2_prepare();
       u8g2.clearBuffer();
@@ -286,6 +303,7 @@ class OLEDWrapper {
       u8g2.sendBuffer();
     }
     void clear() {
+      u8g2_prepare();
       u8g2.clearBuffer();
       u8g2.sendBuffer();
     }
@@ -627,8 +645,8 @@ class App {
   private:
 #define SHOW_GRID false
     String configs[4] = {
-      "~2024Dec03:09:22", // date +"%Y%b%d:%H:%M"
-      "https://github.com/chrisxkeith/arduino-heat-sensor",
+      "~2025Nov25:16:11", // date +"%Y%b%d:%H:%M"
+      "arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
 #else
@@ -774,8 +792,16 @@ class App {
       // extraSetupStart();
       gridEyeSupport.begin();
       oledWrapper.setup_OLED();
+      String initialMsgs[2] = { configs[0], configs[1] };
+      oledWrapper.showMessages(initialMsgs, 2);
+      delay(4000);
+      oledWrapper.clear();
       // extraSetupFinish();
     }
+
+// Shift display left-and-right as well.
+// Only turn on if temp is above a threshold?
+
     void loop() {
 #if SHOW_GRID
       const int DISPLAY_RATE_IN_MS = 1;

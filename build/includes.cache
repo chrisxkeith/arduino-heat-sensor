@@ -7,7 +7,7 @@
   {
     "Sourcefile": null,
     "Include": "",
-    "Includepath": "/home/ck/.arduino15/packages/SparkFun/hardware/apollo3/1.2.1/variants/redboard_artemis_nano"
+    "Includepath": "/home/ck/.arduino15/packages/SparkFun/hardware/apollo3/1.2.1/variants/redboard_artemis"
   },
   {
     "Sourcefile": "/home/ck/Documents/github/arduino-heat-sensor/build/sketch/arduino-heat-sensor.ino.cpp",

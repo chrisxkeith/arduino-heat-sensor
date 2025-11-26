@@ -3,7 +3,7 @@
   "builtInToolsFolders": "",
   "compiler.optimization_flags": "",
   "customBuildProperties": "",
-  "fqbn": "SparkFun:apollo3:amap3nano:svl_baud=115200,loader=sparkfun_svl",
+  "fqbn": "SparkFun:apollo3:amap3redboard:svl_baud=921600,loader=sparkfun_svl",
   "hardwareFolders": "/home/ck/.arduino15/packages",
   "otherLibrariesFolders": "/home/ck/Arduino/libraries",
   "runtime.ide.version": "10607",
