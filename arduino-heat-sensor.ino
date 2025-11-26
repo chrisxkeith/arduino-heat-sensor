@@ -653,9 +653,10 @@ TemperatureMonitor temperatureMonitor;
 
 class App {
   private:
+    const int THRESHOLD = 85; // degrees F
 #define SHOW_GRID false
-    String configs[4] = {
-      "~2025Nov25:16:11", // date +"%Y%b%d:%H:%M"
+    String configs[5] = {
+      "~2025Nov25:16:45", // date +"%Y%b%d:%H:%M"
       "arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
@@ -663,10 +664,11 @@ class App {
       "showing temp",
 #endif
 #ifdef USE_128_X_128
-      "Using 128x128"
+      "Using 128x128",
 #else
-      "Using 128x64"
+      "Using 128x64",
 #endif
+      "placeholder for threshold"
     };
 
     int lastDisplay = 0;
@@ -801,16 +803,18 @@ class App {
       }
       // extraSetupStart();
       gridEyeSupport.begin();
+      String thresholdStr("Threshold: ");
+      thresholdStr.concat(THRESHOLD);
+      thresholdStr.concat(" F");
+      configs[4] = thresholdStr;
+      status();
       oledWrapper.setup_OLED();
-      String initialMsgs[2] = { configs[0], configs[1] };
-      oledWrapper.showMessages(initialMsgs, 2);
+      String initialMsgs[3] = { configs[0], configs[1], configs[4] };
+      oledWrapper.showMessages(initialMsgs, 3);
       delay(4000);
       oledWrapper.clear();
       // extraSetupFinish();
     }
-
-// Only turn on if temp is above a threshold?
-
     void loop() {
 #if SHOW_GRID
       const int DISPLAY_RATE_IN_MS = 1;
@@ -825,8 +829,12 @@ class App {
           oledWrapper.shiftDisplay();
           lastShift = thisMS;
         }
-        display();
-        lastDisplay = thisMS;
+        if (temperatureMonitor.getValue() >= THRESHOLD) {
+          display();
+          lastDisplay = thisMS;
+        } else {
+          oledWrapper.clear();
+        }
       }
       savedValues.saveValue();
       checkSerial();
