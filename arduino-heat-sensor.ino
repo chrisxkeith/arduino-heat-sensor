@@ -218,7 +218,10 @@ Qwiic1in3OLED u8g2; // 128x64
 class OLEDWrapper {
   private:
       const int START_BASELINE = 50;
+      const int VERTICAL_SHIFT = 2;
+      const int HORIZONTAL_SHIFT = 4;
       int   baseLine = START_BASELINE;
+      int   leftMargin = HORIZONTAL_SHIFT;
       int getHeight() {
         return 96; // ??? why does u8g2.getHeight() return 128 ???
       }
@@ -293,13 +296,13 @@ class OLEDWrapper {
         display(s[i], 0, 16 + (i * 16));
       }
       u8g2.sendBuffer();
-    } 
+    }
     void showTemp(int val) {
       u8g2_prepare();
       u8g2.clearBuffer();
-      u8g2.drawUTF8(2, this->baseLine, String(val).c_str());
+      u8g2.drawUTF8(leftMargin, this->baseLine, String(val).c_str());
       u8g2.setFont(u8g2_font_fur11_tf);
-      u8g2.drawUTF8(6, this->baseLine + 20, "Fahrenheit");
+      u8g2.drawUTF8(leftMargin + 4, this->baseLine + 20, "Fahrenheit");
       u8g2.sendBuffer();
     }
     void clear() {
@@ -316,7 +319,14 @@ class OLEDWrapper {
     void endDisplay() {
       u8g2.sendBuffer();
     }
-    void shiftDisplay(int shiftAmount) {}
+    void shiftDisplay() {
+      baseLine += VERTICAL_SHIFT;
+      leftMargin += HORIZONTAL_SHIFT;
+      if (baseLine > 63) {
+        baseLine = START_BASELINE;
+        leftMargin = HORIZONTAL_SHIFT;
+      }
+    }
     void display(String s, int x, int y) {
       u8g2.drawUTF8(x, y, s.c_str());
     }
@@ -799,7 +809,6 @@ class App {
       // extraSetupFinish();
     }
 
-// Shift display left-and-right as well.
 // Only turn on if temp is above a threshold?
 
     void loop() {
@@ -811,8 +820,9 @@ class App {
       int thisMS = millis();
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
         const int SHIFT_RATE = 1000 * 60 * 2; // Shift display every 2 minutes to avoid OLED burn-in.
+        // const int SHIFT_RATE = 1000 * 2; // Shift display every 2 seconds for debugging.
         if (thisMS - lastShift > SHIFT_RATE) {
-          oledWrapper.shiftDisplay(2);
+          oledWrapper.shiftDisplay();
           lastShift = thisMS;
         }
         display();
