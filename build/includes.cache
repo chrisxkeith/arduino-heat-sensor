@@ -2,17 +2,17 @@
   {
     "Sourcefile": null,
     "Include": "",
-    "Includepath": "/home/ck/.arduino15/packages/SparkFun/hardware/apollo3/1.2.1/cores/arduino"
+    "Includepath": "/home/ck/.arduino15/packages/arduino/hardware/samd/1.8.14/cores/arduino"
   },
   {
     "Sourcefile": null,
     "Include": "",
-    "Includepath": "/home/ck/.arduino15/packages/SparkFun/hardware/apollo3/1.2.1/variants/redboard_artemis"
+    "Includepath": "/home/ck/.arduino15/packages/arduino/hardware/samd/1.8.14/variants/nano_33_iot"
   },
   {
     "Sourcefile": "/home/ck/Documents/github/arduino-heat-sensor/build/sketch/arduino-heat-sensor.ino.cpp",
     "Include": "Wire.h",
-    "Includepath": "/home/ck/.arduino15/packages/SparkFun/hardware/apollo3/1.2.1/libraries/Wire/src"
+    "Includepath": "/home/ck/.arduino15/packages/arduino/hardware/samd/1.8.14/libraries/Wire"
   },
   {
     "Sourcefile": "/home/ck/Documents/github/arduino-heat-sensor/build/sketch/arduino-heat-sensor.ino.cpp",
@@ -40,7 +40,7 @@
     "Includepath": null
   },
   {
-    "Sourcefile": "/home/ck/.arduino15/packages/SparkFun/hardware/apollo3/1.2.1/libraries/Wire/src/Wire.cpp",
+    "Sourcefile": "/home/ck/.arduino15/packages/arduino/hardware/samd/1.8.14/libraries/Wire/Wire.cpp",
     "Include": "",
     "Includepath": null
   },
@@ -57,7 +57,7 @@
   {
     "Sourcefile": "/home/ck/Arduino/libraries/U8g2/src/U8x8lib.cpp",
     "Include": "SPI.h",
-    "Includepath": "/home/ck/.arduino15/packages/SparkFun/hardware/apollo3/1.2.1/libraries/SPI/src"
+    "Includepath": "/home/ck/.arduino15/packages/arduino/hardware/samd/1.8.14/libraries/SPI"
   },
   {
     "Sourcefile": "/home/ck/Arduino/libraries/U8g2/src/U8x8lib.cpp",
@@ -420,6 +420,11 @@
     "Includepath": null
   },
   {
+    "Sourcefile": "/home/ck/Arduino/libraries/U8g2/src/clib/u8x8_d_ssd1315_128x64_noname.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
     "Sourcefile": "/home/ck/Arduino/libraries/U8g2/src/clib/u8x8_d_ssd1316.c",
     "Include": "",
     "Includepath": null
@@ -470,6 +475,11 @@
     "Includepath": null
   },
   {
+    "Sourcefile": "/home/ck/Arduino/libraries/U8g2/src/clib/u8x8_d_ssd1362z.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
     "Sourcefile": "/home/ck/Arduino/libraries/U8g2/src/clib/u8x8_d_ssd1363.c",
     "Include": "",
     "Includepath": null
@@ -491,6 +501,11 @@
   },
   {
     "Sourcefile": "/home/ck/Arduino/libraries/U8g2/src/clib/u8x8_d_st7302.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/Arduino/libraries/U8g2/src/clib/u8x8_d_st7305.c",
     "Include": "",
     "Includepath": null
   },
@@ -635,6 +650,11 @@
     "Includepath": null
   },
   {
+    "Sourcefile": "/home/ck/Arduino/libraries/U8g2/src/clib/u8x8_d_uc1698.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
     "Sourcefile": "/home/ck/Arduino/libraries/U8g2/src/clib/u8x8_d_uc1701_dogs102.c",
     "Include": "",
     "Includepath": null
@@ -705,7 +725,7 @@
     "Includepath": null
   },
   {
-    "Sourcefile": "/home/ck/.arduino15/packages/SparkFun/hardware/apollo3/1.2.1/libraries/SPI/src/SPI.cpp",
+    "Sourcefile": "/home/ck/.arduino15/packages/arduino/hardware/samd/1.8.14/libraries/SPI/SPI.cpp",
     "Include": "",
     "Includepath": null
   }

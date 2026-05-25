@@ -1,9 +1,9 @@
 {
   "additionalFiles": "../../..,../../..,../../..,../..,../..,../..,../..,../..",
   "builtInToolsFolders": "",
-  "compiler.optimization_flags": "",
+  "compiler.optimization_flags": "-Os",
   "customBuildProperties": "",
-  "fqbn": "SparkFun:apollo3:amap3redboard:svl_baud=921600,loader=sparkfun_svl",
+  "fqbn": "arduino:samd:nano_33_iot",
   "hardwareFolders": "/home/ck/.arduino15/packages",
   "otherLibrariesFolders": "/home/ck/Arduino/libraries",
   "runtime.ide.version": "10607",
