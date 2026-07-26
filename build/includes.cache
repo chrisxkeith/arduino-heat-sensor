@@ -2,17 +2,17 @@
   {
     "Sourcefile": null,
     "Include": "",
-    "Includepath": "/home/ck/.arduino15/packages/arduino/hardware/samd/1.8.14/cores/arduino"
+    "Includepath": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/cores/arduino"
   },
   {
     "Sourcefile": null,
     "Include": "",
-    "Includepath": "/home/ck/.arduino15/packages/arduino/hardware/samd/1.8.14/variants/nano_33_iot"
+    "Includepath": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/variants/GIGA"
   },
   {
     "Sourcefile": "/home/ck/Documents/github/arduino-heat-sensor/build/sketch/arduino-heat-sensor.ino.cpp",
     "Include": "Wire.h",
-    "Includepath": "/home/ck/.arduino15/packages/arduino/hardware/samd/1.8.14/libraries/Wire"
+    "Includepath": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/Wire"
   },
   {
     "Sourcefile": "/home/ck/Documents/github/arduino-heat-sensor/build/sketch/arduino-heat-sensor.ino.cpp",
@@ -23,6 +23,41 @@
     "Sourcefile": "/home/ck/Documents/github/arduino-heat-sensor/build/sketch/arduino-heat-sensor.ino.cpp",
     "Include": "U8g2lib.h",
     "Includepath": "/home/ck/Arduino/libraries/U8g2/src"
+  },
+  {
+    "Sourcefile": "/home/ck/Documents/github/arduino-heat-sensor/build/sketch/arduino-heat-sensor.ino.cpp",
+    "Include": "Arduino_GigaDisplay_GFX.h",
+    "Includepath": "/home/ck/Arduino/libraries/Arduino_GigaDisplay_GFX/src"
+  },
+  {
+    "Sourcefile": "/home/ck/Documents/github/arduino-heat-sensor/build/sketch/arduino-heat-sensor.ino.cpp",
+    "Include": "Arduino_H7_Video.h",
+    "Includepath": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/Arduino_H7_Video/src"
+  },
+  {
+    "Sourcefile": "/home/ck/Documents/github/arduino-heat-sensor/build/sketch/arduino-heat-sensor.ino.cpp",
+    "Include": "Adafruit_GFX.h",
+    "Includepath": "/home/ck/Arduino/libraries/Adafruit_GFX_Library"
+  },
+  {
+    "Sourcefile": "/home/ck/Documents/github/arduino-heat-sensor/build/sketch/arduino-heat-sensor.ino.cpp",
+    "Include": "Adafruit_I2CDevice.h",
+    "Includepath": "/home/ck/Arduino/libraries/Adafruit_BusIO"
+  },
+  {
+    "Sourcefile": "/home/ck/Documents/github/arduino-heat-sensor/build/sketch/arduino-heat-sensor.ino.cpp",
+    "Include": "SPI.h",
+    "Includepath": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/SPI"
+  },
+  {
+    "Sourcefile": "/home/ck/Documents/github/arduino-heat-sensor/build/sketch/arduino-heat-sensor.ino.cpp",
+    "Include": "SDRAM.h",
+    "Includepath": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/Portenta_SDRAM/src"
+  },
+  {
+    "Sourcefile": "/home/ck/Documents/github/arduino-heat-sensor/build/sketch/arduino-heat-sensor.ino.cpp",
+    "Include": "ea_malloc.h",
+    "Includepath": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/ea_malloc"
   },
   {
     "Sourcefile": "/home/ck/Documents/github/arduino-heat-sensor/build/sketch/arduino-heat-sensor.ino.cpp",
@@ -40,7 +75,7 @@
     "Includepath": null
   },
   {
-    "Sourcefile": "/home/ck/.arduino15/packages/arduino/hardware/samd/1.8.14/libraries/Wire/Wire.cpp",
+    "Sourcefile": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/Wire/Wire.cpp",
     "Include": "",
     "Includepath": null
   },
@@ -53,11 +88,6 @@
     "Sourcefile": "/home/ck/Arduino/libraries/U8g2/src/U8g2lib.cpp",
     "Include": "",
     "Includepath": null
-  },
-  {
-    "Sourcefile": "/home/ck/Arduino/libraries/U8g2/src/U8x8lib.cpp",
-    "Include": "SPI.h",
-    "Includepath": "/home/ck/.arduino15/packages/arduino/hardware/samd/1.8.14/libraries/SPI"
   },
   {
     "Sourcefile": "/home/ck/Arduino/libraries/U8g2/src/U8x8lib.cpp",
@@ -580,6 +610,11 @@
     "Includepath": null
   },
   {
+    "Sourcefile": "/home/ck/Arduino/libraries/U8g2/src/clib/u8x8_d_st7586s_pe24064.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
     "Sourcefile": "/home/ck/Arduino/libraries/U8g2/src/clib/u8x8_d_st7586s_s028hn118a.c",
     "Include": "",
     "Includepath": null
@@ -720,12 +755,107 @@
     "Includepath": null
   },
   {
-    "Sourcefile": "/home/ck/Arduino/libraries/SparkFun_GridEYE_AMG88_Library/src/SparkFun_GridEYE_Arduino_Library.cpp",
+    "Sourcefile": "/home/ck/Arduino/libraries/Arduino_GigaDisplay_GFX/src/Arduino_GigaDisplay_GFX.cpp",
     "Include": "",
     "Includepath": null
   },
   {
-    "Sourcefile": "/home/ck/.arduino15/packages/arduino/hardware/samd/1.8.14/libraries/SPI/SPI.cpp",
+    "Sourcefile": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/Arduino_H7_Video/src/Arduino_H7_Video.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/Arduino_H7_Video/src/H7DisplayShield.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/Arduino_H7_Video/src/anx7625.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/Arduino_H7_Video/src/dsi.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/Arduino_H7_Video/src/edid.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/Arduino_H7_Video/src/st7701.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/Arduino_H7_Video/src/video_modes.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/Arduino/libraries/Adafruit_GFX_Library/Adafruit_GFX.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/Arduino/libraries/Adafruit_GFX_Library/Adafruit_GrayOLED.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/Arduino/libraries/Adafruit_GFX_Library/Adafruit_SPITFT.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/Arduino/libraries/Adafruit_GFX_Library/glcdfont.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/Arduino/libraries/Adafruit_BusIO/Adafruit_BusIO_Register.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/Arduino/libraries/Adafruit_BusIO/Adafruit_GenericDevice.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/Arduino/libraries/Adafruit_BusIO/Adafruit_I2CDevice.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/Arduino/libraries/Adafruit_BusIO/Adafruit_SPIDevice.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/SPI/SPI.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/Portenta_SDRAM/src/SDRAM.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/Portenta_SDRAM/src/ram_internal.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/ea_malloc/malloc_freelist.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/home/ck/Arduino/libraries/SparkFun_GridEYE_AMG88_Library/src/SparkFun_GridEYE_Arduino_Library.cpp",
     "Include": "",
     "Includepath": null
   }

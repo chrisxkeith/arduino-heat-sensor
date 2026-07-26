@@ -1,9 +1,9 @@
 {
   "additionalFiles": "../../..,../../..,../../..,../..,../..,../..,../..,../..",
   "builtInToolsFolders": "",
-  "compiler.optimization_flags": "-Os",
+  "compiler.optimization_flags": "",
   "customBuildProperties": "",
-  "fqbn": "arduino:samd:nano_33_iot",
+  "fqbn": "arduino:mbed_giga:giga:target_core=cm7,split=100_0,security=none",
   "hardwareFolders": "/home/ck/.arduino15/packages",
   "otherLibrariesFolders": "/home/ck/Arduino/libraries",
   "runtime.ide.version": "10607",

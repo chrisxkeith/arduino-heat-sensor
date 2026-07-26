@@ -202,335 +202,153 @@ class SuperPixelPatterns {
 #include <float.h>
 #include <U8g2lib.h>
 
-#define USE_128_X_128
+const int COLOR_WHITE = 0x65535;
+const int COLOR_BLACK = 0x0;
+#include "Arduino_GigaDisplay_GFX.h"
+#include "Fonts/FreeSans18pt7b.h"
+#include "Fonts/Org_01.h"
+#include "Fonts/Picopixel.h"
+#include "Fonts/Tiny3x3a2pt7b.h"
+#include "Fonts/TomThumb.h"
 
-#ifdef USE_128_X_128
-U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
-#else
-#include <Wire.h>
-#include <SparkFun_Qwiic_OLED.h> //http://librarymanager/All#SparkFun_Qwiic_OLED
-#include <res/qw_fnt_8x16.h>
-#include <res/qw_fnt_largenum.h>
-Qwiic1in3OLED u8g2; // 128x64
-#endif
+GigaDisplay_GFX display_;
 
-#ifdef USE_128_X_128
 class OLEDWrapper {
   private:
-      const int START_BASELINE = 50;
-      const int VERTICAL_SHIFT = 2;
-      const int HORIZONTAL_SHIFT = 4;
-      int   baseLine = START_BASELINE;
-      int   leftMargin = HORIZONTAL_SHIFT;
-      int getHeight() {
-        return 96; // ??? why does u8g2.getHeight() return 128 ???
-      }
-      int getWidth() {
-        return u8g2.getWidth();
-      }
-
+    uint16_t currentColor = COLOR_WHITE;
+    const int DEFAULT_FONT_SIZE = 3;
   public:
-    // For showing hands/fingers. Stove burner temps will be different.
-    static const long   MIN_TEMP_IN_F = 80;   // degrees F that will display as black superpixel.
-    static const long   MAX_TEMP_IN_F = 90;   // degrees F that will display as white superpixel.
-
-    SuperPixelPatterns superPixelPatterns;
-
-    void drawSuperPixel(uint16_t superPixelIndex, uint16_t startX, uint16_t startY) {
-      for (uint16_t xi = 0; xi < SuperPixelPatterns::HORIZONTAL_SIZE; xi++) {
-        for (uint16_t yi = 0; yi < SuperPixelPatterns::VERTICAL_SIZE; yi++) {
-          if (superPixelPatterns.getPixelAt(superPixelIndex, xi + yi * SuperPixelPatterns::VERTICAL_COUNT)) {       
-//            u8g2.pixel(startX + xi, startY + yi);
-          }
-        }
-      }
-    }
-
-    void displayGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
-      float min = FLT_MAX;
-      float max = -FLT_MAX;
-      for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
-        if (vals[i] < min) {
-          min = vals[i];
-        }
-        if (vals[i] > max) {
-          max = vals[i];
-        }        
-      }
-      float range = max - min;
- //     clear();
- //     u8g2_prepare();
- //     u8g2.erase();
- //     u8g2.setDrawColor(1);
-      for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
-        uint16_t superPixelIndex = (uint16_t)round((vals[i] - min) / range * 
-                                    SuperPixelPatterns::NUM_SUPER_PIXELS);
-        uint16_t startX = (i % SuperPixelPatterns::HORIZONTAL_COUNT) * 
-                                    SuperPixelPatterns::HORIZONTAL_SIZE;
-        uint16_t startY = (i / SuperPixelPatterns::VERTICAL_COUNT) *
-                                    SuperPixelPatterns::VERTICAL_SIZE;
-        drawSuperPixel(superPixelIndex, startX, startY);
-      }
-      u8g2.display();
-    }
-    void u8g2_prepare(void) {
-      u8g2.setFont(u8g2_font_fur49_tn);
-      u8g2.setFontRefHeightExtendedText();
-      u8g2.setDrawColor(1);
-      u8g2.setFontDirection(0);
-    }
-    void setup_OLED() {
-      pinMode(10, OUTPUT);
-      pinMode(9, OUTPUT);
-      digitalWrite(10, 0);
-      digitalWrite(9, 0);
-      u8g2.begin();
-      u8g2.setBusClock(400000);
-    }
-    void showMessages(String s[], int nStrings) {
-      u8g2_prepare();
-      u8g2.clearBuffer();
-      u8g2.drawFrame(0, 0, getWidth(), getHeight());
-      u8g2.setFont(u8g2_font_fur11_tf);
-      for (int i = 0; i < nStrings; i++) {
-        display(s[i], 0, 16 + (i * 16));
-      }
-      u8g2.sendBuffer();
-    }
-    void showTemp(int val) {
-      u8g2_prepare();
-      u8g2.clearBuffer();
-      u8g2.drawUTF8(leftMargin, this->baseLine, String(val).c_str());
-      u8g2.setFont(u8g2_font_fur11_tf);
-      u8g2.drawUTF8(leftMargin + 4, this->baseLine + 20, "Fahrenheit");
-      u8g2.sendBuffer();
-    }
     void clear() {
-      u8g2_prepare();
-      u8g2.clearBuffer();
-      u8g2.sendBuffer();
+      display_.fillScreen(COLOR_BLACK);
     }
-    void setupBlurFilter() {}
-    void startDisplay(const uint8_t *font) {
-      u8g2_prepare();
-      u8g2.clearBuffer();
-      u8g2.setFont(font);
+    void startup() {
+      delay(1000);
+      display_.begin(); //init library
+      clear();
+      display_.setRotation(1);
     }
-    void endDisplay() {
-      u8g2.sendBuffer();
+    void display(String s, const GFXfont* font, int textSize, uint8_t x, uint8_t y) {
+      display_.setCursor(x, y);
+      display_.setFont(font);
+      display_.setTextSize(textSize);
+      display_.print(s);
     }
-    void shiftDisplay() {
-      baseLine += VERTICAL_SHIFT;
-      leftMargin += HORIZONTAL_SHIFT;
-      if (baseLine > 63) {
-        baseLine = START_BASELINE;
-        leftMargin = HORIZONTAL_SHIFT;
+    void display(String s, int textSize, uint8_t x, uint8_t y) {
+      display(s, nullptr, textSize, x, y);
+    }
+    void display(String s) {
+      display(s, DEFAULT_FONT_SIZE, 10, 10);
+    }
+    void display(String s[], int nStrings) {
+      for (int i = 0; i < nStrings; i++) {
+        display(s[i], DEFAULT_FONT_SIZE, 10, 32 + (i * 32));
       }
     }
-    void display(String s, int x, int y) {
-      u8g2.drawUTF8(x, y, s.c_str());
+    void setDrawColor(int color) {
+      currentColor = color;
     }
-};
-#else
-// Thank you: https://github.com/ragnraok/android-image-filter
-// #include "./GaussianBlurFilter.h"
-
-class OLEDWrapper {
-  private:
-      const int START_BASELINE = 20;
-      int   baseLine = START_BASELINE;
-      GaussianBlurFilter* gaussianBlurFilter = NULL;
-  public:
-    static const long   MIN_TEMP_IN_F = 80;   // degrees F that will display as black superpixel.
-    static const long   MAX_TEMP_IN_F = 90;   // degrees F that will display as white superpixel.
-    
-    void dumpFilter() {
-      String s("gaussianBlurFilter->sigma: ");
-      s.concat(gaussianBlurFilter->sigma);
-      Utils::publish(s);
-      s.remove(0);
-      s.concat("gaussianBlurFilter->kernelSum: ");
-      s.concat(gaussianBlurFilter->kernelSum);
-      Utils::publish(s);
-      s.remove(0);
-      s.concat("gaussianBlurFilter->maskSize: ");
-      s.concat(gaussianBlurFilter->maskSize);
-      Utils::publish(s);
-      for (int x = 0; x < gaussianBlurFilter->maskSize; x++) {
-        s.remove(0);
-        for (int y = 0; y < gaussianBlurFilter->maskSize; y++) {
-          s.concat(gaussianBlurFilter->kernel[x + y * gaussianBlurFilter->maskSize]);
-          s.concat(" ");
-        }
-        Utils::publish(s);
-      }
+    void setFont(const GFXfont* font) {
+      display_.setFont(font);
+    }
+    void getTextBoundsWH(String string, const GFXfont* font, int textSize,
+                          int16_t x, int16_t y, int16_t* x1, int16_t* y1, uint16_t* w, uint16_t* h) {
+      display_.setFont(font);
+      display_.setTextSize(textSize);
+      display_.getTextBounds(string, x, y, x1, y1, w, h);
+    }
+    void getTextBounds(String string, const GFXfont* font, int textSize,
+                          int16_t* x1, int16_t* y1, uint16_t* x2, uint16_t* y2) {
+      uint16_t w;
+      uint16_t h;
+      getTextBoundsWH(string, font, textSize, 0, 0, x1, y1, &w, &h);
+      *x2 = *x1 + w;
+      *y2 = *y1 + h;
+    }
+    void drawLine(int x0, int y0, int x1, int y1) {
+      // Rotate not happening automatically?
+      display_.drawLine(y0, x0, y1, x1, currentColor);
+    }
+    void fillRect(int x0, int y0, int x1, int y1, int color) {
+      display_.fillRect(x0, y0, x1 - x0, y1 - y0, color); // is there an off-by-one error here?
+    }  
+    void fillRectWH(int x0, int y0, int w, int h, int color) {
+      display_.fillRect(x0, y0, w, h, color);
+    }  
+    int getHeight() {
+      return display_.height();
+    }
+    int getWidth() {
+      return display_.width();
+    }
+    void showTemp(int temp) {
+      clear();
+      String s("Temp: ");
+      s.concat(temp);
+      s.concat(" F");
+      display(s, 3, 10, 32);
     }
     void setupBlurFilter() {
-      {
-        //; Timer t1("setupBlurFilter()");
-        GaussianBlurOptions gbh(2.0);
-        gaussianBlurFilter = new GaussianBlurFilter(NULL,
-                                SuperPixelPatterns::HORIZONTAL_COUNT * SuperPixelPatterns::HORIZONTAL_SIZE,
-                                SuperPixelPatterns::VERTICAL_COUNT * SuperPixelPatterns::VERTICAL_SIZE,
-                                gbh);
-      }
-      // dumpFilter();
     }
-    void setup_OLED() {
-      Wire.begin();
-      delay(2000); // try to avoid u8g2.begin() failure.
-      if (!u8g2.begin()) {
-        Serial.println("u8g2.begin() failed! Stopping. Try power down/up instead of just restart.");
-        while (true) { ; }
-      }
-      clear();
+    void shiftDisplay() {
     }
-    void showTemp(int val) {
-      u8g2.erase();
-      u8g2.setFont(QW_FONT_LARGENUM);
-      u8g2.text(0, 0, String(val).c_str());
-      display("Farenheit", 0, FONT_LARGENUM_HEIGHT);
-      endDisplay();
+    void dump() {
+      String s("OLEDWrapper: getHeight(): ");
+      s.concat(getHeight());
+      s.concat(", getWidth(): ");
+      s.concat(getWidth());
+      Utils::publish(s);
     }
-    void clear() {
-      u8g2.erase();
-      u8g2.display();
-    }
-    void display(String s, uint8_t x, uint8_t y) {
-      u8g2.setFont(QW_FONT_8X16);
-      u8g2.text(x, y, s);
-    }
-    void endDisplay() {
-      u8g2.display();
-    }
-    void shiftDisplay(int shiftAmount) {
-        baseLine += shiftAmount;
-        if (baseLine > 63) {
-          baseLine = START_BASELINE;
+    void test2() {
+      for (int r = 0; r < 4; r++) {
+        clear();
+        display_.setRotation(r);
+        for (int i = 0; i < 24; i++) {
+          int x = 0;
+          int y = i * 20;
+          String s(i);
+          s.concat(",");
+          s.concat(x);
+          s.concat(",");
+          s.concat(y);
+          s.concat(",");
+          s.concat(getWidth());
+          s.concat(",");
+          s.concat(getHeight());
+          display(s, 2, x, y);
+          Utils::publish(s);
+          delay(1000);
         }
-    }
-    void startDisplay(const uint8_t *font) {
-    }
-    void superPixel(int xStart, int yStart, int pixelVal, int pixelIndex, int* bitMap) {
-      if (pixelVal < 0) {
-        pixelVal = 0;
-      } else if (pixelVal >= SuperPixelPatterns::SUPER_PIXEL_SIZE) {
-        pixelVal = SuperPixelPatterns::SUPER_PIXEL_SIZE - 1;
-      }
-      for (int xi = xStart; xi < xStart + SuperPixelPatterns::HORIZONTAL_SIZE; xi++) {
-        for (int yi = yStart; yi < yStart + SuperPixelPatterns::VERTICAL_SIZE; yi++) {
-            int drawColor;
-            int r = (rand() % (SuperPixelPatterns::SUPER_PIXEL_SIZE - 2)) + 1;
-            if (r < pixelVal) {
-              drawColor = COLOR_WHITE;
-            } else {
-              drawColor = COLOR_BLACK;
-            }
-            if (bitMap == NULL) {
-              u8g2.pixel(xi, yi, drawColor);
-            } else {
-              int v;
-              if (drawColor == COLOR_WHITE) {
-                v = 0;
-              } else {
-                v = 255;
-              }
-              int indexInBitmap = yi * SuperPixelPatterns::VERTICAL_SIZE + xi;
-              bitMap[indexInBitmap++] = 255;
-              bitMap[indexInBitmap++] = v;
-              bitMap[indexInBitmap++] = v;
-              bitMap[indexInBitmap] = v;
-            }
-        }
+        delay(5000);
       }
     }
-    void displayArray(int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
-      u8g2.erase();
-      for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
-        int x = (i % SuperPixelPatterns::HORIZONTAL_COUNT) * SuperPixelPatterns::HORIZONTAL_SIZE;
-        int y = (i / SuperPixelPatterns::VERTICAL_COUNT) * SuperPixelPatterns::VERTICAL_SIZE;
-        superPixel(y, x, pixelVals[i], i, NULL);
-      }
-      u8g2.display();
-    }
-    void displayBlurredArray(int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
-      unsigned long then = millis();
-      int bitMap[ SuperPixelPatterns::HORIZONTAL_COUNT * SuperPixelPatterns::HORIZONTAL_SIZE *
-                  SuperPixelPatterns::VERTICAL_COUNT * SuperPixelPatterns::VERTICAL_SIZE *
-                  4 // AlphaRGB
-      ];
-      for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
-        int x = (i % SuperPixelPatterns::HORIZONTAL_COUNT) * SuperPixelPatterns::HORIZONTAL_SIZE;
-        int y = (i / SuperPixelPatterns::VERTICAL_COUNT) * SuperPixelPatterns::VERTICAL_SIZE;
-        superPixel(y, x, pixelVals[i], i, bitMap);
-      }
-      blur(bitMap);
-      u8g2.erase();
-      for (int xi = 0; xi < SuperPixelPatterns::HORIZONTAL_COUNT * SuperPixelPatterns::HORIZONTAL_SIZE; xi++) {
-        for (int yi = 0; yi < SuperPixelPatterns::VERTICAL_SIZE * SuperPixelPatterns::VERTICAL_SIZE; yi++) {
-          int indexInBitmap = yi * SuperPixelPatterns::VERTICAL_SIZE + xi + 1;
-          int totalColorSaturation = bitMap[indexInBitmap] + bitMap[indexInBitmap + 1] + bitMap[indexInBitmap + 2];
-          int drawColor;
-          if (totalColorSaturation > 768 / 2) {
-            drawColor = COLOR_WHITE;
-          } else {
-            drawColor = COLOR_BLACK;
-          }
-          u8g2.pixel(xi, yi, drawColor);
-        }
-      }
-      u8g2.display();
-      unsigned long ms = millis() - then;
-      String msg("milliseconds for displayBlurredArray: ");
-      msg.concat(ms);
-      Serial.println(msg);
-    }
+    void oneFontTest(const GFXfont* font, String fontName) {
+      int16_t x1;
+      int16_t y1;
+      uint16_t w;
+      uint16_t h;
 
-    void quickBlurOneBit(int targetBitmap[64][64], int bitX, int bitY, float factors[16], int sourceBitmap[64][64]) {
-      // add vertical factors
-      float accum = 0.0f;
-      int minIndex = max(bitY - 16, 0);
-      int maxIndex = min(bitY + 16, 63);
-      for (int i = minIndex; i <= maxIndex; i++) {
-        if (sourceBitmap[ bitX ][ i ] == 1) {
-          accum += factors[ i ];
-        }
-      }
-      // add horizontal factors
-      minIndex = max(bitX - 16, 0);
-      maxIndex = min(bitX + 16, 63);
-      for (int i = minIndex; i <= maxIndex; i++) {
-        if (sourceBitmap[ i ][ bitY ] == 1) {
-          accum += factors[ i ];
-        }
-      }
-      // Maximum value is 1's all the way across.
-      float v = accum / gaussianBlurFilter->maskSize;
-      if (v > 0.5) {
-        targetBitmap[ bitX ][ bitY ] = 1;
-      } else {
-        targetBitmap[ bitX ][ bitY ] = 0;
-      }
+      clear();
+      setFont(font);
+      display_.setTextSize(1);
+      display_.getTextBounds(fontName, 0, 0, &x1, &y1, &w, &h);
+      String s(fontName);
+      s.concat(", w: ");
+      s.concat(w);
+      s.concat(", h: ");
+      s.concat(h);
+      display(s, 1, 10, 10);
+      Utils::publish(s);
+      delay(10000);
     }
-    void blur(int* bitMap) {
-      Timer t2("blur(int* bitMap)");
-      gaussianBlurFilter->setPixels(bitMap,
-                              SuperPixelPatterns::HORIZONTAL_COUNT * SuperPixelPatterns::HORIZONTAL_SIZE,
-                              SuperPixelPatterns::VERTICAL_COUNT * SuperPixelPatterns::VERTICAL_SIZE
-                              );
-      gaussianBlurFilter->procImage();
-    }
-    void displayDynamicGrid(float vals[SuperPixelPatterns::NUM_SUPER_PIXELS]) {
-      int pixelVals[SuperPixelPatterns::NUM_SUPER_PIXELS];
-      for (int i = 0; i < SuperPixelPatterns::NUM_SUPER_PIXELS; i++) {
-        long t = (long)round(vals[i]);
-        pixelVals[i] = map(t, MIN_TEMP_IN_F, MAX_TEMP_IN_F, 0, SuperPixelPatterns::SUPER_PIXEL_SIZE);
-        
-      }
-      displayArray(pixelVals);
+    void fontTest() {
+      oneFontTest(&Org_01, "Org_01");
+      oneFontTest(&Picopixel, "Picopixel");
+      oneFontTest(&Tiny3x3a2pt7b, "Tiny3x3a2pt7b");
+      oneFontTest(&TomThumb, "TomThumb");
+      oneFontTest(&FreeSans18pt7b, "FreeSans18pt7b");
+      setFont(nullptr);
     }
 };
-#endif
 OLEDWrapper oledWrapper;
 
 #include <SparkFun_GridEYE_Arduino_Library.h>
@@ -778,9 +596,9 @@ class App {
 //      datalogger = new DataLogger("heatdata.txt");
     }
     void extraSetupFinish() {
-      oledWrapper.setupBlurFilter();
+/*      oledWrapper.setupBlurFilter();
       delay(1000);
-      oledWrapper.startDisplay(u8g2_font_fur11_tf);
+      oledWrapper.startup();
       uint16_t baseline = 16;
       for (String s : configs) {
         oledWrapper.display(s, 0, baseline);
@@ -792,7 +610,8 @@ class App {
       savedValues.doSaveValue();
       Utils::scanI2C();
 //      datalogger->test();
-      Utils::publish("Finished setup...");    }
+      Utils::publish("Finished setup...");
+*/   }
   public:
     App() {
     }
@@ -801,8 +620,9 @@ class App {
         Serial.begin(115200);
         delay(1000);
       }
+      Utils::scanI2C();
       // extraSetupStart();
-      gridEyeSupport.begin();
+  /*    gridEyeSupport.begin();
       String thresholdStr("Threshold: ");
       thresholdStr.concat(THRESHOLD);
       thresholdStr.concat(" F");
@@ -813,7 +633,7 @@ class App {
       oledWrapper.showMessages(initialMsgs, 3);
       delay(4000);
       oledWrapper.clear();
-      // extraSetupFinish();
+*/      // extraSetupFinish();
     }
     void loop() {
 #if SHOW_GRID
@@ -847,5 +667,5 @@ void setup() {
 }
 
 void loop() {
-  app.loop();
+//  app.loop();
 }
