@@ -564,6 +564,8 @@ class App {
             savedValues.dumpHistory();
           } else if (teststr.equals("ref")) {
             displayRef();
+          } else if (teststr.equals("scan")) {
+            Utils::scanI2C();
           } else if (teststr.equals("temp")) {
             oledWrapper.showTemp(temperatureMonitor.getValue());
           } else if (teststr.equals("testgrids")) {
@@ -573,7 +575,7 @@ class App {
           } else {
             String msg("Unknown command: '");
             msg.concat(teststr);
-            msg.concat("'. Expected contrastgrid, grid, history, ref, temp, testgrids or values");
+            msg.concat("'. Expected contrastgrid, grid, history, ref, scan, temp, testgrids or values");
             Utils::publish(msg);
             return;
           }
@@ -636,6 +638,7 @@ class App {
 */      // extraSetupFinish();
     }
     void loop() {
+/*
 #if SHOW_GRID
       const int DISPLAY_RATE_IN_MS = 1;
 #else
@@ -657,7 +660,7 @@ class App {
         }
       }
       savedValues.saveValue();
-      checkSerial();
+*/      checkSerial();
     }
 };
 App app;
@@ -667,5 +670,5 @@ void setup() {
 }
 
 void loop() {
-//  app.loop();
+  app.loop();
 }
