@@ -18,7 +18,7 @@ class Utils {
     
       Serial.println("I2C: Scanning for devices...");    
       std::vector<byte> foundDevices;
-      std::set<byte> errors;
+      String ss("I2C: Error numbers returned: ");
       for( byte address = 1; address < 127; address++ ) {
         // The i2c_scanner uses the return value of
         // the Write.endTransmisstion to see if
@@ -29,25 +29,19 @@ class Utils {
         if (error == 0) {
           foundDevices.push_back(address);
         } else {
-          errors.insert(error);
+          String err(address);
+          err.concat(":");
+          err.concat(error);
+          err.concat(", ");
+          ss.concat(err);
         }    
       }
       Serial.print("I2C: Devices found at: ");
       for (byte b : foundDevices) {
-        Serial.print("0x");
-        if (b < 16) {
-          Serial.print("0");
-        }
-        Serial.print(b, HEX);
+        Serial.print(b);
         Serial.print(" ");
       }
       Serial.println("");
-      String ss("I2C: Error numbers returned: ");
-      std::set<byte>::iterator itr;
-      for (itr = errors.begin(); itr != errors.end(); itr++) {
-        ss.concat(*itr);
-        ss.concat(" ");
-      }
       Serial.println(ss);
     }
 };
@@ -622,23 +616,20 @@ class App {
         Serial.begin(115200);
         delay(1000);
       }
-      Utils::scanI2C();
-      // extraSetupStart();
-  /*    gridEyeSupport.begin();
+      gridEyeSupport.begin();
       String thresholdStr("Threshold: ");
       thresholdStr.concat(THRESHOLD);
       thresholdStr.concat(" F");
       configs[4] = thresholdStr;
       status();
-      oledWrapper.setup_OLED();
+      oledWrapper.startup();
       String initialMsgs[3] = { configs[0], configs[1], configs[4] };
-      oledWrapper.showMessages(initialMsgs, 3);
+      oledWrapper.display(initialMsgs[0]);
       delay(4000);
       oledWrapper.clear();
-*/      // extraSetupFinish();
+      // extraSetupFinish();
     }
     void loop() {
-/*
 #if SHOW_GRID
       const int DISPLAY_RATE_IN_MS = 1;
 #else
@@ -646,6 +637,7 @@ class App {
 #endif
       int thisMS = millis();
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
+/*        Utils::publish(gridEyeSupport.getValuesAsString());
         const int SHIFT_RATE = 1000 * 60 * 2; // Shift display every 2 minutes to avoid OLED burn-in.
         // const int SHIFT_RATE = 1000 * 2; // Shift display every 2 seconds for debugging.
         if (thisMS - lastShift > SHIFT_RATE) {
@@ -658,9 +650,9 @@ class App {
         } else {
           oledWrapper.clear();
         }
-      }
-      savedValues.saveValue();
-*/      checkSerial();
+*/     }
+//     savedValues.saveValue();
+       checkSerial();
     }
 };
 App app;
