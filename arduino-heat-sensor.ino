@@ -238,6 +238,17 @@ class OLEDWrapper {
         display(s[i], DEFAULT_FONT_SIZE, 10, 32 + (i * 32));
       }
     }
+    void displayDynamicGrid(float vals[]) {
+      for (int x = 0; x < 8; x++) {
+        for (int y = 0; y < 8; y++) {
+          int index = (y * 8) + x;
+          int val = (int)(vals[index]);
+          val = map(val, 60, 100, 0, 255);
+          int color = display_.color565(val, 0, 0);
+          display_.fillRect(x * 64, y * 64, 64, 64, color);
+        }
+      }
+    }
     void setDrawColor(int color) {
       currentColor = color;
     }
@@ -465,10 +476,10 @@ TemperatureMonitor temperatureMonitor;
 
 class App {
   private:
-    const int THRESHOLD = 85; // degrees F
-#define SHOW_GRID false
+    const int THRESHOLD = 0; // degrees F
+#define SHOW_GRID true
     String configs[5] = {
-      "~2025Nov25:16:45", // date +"%Y%b%d:%H:%M"
+      "~2026Aug12:16:32", // date +"%Y%b%d:%H:%M"
       "arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
@@ -499,7 +510,7 @@ class App {
       for (int i = 0; i < 64; i++) {
         vals[i] = gridEyeSupport.readOneSensor(i);
       }
-//      oledWrapper.displayDynamicGrid(vals);
+      oledWrapper.displayDynamicGrid(vals);
     }
 
     void displayRef() {
@@ -638,7 +649,6 @@ class App {
 #endif
       int thisMS = millis();
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
-        Utils::publish(gridEyeSupport.getValuesAsString());
         const int SHIFT_RATE = 1000 * 60 * 2; // Shift display every 2 minutes to avoid OLED burn-in.
         // const int SHIFT_RATE = 1000 * 2; // Shift display every 2 seconds for debugging.
         if (thisMS - lastShift > SHIFT_RATE) {
