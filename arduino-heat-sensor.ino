@@ -612,6 +612,7 @@ class App {
     App() {
     }
     void setup() {
+      Wire.begin();
       if (Utils::DO_SERIAL) {
         Serial.begin(115200);
         delay(1000);
@@ -637,7 +638,7 @@ class App {
 #endif
       int thisMS = millis();
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
-/*        Utils::publish(gridEyeSupport.getValuesAsString());
+        Utils::publish(gridEyeSupport.getValuesAsString());
         const int SHIFT_RATE = 1000 * 60 * 2; // Shift display every 2 minutes to avoid OLED burn-in.
         // const int SHIFT_RATE = 1000 * 2; // Shift display every 2 seconds for debugging.
         if (thisMS - lastShift > SHIFT_RATE) {
@@ -650,7 +651,7 @@ class App {
         } else {
           oledWrapper.clear();
         }
-*/     }
+      }
 //     savedValues.saveValue();
        checkSerial();
     }
