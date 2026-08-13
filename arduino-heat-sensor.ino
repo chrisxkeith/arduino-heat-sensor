@@ -503,6 +503,24 @@ class App {
       }
     }
 
+    float previousVals[64] = {-1.0};
+    bool changed(float vals[64]) {
+      if (vals[0] < 0.0) {
+        for (int i = 0; i < 64; i++) {
+          previousVals[i] = vals[i];
+        }
+        return false;
+      }
+      const float DELTA = 3.0; // degrees F
+      bool changed = false;
+      for (int i = 0; i < 64; i++) {
+        if (abs(vals[i] - previousVals[i]) > DELTA) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     // Read, blur and display should be < 400 ms.
     void displayGrid() {
       // Timer t("displayGrid()");
@@ -510,7 +528,12 @@ class App {
       for (int i = 0; i < 64; i++) {
         vals[i] = gridEyeSupport.readOneSensor(i);
       }
-      oledWrapper.displayDynamicGrid(vals);
+      if (changed(vals)) {
+        oledWrapper.displayDynamicGrid(vals);
+        for (int i = 0; i < 64; i++) {
+          previousVals[i] = vals[i];
+        }
+      }
     }
 
     void displayRef() {
