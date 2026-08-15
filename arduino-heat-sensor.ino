@@ -245,7 +245,9 @@ class OLEDWrapper {
           int val = (int)(vals[index]);
           val = map(val, 60, 100, 0, 255);
           int color = display_.color565(val, 0, 0);
-          display_.fillRect(x * 64, y * 64, 64, 64, color);
+          int rotatedX = y;
+          int rotatedY = 7 - x;
+          display_.fillRect(rotatedX * 64, rotatedY * 64, 64, 64, color);
         }
       }
     }
