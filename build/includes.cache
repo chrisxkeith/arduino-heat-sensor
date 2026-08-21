@@ -70,7 +70,7 @@
     "Includepath": null
   },
   {
-    "Sourcefile": "/home/ck/Documents/github/arduino-heat-sensor/build/sketch/GaussianBlurFilter.cpp",
+    "Sourcefile": "/home/ck/Documents/github/arduino-heat-sensor/build/sketch/AverageSmoothFilter.cpp",
     "Include": "",
     "Includepath": null
   },
