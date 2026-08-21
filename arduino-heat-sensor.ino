@@ -239,6 +239,7 @@ class OLEDWrapper {
       }
     }
     void displayDynamicGrid(float vals[]) {
+      display_.startWrite();
       for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
           int index = (y * 8) + x;
@@ -247,9 +248,16 @@ class OLEDWrapper {
           int color = display_.color565(val, 0, 0);
           int rotatedX = y;
           int rotatedY = 7 - x;
-          display_.fillRect(rotatedX * 64, rotatedY * 64, 64, 64, color);
+          int x0 = rotatedX * 64;
+          int y0 = rotatedY * 64;
+          for (int i = 0; i < 64; i++) {
+            for (int j = 0; j < 64; j++) {
+              display_.drawPixel(x0 + j, y0 + i, color);
+            }
+          }
         }
       }
+      display_.endWrite();
     }
     void setDrawColor(int color) {
       currentColor = color;
