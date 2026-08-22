@@ -4,6 +4,8 @@
 #include <vector>
 #include <set>
 
+#include "./AverageSmoothFilter.h"
+
 class Utils {
   public:
     const static bool DO_SERIAL = true;
@@ -237,6 +239,54 @@ class OLEDWrapper {
       for (int i = 0; i < nStrings; i++) {
         display(s[i], DEFAULT_FONT_SIZE, 10, 32 + (i * 32));
       }
+    }
+    void blur(int* bitMap) {
+      AverageSmoothOptions aso(8);
+      AverageSmoothFilter averageSmoothFilter(bitMap, getWidth(), getHeight(), aso);
+      averageSmoothFilter.procImage();
+    }
+    void buildBitMap(float vals[], int* bitMap) {
+      int indexInBitmap = 0;
+      for (int x = 0; x < 8; x++) {
+        for (int y = 0; y < 8; y++) {
+          int index = (y * 8) + x;
+          int val = (int)(vals[index]);
+          val = map(val, 60, 100, 0, 255);
+          for (int i = 0; i < 64; i++) {
+            for (int j = 0; j < 64; j++) {
+              bitMap[indexInBitmap++] = 255;
+              bitMap[indexInBitmap++] = val;
+              bitMap[indexInBitmap++] = 0;
+              bitMap[indexInBitmap++] = 0;
+            }
+          }
+        }
+      }
+    }
+    void displaySmoothedDynamicGrid(float vals[]) {
+      int bitMap[
+        getHeight() * getWidth() * 4 // AlphaRGB
+      ];
+      buildBitMap(vals, bitMap);
+      blur(bitMap);
+      int indexInBitmap = 1; // skip alpha channel
+      display_.startWrite();
+      for (int x = 0; x < 8; x++) {
+        for (int y = 0; y < 8; y++) {
+          int rotatedX = y;
+          int rotatedY = 7 - x;
+          int x0 = rotatedX * 64;
+          int y0 = rotatedY * 64;
+          for (int i = 0; i < 64; i++) {
+            for (int j = 0; j < 64; j++) {
+              int color = display_.color565(bitMap[indexInBitmap], bitMap[indexInBitmap + 1], bitMap[indexInBitmap + 2]);
+              display_.drawPixel(x0 + j, y0 + i, color);
+              indexInBitmap += 4;
+            }
+          }
+        }
+      }
+      display_.endWrite();
     }
     void displayDynamicGrid(float vals[]) {
       display_.startWrite();
@@ -489,7 +539,7 @@ class App {
     const int THRESHOLD = 0; // degrees F
 #define SHOW_GRID true
     String configs[5] = {
-      "~2026Aug12:16:32", // date +"%Y%b%d:%H:%M"
+      "~2026Aug21,16:59", // date +"%Y%b%d,%H:%M"
       "arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
