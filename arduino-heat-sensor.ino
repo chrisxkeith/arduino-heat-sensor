@@ -13,6 +13,14 @@ class Utils {
     static void publishWithSep(String s, String sep);
     static void publish(String s);
     static String toString(bool b);
+    static void waitForSomeSeconds(String msg) {
+      const int WAIT_SECONDS = 3;
+      Utils::publish("Waiting for " + String(WAIT_SECONDS) + " seconds: " + msg);
+      for (int i = 0; i < WAIT_SECONDS; i++) {
+        Serial.print(".");
+        delay(1000);
+      }
+    }
 
     // Modified from https://playground.arduino.cc/Main/I2cScanner/
     static void scanI2C() {
@@ -214,6 +222,7 @@ class OLEDWrapper {
     uint16_t currentColor = COLOR_WHITE;
     const int DEFAULT_FONT_SIZE = 3;
   public:
+    bool doSmoothing = false;
     void clear() {
       display_.fillScreen(COLOR_BLACK);
     }
@@ -251,7 +260,7 @@ class OLEDWrapper {
         for (int y = 0; y < 8; y++) {
           int index = (y * 8) + x;
           int val = (int)(vals[index]);
-          val = map(val, 60, 100, 0, 255);
+          val = map(val, 60, 100, 0, 65535);
           for (int i = 0; i < 64; i++) {
             for (int j = 0; j < 64; j++) {
               bitMap[indexInBitmap++] = 255;
@@ -264,10 +273,13 @@ class OLEDWrapper {
       }
     }
     void displaySmoothedDynamicGrid(float vals[]) {
-      int bitMap[
-        getHeight() * getWidth() * 4 // AlphaRGB
-      ];
+      long nBytes = getWidth() * getHeight() * 4 * sizeof(int); // 4 bytes per pixel for AlphaRGB
+      Utils::waitForSomeSeconds("displaySmoothedDynamicGrid(): before allocating bitMap, nBytes: " + String(nBytes));
+      int* bitMap = new int[/* getWidth() * getHeight() * */ 4]; // AlphaRGB
+      Utils::waitForSomeSeconds("displaySmoothedDynamicGrid(): buildBitMap");
+      return;
       buildBitMap(vals, bitMap);
+      Utils::waitForSomeSeconds("displaySmoothedDynamicGrid(): blur");
       blur(bitMap);
       int indexInBitmap = 1; // skip alpha channel
       display_.startWrite();
@@ -279,16 +291,20 @@ class OLEDWrapper {
           int y0 = rotatedY * 64;
           for (int i = 0; i < 64; i++) {
             for (int j = 0; j < 64; j++) {
-              int color = display_.color565(bitMap[indexInBitmap], bitMap[indexInBitmap + 1], bitMap[indexInBitmap + 2]);
+              int r = map(bitMap[indexInBitmap++], 0, 65535, 0, 255);
+              int g = map(bitMap[indexInBitmap++], 0, 65535, 0, 255);
+              int b = map(bitMap[indexInBitmap++], 0, 65535, 0, 255);
+              int color = display_.color565(r, g, b);
               display_.drawPixel(x0 + j, y0 + i, color);
-              indexInBitmap += 4;
+              indexInBitmap++;
             }
           }
         }
       }
       display_.endWrite();
+      delete bitMap;
     }
-    void displayDynamicGrid(float vals[]) {
+    void displayUnsmoothedDynamicGrid(float vals[]) {
       display_.startWrite();
       for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
@@ -308,6 +324,13 @@ class OLEDWrapper {
         }
       }
       display_.endWrite();
+    }
+    void displayDynamicGrid(float vals[]) {
+      if (doSmoothing) {
+        displaySmoothedDynamicGrid(vals);
+      } else {
+        displayUnsmoothedDynamicGrid(vals);
+      }
     }
     void setDrawColor(int color) {
       currentColor = color;
@@ -361,6 +384,8 @@ class OLEDWrapper {
       s.concat(getHeight());
       s.concat(", getWidth(): ");
       s.concat(getWidth());
+      s.concat(", doSmoothing: ");
+      s.concat(doSmoothing);
       Utils::publish(s);
     }
     void test2() {
@@ -539,18 +564,14 @@ class App {
     const int THRESHOLD = 0; // degrees F
 #define SHOW_GRID true
     String configs[5] = {
-      "~2026Aug21,16:59", // date +"%Y%b%d,%H:%M"
+      "~Sun Aug 23 01:28:55 PM PDT 2026",
       "arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
 #else
       "showing temp",
 #endif
-#ifdef USE_128_X_128
-      "Using 128x128",
-#else
-      "Using 128x64",
-#endif
+      "Using GigaDisplay_GFX",
       "placeholder for threshold"
     };
 
@@ -644,6 +665,7 @@ class App {
           teststr.trim();                        // remove any \r \n whitespace at the end of the String
           if (teststr.equals("?")) {
             status();
+            oledWrapper.dump();
           } else if (teststr.equals("contrastgrid")) {
             displayContrastGrid();
           } else if (teststr.equals("grid")) {
@@ -652,6 +674,9 @@ class App {
             savedValues.dumpHistory();
           } else if (teststr.equals("ref")) {
             displayRef();
+          } else if (teststr.equals("smooth")) {
+            oledWrapper.doSmoothing = true;
+            oledWrapper.dump();
           } else if (teststr.equals("scan")) {
             Utils::scanI2C();
           } else if (teststr.equals("temp")) {
@@ -663,7 +688,7 @@ class App {
           } else {
             String msg("Unknown command: '");
             msg.concat(teststr);
-            msg.concat("'. Expected contrastgrid, grid, history, ref, scan, temp, testgrids or values");
+            msg.concat("'. Expected ?, contrastgrid, dump, grid, history, ref, smooth, scan, temp, testgrids or values");
             Utils::publish(msg);
             return;
           }
