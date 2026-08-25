@@ -15,11 +15,12 @@ class Utils {
     static String toString(bool b);
     static void waitForSomeSeconds(String msg) {
       const int WAIT_SECONDS = 3;
-      Utils::publish("Waiting for " + String(WAIT_SECONDS) + " seconds: " + msg);
+      Serial.print("Waiting for " + String(WAIT_SECONDS) + " seconds: " + msg);
       for (int i = 0; i < WAIT_SECONDS; i++) {
         Serial.print(".");
         delay(1000);
       }
+      Serial.println("");
     }
 
     // Modified from https://playground.arduino.cc/Main/I2cScanner/
@@ -249,20 +250,20 @@ class OLEDWrapper {
         display(s[i], DEFAULT_FONT_SIZE, 10, 32 + (i * 32));
       }
     }
-    void blur(int* bitMap) {
+    void blur(int* bitMap, int width, int height) {
       AverageSmoothOptions aso(8);
-      AverageSmoothFilter averageSmoothFilter(bitMap, getWidth(), getHeight(), aso);
+      AverageSmoothFilter averageSmoothFilter(bitMap, width, height, aso);
       averageSmoothFilter.procImage();
     }
-    void buildBitMap(float vals[], int* bitMap) {
+    void buildBitMap(float vals[], int* bitMap, int width, int height, int superPixelSize) {
       int indexInBitmap = 0;
-      for (int x = 0; x < 8; x++) {
-        for (int y = 0; y < 8; y++) {
-          int index = (y * 8) + x;
+      for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+          int index = (y * width) + x;
           int val = (int)(vals[index]);
           val = map(val, 60, 100, 0, 65535);
-          for (int i = 0; i < 64; i++) {
-            for (int j = 0; j < 64; j++) {
+          for (int i = 0; i < superPixelSize; i++) {
+            for (int j = 0; j < superPixelSize; j++) {
               bitMap[indexInBitmap++] = 255;
               bitMap[indexInBitmap++] = val;
               bitMap[indexInBitmap++] = 0;
@@ -273,24 +274,25 @@ class OLEDWrapper {
       }
     }
     void displaySmoothedDynamicGrid(float vals[]) {
-      long nBytes = getWidth() * getHeight() * 4 * sizeof(int); // 4 bytes per pixel for AlphaRGB
-      Utils::waitForSomeSeconds("displaySmoothedDynamicGrid(): before allocating bitMap, nBytes: " + String(nBytes));
-      int* bitMap = new int[/* getWidth() * getHeight() * */ 4]; // AlphaRGB
-      Utils::waitForSomeSeconds("displaySmoothedDynamicGrid(): buildBitMap");
-      return;
-      buildBitMap(vals, bitMap);
-      Utils::waitForSomeSeconds("displaySmoothedDynamicGrid(): blur");
-      blur(bitMap);
+      const int SUPER_PIXEL_SIZE = 16; // 16x16 'superpixels' to reduce memory usage
+      int pixelsPerDimension = getHeight() / SUPER_PIXEL_SIZE;
+      int nPixels = pixelsPerDimension * pixelsPerDimension;
+      int* bitMap = new int[nPixels * 4]; // "* 4" for AlphaRGB
+      Utils::waitForSomeSeconds("displaySmoothedDynamicGrid(): before buildBitMap");
+      buildBitMap(vals, bitMap, pixelsPerDimension, pixelsPerDimension, SUPER_PIXEL_SIZE);
+      Utils::waitForSomeSeconds("displaySmoothedDynamicGrid(): before blur");
+      blur(bitMap, pixelsPerDimension, pixelsPerDimension);
+      Utils::waitForSomeSeconds("displaySmoothedDynamicGrid(): before display");
       int indexInBitmap = 1; // skip alpha channel
       display_.startWrite();
-      for (int x = 0; x < 8; x++) {
-        for (int y = 0; y < 8; y++) {
+      for (int x = 0; x < pixelsPerDimension; x++) {
+        for (int y = 0; y < pixelsPerDimension; y++) {
           int rotatedX = y;
           int rotatedY = 7 - x;
-          int x0 = rotatedX * 64;
-          int y0 = rotatedY * 64;
-          for (int i = 0; i < 64; i++) {
-            for (int j = 0; j < 64; j++) {
+          int x0 = rotatedX * SUPER_PIXEL_SIZE;
+          int y0 = rotatedY * SUPER_PIXEL_SIZE;
+          for (int i = 0; i < SUPER_PIXEL_SIZE; i++) {
+            for (int j = 0; j < SUPER_PIXEL_SIZE; j++) {
               int r = map(bitMap[indexInBitmap++], 0, 65535, 0, 255);
               int g = map(bitMap[indexInBitmap++], 0, 65535, 0, 255);
               int b = map(bitMap[indexInBitmap++], 0, 65535, 0, 255);
@@ -744,8 +746,6 @@ class App {
       status();
       oledWrapper.startup();
       String initialMsgs[3] = { configs[0], configs[1], configs[4] };
-      oledWrapper.display(initialMsgs[0]);
-      delay(4000);
       oledWrapper.clear();
       // extraSetupFinish();
     }
