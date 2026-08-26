@@ -262,27 +262,27 @@ class OLEDWrapper {
 
         // create one row of superpixel values.
         int row[pixelsPerDimension];
-        for (int xCoord = 0; xCoord < 8; xCoord++) {
-          int index = (sensorY * width) + xCoord;
+        for (int sensorX = 0; sensorX < 8; sensorX++) {
+          int index = (sensorY * width) + sensorX;
           int val = (int)(vals[index]);
           val = map(val, 60, 100, 0, 65535);
           for (int pixelCoord = 0; pixelCoord < pixelsPerSensor; pixelCoord++) {
-            row[(xCoord * pixelsPerSensor) + pixelCoord] = val;
+            row[(sensorX * pixelsPerSensor) + pixelCoord] = val;
           }
         }
-
         // load that row into the bitmap, repeating for the number of superpixels per sensor
-        for (int i = 0; i < pixelsPerSensor; i++) {
+        for (int y = 0; y < pixelsPerSensor; y++) {
           for (int j = 0; j < width; j++) {
+            if (indexInBitmap >= bitMapSize) {
+              Serial.println("buildBitMap(): indexInBitmap (" + String(indexInBitmap) + 
+                              ") >= bitMapSize (" + String(bitMapSize) + 
+                              ",) y: " + String(y) + ", j: " + String(j) + ", returning early");
+              return;
+            }
             bitMap[indexInBitmap++] = 255;
             bitMap[indexInBitmap++] = row[j];
             bitMap[indexInBitmap++] = 0;
             bitMap[indexInBitmap++] = 0;
-            if (indexInBitmap >= bitMapSize) {
-              Serial.println("buildBitMap(): indexInBitmap (" + String(indexInBitmap) + 
-                              ") >= bitMapSize (" + String(bitMapSize) + "), returning early");
-              return;
-            }
           }
         }
       }
@@ -292,10 +292,8 @@ class OLEDWrapper {
       int pixelsPerDimension = getHeight() / SUPER_PIXEL_SIZE;
       int nPixels = pixelsPerDimension * pixelsPerDimension;
       int* bitMap = new int[nPixels * 4]; // "* 4" for AlphaRGB
-      Utils::waitForSomeSeconds("displaySmoothedDynamicGrid(): before buildBitMap");
       const int PIXELS_PER_SENSOR = 5;
       buildBitMap(vals, bitMap, nPixels * 4, pixelsPerDimension, pixelsPerDimension, PIXELS_PER_SENSOR, pixelsPerDimension);
-      Utils::waitForSomeSeconds("displaySmoothedDynamicGrid(): before blur");
       blur(bitMap, pixelsPerDimension, pixelsPerDimension);
       Utils::waitForSomeSeconds("displaySmoothedDynamicGrid(): before display");
       int indexInBitmap = 1; // skip alpha channel
