@@ -255,31 +255,46 @@ class OLEDWrapper {
       AverageSmoothFilter averageSmoothFilter(bitMap, width, height, aso);
       averageSmoothFilter.procImage();
     }
-    void buildBitMap(float vals[], int* bitMap, int width, int height, int superPixelSize) {
+    void buildBitMap(float vals[], int* bitMap, int bitMapSize, int width, int height,
+                    int pixelsPerSensor, int pixelsPerDimension) {
       int indexInBitmap = 0;
-      for (int x = 0; x < width; x++) {
-        for (int y = 0; y < height; y++) {
-          int index = (y * width) + x;
+      for (int sensorY = 0; sensorY < 8; sensorY++) {
+
+        // create one row of superpixel values.
+        int row[pixelsPerDimension];
+        for (int xCoord = 0; xCoord < 8; xCoord++) {
+          int index = (sensorY * width) + xCoord;
           int val = (int)(vals[index]);
           val = map(val, 60, 100, 0, 65535);
-          for (int i = 0; i < superPixelSize; i++) {
-            for (int j = 0; j < superPixelSize; j++) {
-              bitMap[indexInBitmap++] = 255;
-              bitMap[indexInBitmap++] = val;
-              bitMap[indexInBitmap++] = 0;
-              bitMap[indexInBitmap++] = 0;
+          for (int pixelCoord = 0; pixelCoord < pixelsPerSensor; pixelCoord++) {
+            row[(xCoord * pixelsPerSensor) + pixelCoord] = val;
+          }
+        }
+
+        // load that row into the bitmap, repeating for the number of superpixels per sensor
+        for (int i = 0; i < pixelsPerSensor; i++) {
+          for (int j = 0; j < width; j++) {
+            bitMap[indexInBitmap++] = 255;
+            bitMap[indexInBitmap++] = row[j];
+            bitMap[indexInBitmap++] = 0;
+            bitMap[indexInBitmap++] = 0;
+            if (indexInBitmap >= bitMapSize) {
+              Serial.println("buildBitMap(): indexInBitmap (" + String(indexInBitmap) + 
+                              ") >= bitMapSize (" + String(bitMapSize) + "), returning early");
+              return;
             }
           }
         }
       }
     }
     void displaySmoothedDynamicGrid(float vals[]) {
-      const int SUPER_PIXEL_SIZE = 16; // 16x16 'superpixels' to reduce memory usage
+      const int SUPER_PIXEL_SIZE = 12; // 12x12 'superpixels' to reduce memory usage
       int pixelsPerDimension = getHeight() / SUPER_PIXEL_SIZE;
       int nPixels = pixelsPerDimension * pixelsPerDimension;
       int* bitMap = new int[nPixels * 4]; // "* 4" for AlphaRGB
       Utils::waitForSomeSeconds("displaySmoothedDynamicGrid(): before buildBitMap");
-      buildBitMap(vals, bitMap, pixelsPerDimension, pixelsPerDimension, SUPER_PIXEL_SIZE);
+      const int PIXELS_PER_SENSOR = 5;
+      buildBitMap(vals, bitMap, nPixels * 4, pixelsPerDimension, pixelsPerDimension, PIXELS_PER_SENSOR, pixelsPerDimension);
       Utils::waitForSomeSeconds("displaySmoothedDynamicGrid(): before blur");
       blur(bitMap, pixelsPerDimension, pixelsPerDimension);
       Utils::waitForSomeSeconds("displaySmoothedDynamicGrid(): before display");
