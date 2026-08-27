@@ -273,6 +273,7 @@ class OLEDWrapper {
           if (origVal > MAX_TEMP) {
             origVal = MAX_TEMP;
           }
+          // TODO: is this map() really needed here?
           int val = map(origVal, MIN_TEMP, MAX_TEMP, 0, 65535);
           if (val < 0) {
             Serial.println("buildBitMap(): val < 0, origVal: " + String(origVal) + 
@@ -301,7 +302,7 @@ class OLEDWrapper {
         }
       }
     }
-    void displaySmoothedDynamicGrid(float vals[]) {
+    bool displaySmoothedDynamicGrid(float vals[]) {
       const int SUPER_PIXEL_SIZE = 12; // 12x12 'superpixels' to reduce memory usage
       int pixelsPerDimension = getHeight() / SUPER_PIXEL_SIZE;
       int nPixels = pixelsPerDimension * pixelsPerDimension;
@@ -310,7 +311,7 @@ class OLEDWrapper {
       buildBitMap(vals, bitMap, nPixels * 4, pixelsPerDimension,
                   pixelsPerDimension, PIXELS_PER_SENSOR, pixelsPerDimension);
       blur(bitMap, pixelsPerDimension, pixelsPerDimension);
-      int indexInBitmap = 1; // skip alpha channel
+      int indexInBitmap = 1; // 1 == skip alpha channel
       display_.startWrite();
       for (int x = 0; x < pixelsPerDimension; x++) {
         for (int y = 0; y < pixelsPerDimension; y++) {
@@ -323,21 +324,27 @@ class OLEDWrapper {
               if (indexInBitmap >= nPixels * 4) {
                 Serial.println("displaySmoothedDynamicGrid(): indexInBitmap (" + String(indexInBitmap) + 
                             ") >= nPixels * 4 (" + String(nPixels * 4) + "), " + 
-                            "returning early");
-                return;
+                            ", x: " + String(x) + ", y: " + String(y) + 
+                            ", rotatedX: " + String(rotatedX) + ", rotatedY: " + String(rotatedY) +
+                            ", x0: " + String(x0) + ", y0: " + String(y0) + 
+                            ", i: " + String(i) + ", j: " + String(j) +
+                            ", returning early");
+                return false;
               }
               int r = map(bitMap[indexInBitmap++], 0, 65535, 0, 255);
               int g = map(bitMap[indexInBitmap++], 0, 65535, 0, 255);
               int b = map(bitMap[indexInBitmap++], 0, 65535, 0, 255);
               int color = display_.color565(r, g, b);
               display_.drawPixel(x0 + j, y0 + i, color);
-              indexInBitmap++;
+              indexInBitmap -= 3; // reset to the start of the pixel for the next iteration
             }
           }
+          indexInBitmap += 4; // to the next pixel
         }
       }
       display_.endWrite();
       delete bitMap;
+      return true;
     }
     void displayUnsmoothedDynamicGrid(float vals[]) {
       display_.startWrite();
@@ -362,7 +369,9 @@ class OLEDWrapper {
     }
     void displayDynamicGrid(float vals[]) {
       if (doSmoothing) {
-        displaySmoothedDynamicGrid(vals);
+        if (!displaySmoothedDynamicGrid(vals)) {
+          doSmoothing = false;
+        }
       } else {
         displayUnsmoothedDynamicGrid(vals);
       }
