@@ -264,8 +264,21 @@ class OLEDWrapper {
         int row[pixelsPerDimension];
         for (int sensorX = 0; sensorX < 8; sensorX++) {
           int index = (sensorY * width) + sensorX;
-          int val = (int)(vals[index]);
-          val = map(val, 60, 100, 0, 65535);
+          int origVal = (int)(vals[index]);
+          const int MIN_TEMP = 60;
+          const int MAX_TEMP = 100;
+          if (origVal < MIN_TEMP) {
+            origVal = MIN_TEMP;
+          }
+          if (origVal > MAX_TEMP) {
+            origVal = MAX_TEMP;
+          }
+          int val = map(origVal, MIN_TEMP, MAX_TEMP, 0, 65535);
+          if (val < 0) {
+            Serial.println("buildBitMap(): val < 0, origVal: " + String(origVal) + 
+                            ", val: " + String(val) + ", returning early");
+            return;
+          }
           for (int pixelCoord = 0; pixelCoord < pixelsPerSensor; pixelCoord++) {
             row[(sensorX * pixelsPerSensor) + pixelCoord] = val;
           }
@@ -276,7 +289,8 @@ class OLEDWrapper {
             if (indexInBitmap >= bitMapSize) {
               Serial.println("buildBitMap(): indexInBitmap (" + String(indexInBitmap) + 
                               ") >= bitMapSize (" + String(bitMapSize) + 
-                              ",) y: " + String(y) + ", j: " + String(j) + ", returning early");
+                              "), y: " + String(y) + ", j: " + String(j) + 
+                              ", sensorY: " + String(sensorY) + ", returning early");
               return;
             }
             bitMap[indexInBitmap++] = 255;
@@ -293,9 +307,9 @@ class OLEDWrapper {
       int nPixels = pixelsPerDimension * pixelsPerDimension;
       int* bitMap = new int[nPixels * 4]; // "* 4" for AlphaRGB
       const int PIXELS_PER_SENSOR = 5;
-      buildBitMap(vals, bitMap, nPixels * 4, pixelsPerDimension, pixelsPerDimension, PIXELS_PER_SENSOR, pixelsPerDimension);
+      buildBitMap(vals, bitMap, nPixels * 4, pixelsPerDimension,
+                  pixelsPerDimension, PIXELS_PER_SENSOR, pixelsPerDimension);
       blur(bitMap, pixelsPerDimension, pixelsPerDimension);
-      Utils::waitForSomeSeconds("displaySmoothedDynamicGrid(): before display");
       int indexInBitmap = 1; // skip alpha channel
       display_.startWrite();
       for (int x = 0; x < pixelsPerDimension; x++) {
@@ -306,6 +320,12 @@ class OLEDWrapper {
           int y0 = rotatedY * SUPER_PIXEL_SIZE;
           for (int i = 0; i < SUPER_PIXEL_SIZE; i++) {
             for (int j = 0; j < SUPER_PIXEL_SIZE; j++) {
+              if (indexInBitmap >= nPixels * 4) {
+                Serial.println("displaySmoothedDynamicGrid(): indexInBitmap (" + String(indexInBitmap) + 
+                            ") >= nPixels * 4 (" + String(nPixels * 4) + "), " + 
+                            "returning early");
+                return;
+              }
               int r = map(bitMap[indexInBitmap++], 0, 65535, 0, 255);
               int g = map(bitMap[indexInBitmap++], 0, 65535, 0, 255);
               int b = map(bitMap[indexInBitmap++], 0, 65535, 0, 255);
