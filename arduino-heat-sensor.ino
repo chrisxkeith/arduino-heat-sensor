@@ -255,36 +255,28 @@ class OLEDWrapper {
       AverageSmoothFilter averageSmoothFilter(bitMap, width, height, aso);
       averageSmoothFilter.procImage();
     }
-    const int MIN_TEMP = 60;
-    const int MAX_TEMP = 100;
-    void buildBitMap(float vals[], int* bitMap, int bitMapSize, int width, int height,
-                    int pixelsPerSensor, int pixelsPerDimension) {
+    void buildBitMap(int vals[], int inputWidth, int inputHeight,
+                    int* bitMap, int xFactor, int yFactor) {
+      int outputWidth = inputWidth * xFactor;
+      int outputHeight = inputHeight * yFactor;
+      int bitMapSize = outputWidth * outputHeight * 4; // "* 4" for AlphaRGB
       int indexInBitmap = 0;
-      for (int sensorY = 0; sensorY < 8; sensorY++) {
-
-        // create one row of superpixel values.
-        int row[pixelsPerDimension];
-        for (int sensorX = 0; sensorX < 8; sensorX++) {
-          int index = (sensorY * width) + sensorX;
-          int origVal = (int)(vals[index]);
-          if (origVal < MIN_TEMP) {
-            origVal = MIN_TEMP;
-          }
-          if (origVal > MAX_TEMP) {
-            origVal = MAX_TEMP;
-          }
-          for (int pixelCoord = 0; pixelCoord < pixelsPerSensor; pixelCoord++) {
-            row[(sensorX * pixelsPerSensor) + pixelCoord] = origVal;
+      for (int inputY = 0; inputY < inputHeight; inputY++) {
+        int row[outputWidth];
+        for (int inputX = 0; inputX < inputWidth; inputX++) {
+          int index = (inputY * outputWidth) + inputX;
+          for (int pixelCoord = 0; pixelCoord < xFactor; pixelCoord++) {
+            row[(inputX * xFactor) + pixelCoord] = vals[index];
           }
         }
         // load that row into the bitmap, repeating for the number of superpixels per sensor
-        for (int y = 0; y < pixelsPerSensor; y++) {
-          for (int j = 0; j < width; j++) {
+        for (int y = 0; y < xFactor; y++) {
+          for (int j = 0; j < outputWidth; j++) {
             if (indexInBitmap >= bitMapSize) {
               Serial.println("buildBitMap(): indexInBitmap (" + String(indexInBitmap) + 
                               ") >= bitMapSize (" + String(bitMapSize) + 
                               "), y: " + String(y) + ", j: " + String(j) + 
-                              ", sensorY: " + String(sensorY) + ", returning early");
+                              ", inputY: " + String(inputY) + ", returning early");
               return;
             }
             bitMap[indexInBitmap++] = 255;
@@ -332,23 +324,42 @@ class OLEDWrapper {
       delete bitMap;
       return true;
     }
+    void clampValues(int iVals[], float vals[], int nVals, float minVal, float maxVal) {
+      for (int i = 0; i < nVals; i++) {
+        if (vals[i] < minVal) {
+          iVals[i] = (int)minVal;
+        } else {
+          iVals[i] = (int)vals[i];
+        }
+        if (vals[i] > maxVal) {
+          iVals[i] = (int)maxVal;
+        } else {
+          iVals[i] = (int)vals[i];
+        }
+      }
+    }
+    const int MIN_TEMP = 60;
+    const int MAX_TEMP = 100;
     bool displaySmoothedDynamicGrid(float vals[]) {
+      int iVals[64];
+      clampValues(iVals, vals, 64, MIN_TEMP, MAX_TEMP);
       int pixelsPerDimension = getHeight() / SUPER_PIXEL_SIZE;
-      int nPixels = pixelsPerDimension * pixelsPerDimension;
-      int* bitMap = new int[nPixels * 4]; // "* 4" for AlphaRGB
       const int PIXELS_PER_SENSOR = 5;
-      buildBitMap(vals, bitMap, nPixels * 4, pixelsPerDimension,
-                  pixelsPerDimension, PIXELS_PER_SENSOR, pixelsPerDimension);
-      blur(bitMap, pixelsPerDimension, pixelsPerDimension);
+      int nPixels = pixelsPerDimension * PIXELS_PER_SENSOR * pixelsPerDimension * PIXELS_PER_SENSOR;
+      int* bitMap = new int[nPixels * 4]; // "* 4" for AlphaRGB
+      buildBitMap(iVals, 8, 8,
+                  bitMap, PIXELS_PER_SENSOR, PIXELS_PER_SENSOR);
+      // blur(bitMap, pixelsPerDimension, pixelsPerDimension);
       return doDisplaySmoothedDynamicGrid(bitMap, pixelsPerDimension, nPixels);
     }
     void displayUnsmoothedDynamicGrid(float vals[]) {
+      int iVals[64];
+      clampValues(iVals, vals, 64, MIN_TEMP, MAX_TEMP);
       display_.startWrite();
       for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
           int index = (y * 8) + x;
-          int val = (int)(vals[index]);
-          val = map(val, 60, 100, 0, 255);
+          int val = map(vals[index], MIN_TEMP, MAX_TEMP, 0, 255);
           int color = display_.color565(val, 0, 0);
           int rotatedX = y;
           int rotatedY = 7 - x;
