@@ -76,134 +76,6 @@ class Timer {
     }
 };
 
-#include <SparkFun_Qwiic_OpenLog_Arduino_Library.h>
-
-class DataLogger {
-  private:
-     OpenLog    openLog;
-     String     fileName;
-  public:
-    DataLogger(String fileName) {
-      Wire.begin();
-      openLog.begin();
-      this->fileName = fileName;
-    }
-    void writeFile(std::vector<String> lines) {
-      if (openLog.size(this->fileName) > 0) {
-        uint32_t retCode = openLog.removeFile(this->fileName); 
-        if (retCode != 1) {
-          String s("Unable to remove: ");
-          s.concat(this->fileName);
-          s.concat(", return code: ");
-          s.concat(retCode);
-          Serial.println(s);
-          return;
-        };
-      }
-      if (!openLog.append(this->fileName)) {
-          String s("Unable to append: ");
-          s.concat(this->fileName);
-          Serial.println(s);
-          return;
-      }
-      for (const String &s : lines) {
-        if (s.length() > 0) {
-          if (openLog.println(s) == 0) {
-            String err("Error writing string: ");
-            err.concat(s);
-            Serial.println(err);
-            break;
-          }
-        }
-      }
-      openLog.syncFile();
-    }
-    void readFile(std::vector<String*>* lines) {
-      long sizeOfFile = openLog.size(this->fileName);
-      if (sizeOfFile <= 0) {
-        String s("openLog.size returned: ");
-        s.concat(sizeOfFile);
-        s.concat(" for file: ");
-        s.concat(this->fileName);
-        Serial.println(s);
-        return;
-      }
-      byte* buf = new byte[sizeOfFile];
-      if (buf == nullptr) {
-        String s("Failed to alloc buf of size: ");
-        s.concat(sizeOfFile);
-        Serial.println(s);
-        return;
-      }
-      openLog.read(buf, (uint16_t)sizeOfFile, this->fileName);
-      const byte CR = 13;
-      const byte LF = 10;
-      String line;
-      for (int x = 0; x < sizeOfFile ; x++) {
-        byte b = buf[x];
-        if (b == CR) {
-          continue;
-        }
-        if (b == LF) {
-          lines->push_back(new String(line));
-          line.remove(0);
-          continue;
-        }
-        line.concat((char)b);      
-      }
-      delete buf;
-    }
-    void test() {
-      randomSeed(analogRead(0));
-      String lineToWrite("Some junk text to test the DataLogger - ");
-      lineToWrite.concat(random(10000));
-      std::vector<String>  example;
-      example.push_back(lineToWrite);
-      this->fileName = "test.txt";
-      String m("About to write line: ");
-      m.concat(lineToWrite);
-      Serial.println(m);
-      writeFile(example);
-      delay(5000);
-      std::vector<String*> linesRead;
-      readFile(&linesRead);
-      String msg("Read the line: ");
-      if (linesRead.size() == 0) {
-        msg.concat("[no line!]");
-      } else {
-        msg.concat(*linesRead.at(0));
-      }
-      Serial.println(msg);
-    }
-};
-DataLogger* datalogger = nullptr;
-
-#include <bitset>
-class SuperPixelPatterns {
-  public:
-    const static uint16_t HORIZONTAL_COUNT = 8;
-    const static uint16_t VERTICAL_COUNT = 8;
-    const static uint16_t NUM_SUPER_PIXELS = HORIZONTAL_COUNT * VERTICAL_COUNT;
-    const static uint16_t HORIZONTAL_SIZE = 8;
-    const static uint16_t VERTICAL_SIZE = 8;
-    const static uint16_t SUPER_PIXEL_SIZE = HORIZONTAL_SIZE * VERTICAL_SIZE;
-  private:
-    std::bitset<SUPER_PIXEL_SIZE> patterns[NUM_SUPER_PIXELS];
-
-  public:
-    SuperPixelPatterns() {
-      for (int superPixelIndex = 0; superPixelIndex < NUM_SUPER_PIXELS; superPixelIndex++) {
-        for (int pixelPosition = 0; pixelPosition < SUPER_PIXEL_SIZE; pixelPosition++) {
-          bool bitValue = (rand() % NUM_SUPER_PIXELS) < superPixelIndex;
-          patterns[superPixelIndex][pixelPosition] = bitValue;
-        }
-      }
-    }
-    bool getPixelAt(int superPixelIndex, int pixelPosition) {
-      return patterns[superPixelIndex][pixelPosition];
-    }
-};
-
 #include <float.h>
 #include <U8g2lib.h>
 
@@ -259,7 +131,7 @@ class OLEDWrapper {
                     int* bitMap, int xFactor, int yFactor) {
       int outputWidth = inputWidth * xFactor;
       int outputHeight = inputHeight * yFactor;
-      int bitMapSize = outputWidth * outputHeight * 4; // "* 4" for AlphaRGB
+      int bitMapSize = outputWidth * outputHeight * 3; // "* 3" for RGB
       int indexInBitmap = 0;
       for (int inputY = 0; inputY < inputHeight; inputY++) {
         int row[outputWidth];
@@ -297,7 +169,6 @@ class OLEDWrapper {
                               ", inputY: " + String(inputY) + ", returning early");
               return;
             }
-            bitMap[indexInBitmap++] = 255;
             bitMap[indexInBitmap++] = row[j];
             bitMap[indexInBitmap++] = 0;
             bitMap[indexInBitmap++] = 0;
@@ -305,10 +176,12 @@ class OLEDWrapper {
         }
       }
     }
-    const int SUPER_PIXEL_SIZE = 24; // 24x24 'superpixels' to reduce memory usage
+    const int SUPER_PIXEL_SIZE = 24;
+    // 24x24 'superpixels' to reduce memory usage.
     // 12x12 needs array of 640000 bytes, too big.
+    // TODO: Fix me!
     bool doDisplaySmoothedDynamicGrid(int* bitMap, int pixelsPerDimension, int nPixels) {
-      int indexInBitmap = 1; // 1 == skip alpha channel
+      int indexInBitmap = 0;
       display_.startWrite();
       for (int x = 0; x < pixelsPerDimension; x++) {
         for (int y = 0; y < pixelsPerDimension; y++) {
@@ -318,9 +191,9 @@ class OLEDWrapper {
           int y0 = rotatedY * SUPER_PIXEL_SIZE;
           for (int i = 0; i < SUPER_PIXEL_SIZE; i++) {
             for (int j = 0; j < SUPER_PIXEL_SIZE; j++) {
-              if (indexInBitmap >= nPixels * 4) {
+              if (indexInBitmap >= nPixels * 3) {
                 Serial.println("displaySmoothedDynamicGrid(): indexInBitmap (" + String(indexInBitmap) + 
-                            ") >= nPixels * 4 (" + String(nPixels * 4) + "), " + 
+                            ") >= nPixels * 3 (" + String(nPixels * 3) + "), " + 
                             ", x: " + String(x) + ", y: " + String(y) + 
                             ", rotatedX: " + String(rotatedX) + ", rotatedY: " + String(rotatedY) +
                             ", x0: " + String(x0) + ", y0: " + String(y0) + 
@@ -336,7 +209,7 @@ class OLEDWrapper {
               indexInBitmap -= 3; // reset to the start of the pixel for the next iteration
             }
           }
-          indexInBitmap += 4; // to the next pixel
+          indexInBitmap += 3; // to the next pixel
         }
       }
       display_.endWrite();
@@ -365,7 +238,7 @@ class OLEDWrapper {
       int pixelsPerDimension = getHeight() / SUPER_PIXEL_SIZE;
       const int PIXELS_PER_SENSOR = 5;
       int nPixels = pixelsPerDimension * PIXELS_PER_SENSOR * pixelsPerDimension * PIXELS_PER_SENSOR;
-      int* bitMap = new int[nPixels * 4]; // "* 4" for AlphaRGB
+      int* bitMap = new int[nPixels * 3]; // "* 3" for RGB
       expandBitMap(iVals, 8, 8,
                   bitMap, PIXELS_PER_SENSOR, PIXELS_PER_SENSOR);
       blur(bitMap, pixelsPerDimension * PIXELS_PER_SENSOR, pixelsPerDimension * PIXELS_PER_SENSOR);
@@ -445,8 +318,6 @@ class OLEDWrapper {
       s.concat(" F");
       display(s, 3, 10, 32);
     }
-    void setupBlurFilter() {
-    }
     void shiftDisplay() {
     }
     void dump() {
@@ -457,56 +328,6 @@ class OLEDWrapper {
       s.concat(", doSmoothing: ");
       s.concat(doSmoothing);
       Utils::publish(s);
-    }
-    void test2() {
-      for (int r = 0; r < 4; r++) {
-        clear();
-        display_.setRotation(r);
-        for (int i = 0; i < 24; i++) {
-          int x = 0;
-          int y = i * 20;
-          String s(i);
-          s.concat(",");
-          s.concat(x);
-          s.concat(",");
-          s.concat(y);
-          s.concat(",");
-          s.concat(getWidth());
-          s.concat(",");
-          s.concat(getHeight());
-          display(s, 2, x, y);
-          Utils::publish(s);
-          delay(1000);
-        }
-        delay(5000);
-      }
-    }
-    void oneFontTest(const GFXfont* font, String fontName) {
-      int16_t x1;
-      int16_t y1;
-      uint16_t w;
-      uint16_t h;
-
-      clear();
-      setFont(font);
-      display_.setTextSize(1);
-      display_.getTextBounds(fontName, 0, 0, &x1, &y1, &w, &h);
-      String s(fontName);
-      s.concat(", w: ");
-      s.concat(w);
-      s.concat(", h: ");
-      s.concat(h);
-      display(s, 1, 10, 10);
-      Utils::publish(s);
-      delay(10000);
-    }
-    void fontTest() {
-      oneFontTest(&Org_01, "Org_01");
-      oneFontTest(&Picopixel, "Picopixel");
-      oneFontTest(&Tiny3x3a2pt7b, "Tiny3x3a2pt7b");
-      oneFontTest(&TomThumb, "TomThumb");
-      oneFontTest(&FreeSans18pt7b, "FreeSans18pt7b");
-      setFont(nullptr);
     }
 };
 OLEDWrapper oledWrapper;
@@ -557,39 +378,6 @@ public:
   }
 };
 GridEyeSupport gridEyeSupport;
-
-#include <map>
-class SavedValues {
-  private:
-    const static int      NUM_SAVED_VALS = 60 * 6; // 6 hours @ one every minute
-    std::map<String, int> savedValues;
-    unsigned long         lastSavedTimeStamp = 0;
-  public:
-    void doSaveValue() {
-      unsigned long now = millis();
-      savedValues[Utils::msToString(now)] = gridEyeSupport.readValue();
-      lastSavedTimeStamp = now;
-    }
-    void saveValue() {
-      if (savedValues.size() < NUM_SAVED_VALS) {
-        unsigned long now = millis();
-        if (now - lastSavedTimeStamp > 1000 * 60) { // every minute, roughly
-          doSaveValue();
-        }
-      }
-    }
-    void dumpHistory() {
-      for(std::map<String, int>::iterator it = savedValues.begin();
-          it != savedValues.end();
-          it++) {
-        String s(it->first);
-        s.concat(",");
-        s.concat(it->second);
-        Serial.println(s);
-      }
-    }
-};
-SavedValues savedValues;
 
 String Utils::msToString(unsigned long ms) {
   int totalSeconds = ms / 1000;
@@ -686,48 +474,6 @@ class App {
         }
       }
     }
-
-    void displayRef() {
-      int vals[64];
-      for (int i = 0; i < 64; i++) {
-        vals[i] = i;
-      }
-//      oledWrapper.displayArray(vals);
-    }
-
-    void displayContrastGrid() {
-      int ref[] = { 0, 1, 2, 3, 4, 5, 6, 7,
-                    7, 6, 5, 4, 3, 2, 1, 0,
-                    1, 2, 3, 4, 5, 6, 7, 0,
-                    7, 6, 5, 4, 3, 2, 1, 0,
-                    2, 3, 4, 5, 6, 7, 0, 1,
-                    7, 6, 5, 4, 3, 2, 1, 0,
-                    3, 4, 5, 6, 7, 0, 1, 2,
-                    7, 6, 5, 4, 3, 2, 1, 0
-                  };
-      for (int i = 0; i < 64; i++) {
-        ref[i] *= 8;
-      }
-//      oledWrapper.displayBlurredArray(ref);
-    }
-
-    void displayTestGrids() {
-      const int NUM_TESTDATA = 1;
-      float d1[] = {80,81,80,81,84,96,98,90,81,82,82,83,86,135,133,94,83,83,83,85,87,98,107,91,87,90,90,87,90,100,95,90,95,134,144,101,113,146,132,95,98,137,131,105,123,137,128,95,90,98,104,92,98,116,100,92,86,89,86,86,87,90,89,88};
-      float* testData[NUM_TESTDATA] = {
-        d1
-      };
-      String testDataNames[NUM_TESTDATA] = {
-        "3burners"
-      };
-      for (int i = 0; i < NUM_TESTDATA; i++) {
-//        oledWrapper.display(testDataNames[i]);
-        delay(3000);
-//        oledWrapper.displayDynamicGrid(testData[i]);
-        delay(3000);
-      }
-    }
-
     void checkSerial() {
       if (Utils::DO_SERIAL) {
         if (Serial.available() > 0) {
@@ -736,14 +482,6 @@ class App {
           if (teststr.equals("?")) {
             status();
             oledWrapper.dump();
-          } else if (teststr.equals("contrastgrid")) {
-            displayContrastGrid();
-          } else if (teststr.equals("grid")) {
-            displayGrid();
-          } else if (teststr.equals("history")) {
-            savedValues.dumpHistory();
-          } else if (teststr.equals("ref")) {
-            displayRef();
           } else if (teststr.equals("smooth")) {
             oledWrapper.doSmoothing = true;
             oledWrapper.dump();
@@ -751,14 +489,12 @@ class App {
             Utils::scanI2C();
           } else if (teststr.equals("temp")) {
             oledWrapper.showTemp(temperatureMonitor.getValue());
-          } else if (teststr.equals("testgrids")) {
-            displayTestGrids();
           } else if (teststr.equals("values")) {
             Utils::publish(gridEyeSupport.getValuesAsString());
           } else {
             String msg("Unknown command: '");
             msg.concat(teststr);
-            msg.concat("'. Expected ?, contrastgrid, dump, grid, history, ref, smooth, scan, temp, testgrids or values");
+            msg.concat("'. Expected ?, smooth, scan, temp or values");
             Utils::publish(msg);
             return;
           }
@@ -775,28 +511,6 @@ class App {
       oledWrapper.showTemp(temperatureMonitor.getValue());
 #endif
     }
-    void extraSetupStart() {
-      Utils::publish("Started setup...");
-      status();
-//      datalogger = new DataLogger("heatdata.txt");
-    }
-    void extraSetupFinish() {
-/*      oledWrapper.setupBlurFilter();
-      delay(1000);
-      oledWrapper.startup();
-      uint16_t baseline = 16;
-      for (String s : configs) {
-        oledWrapper.display(s, 0, baseline);
-        baseline += 16;
-      }
-      oledWrapper.endDisplay();
-      delay(5000);
-      oledWrapper.clear();
-      savedValues.doSaveValue();
-      Utils::scanI2C();
-//      datalogger->test();
-      Utils::publish("Finished setup...");
-*/   }
   public:
     App() {
     }
@@ -815,7 +529,6 @@ class App {
       oledWrapper.startup();
       String initialMsgs[3] = { configs[0], configs[1], configs[4] };
       oledWrapper.clear();
-      // extraSetupFinish();
     }
     void loop() {
 #if SHOW_GRID
@@ -838,7 +551,6 @@ class App {
           oledWrapper.clear();
         }
       }
-//     savedValues.saveValue();
        checkSerial();
     }
 };

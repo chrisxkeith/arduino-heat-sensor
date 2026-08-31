@@ -16,11 +16,6 @@
   },
   {
     "Sourcefile": "/home/ck/Documents/github/arduino-heat-sensor/build/sketch/arduino-heat-sensor.ino.cpp",
-    "Include": "SparkFun_Qwiic_OpenLog_Arduino_Library.h",
-    "Includepath": "/home/ck/Arduino/libraries/SparkFun_Qwiic_OpenLog/src"
-  },
-  {
-    "Sourcefile": "/home/ck/Documents/github/arduino-heat-sensor/build/sketch/arduino-heat-sensor.ino.cpp",
     "Include": "U8g2lib.h",
     "Includepath": "/home/ck/Arduino/libraries/U8g2/src"
   },
@@ -76,11 +71,6 @@
   },
   {
     "Sourcefile": "/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/Wire/Wire.cpp",
-    "Include": "",
-    "Includepath": null
-  },
-  {
-    "Sourcefile": "/home/ck/Arduino/libraries/SparkFun_Qwiic_OpenLog/src/SparkFun_Qwiic_OpenLog_Arduino_Library.cpp",
     "Include": "",
     "Includepath": null
   },
