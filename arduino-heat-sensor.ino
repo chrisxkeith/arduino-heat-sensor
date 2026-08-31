@@ -489,12 +489,15 @@ class App {
             Utils::scanI2C();
           } else if (teststr.equals("temp")) {
             oledWrapper.showTemp(temperatureMonitor.getValue());
+          } else if (teststr.equals("unsmooth")) {
+            oledWrapper.doSmoothing = false;
+            oledWrapper.dump();
           } else if (teststr.equals("values")) {
             Utils::publish(gridEyeSupport.getValuesAsString());
           } else {
             String msg("Unknown command: '");
             msg.concat(teststr);
-            msg.concat("'. Expected ?, smooth, scan, temp or values");
+            msg.concat("'. Expected ?, smooth, scan, temp, unsmooth, or values");
             Utils::publish(msg);
             return;
           }
