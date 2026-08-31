@@ -120,11 +120,12 @@ class OLEDWrapper {
         display(s[i], DEFAULT_FONT_SIZE, 10, 32 + (i * 32));
       }
     }
+// #define ERROR_CHECK
     bool doDisplaySmoothedDynamicGrid(uint16_t colors[], int size, int width, int height) {
-      const int   MASK_SIZE = 5;
+      const int   FACTOR = height / 8; // 8x8 sensor grid
+      const int   MASK_SIZE = FACTOR / 2;
       const int   DIV = MASK_SIZE * MASK_SIZE;
       const int   HALF_MASK_SIZE = MASK_SIZE / 2;
-      const int   FACTOR = height / 8; // 8x8 sensor grid
       int         sumR = 0;
       int         sumG = 0;
       int         sumB = 0;
@@ -135,16 +136,31 @@ class OLEDWrapper {
           sumR = sumG = sumB = 0;
           for (int m = -HALF_MASK_SIZE; m <= HALF_MASK_SIZE; m++) {
             for (int n = -HALF_MASK_SIZE; n <= HALF_MASK_SIZE; n++) {
-              int index = ((row + m) * width) / FACTOR + (col + n) / FACTOR;
-              // 00:00:26 doDisplaySmoothedDynamicGrid: index out of bounds: 64 >= 64, row: 6, col: 2, m: 2, n: -2
-              if (index >= size) {
-                Utils::publish("doDisplaySmoothedDynamicGrid: index out of bounds: " + 
-                        String(index) + " >= " + String(size) +
-                        ", row: " + String(row) + ", col: " + String(col) +
-                        ", m: " + String(m) + ", n: " + String(n));
+              int sensorX = (col + n) / FACTOR;
+              int sensorY = (row + m) / FACTOR;
+#ifdef ERROR_CHECK
+              if (sensorX < 0 || sensorX >= 8 || sensorY < 0 || sensorY >= 8) {
+                Utils::publish("doDisplaySmoothedDynamicGrid: sensorX or sensorY out of bounds: sensorX: " + 
+                    String(sensorX) + ", sensorY: " + String(sensorY) + ", row: " + String(row) + 
+                    ", col: " + String(col) + ", m: " + String(m) +
+                    ", n: " + String(n) + ", width: " + String(width) + 
+                    ", height: " + String(height) + ", FACTOR: " + String(FACTOR));
                 return false;
               }
-              uint16_t color(colors[index]);
+#endif
+              int sensorIndex = (sensorX * 8) + sensorY;
+#ifdef ERROR_CHECK
+              if (sensorIndex >= size) {
+                Utils::publish("doDisplaySmoothedDynamicGrid: index out of bounds: " + 
+                        String(sensorIndex) + " >= " + String(size) +
+                        ", row: " + String(row) + ", col: " + String(col) +
+                        ", m: " + String(m) + ", n: " + String(n) +
+                      ", width: " + String(width) + ", height: " + String(height) + 
+                      ", FACTOR: " + String(FACTOR));
+                return false;
+              }
+#endif
+              uint16_t color(colors[sensorIndex]);
               // return ((red & 0xF8) << 8) | ((green & 0xFC) << 3) | (blue >> 3);
               sumR += (color >> 8) & 0xF8;
               sumG += (color >> 3) & 0xFC;
