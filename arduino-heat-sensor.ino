@@ -4,8 +4,6 @@
 #include <vector>
 #include <set>
 
-#include "./AverageSmoothFilter.h"
-
 class Utils {
   public:
     const static bool DO_SERIAL = true;
@@ -95,7 +93,7 @@ class OLEDWrapper {
     uint16_t currentColor = COLOR_WHITE;
     const int DEFAULT_FONT_SIZE = 3;
   public:
-    bool doSmoothing = true;
+    bool doSmoothing = false;
     void clear() {
       display_.fillScreen(COLOR_BLACK);
     }
@@ -122,98 +120,42 @@ class OLEDWrapper {
         display(s[i], DEFAULT_FONT_SIZE, 10, 32 + (i * 32));
       }
     }
-    void blur(int* bitMap, int width, int height) {
-      AverageSmoothOptions aso(8);
-      AverageSmoothFilter averageSmoothFilter(bitMap, width, height, aso);
-      averageSmoothFilter.procImage();
-    }
-    void expandBitMap(int vals[], int inputWidth, int inputHeight,
-                    int* bitMap, int xFactor, int yFactor) {
-      int outputWidth = inputWidth * xFactor;
-      int outputHeight = inputHeight * yFactor;
-      int bitMapSize = outputWidth * outputHeight * 3; // "* 3" for RGB
-      int indexInBitmap = 0;
-      for (int inputY = 0; inputY < inputHeight; inputY++) {
-        int row[outputWidth];
-        for (int inputX = 0; inputX < inputWidth; inputX++) {
-          int inputIndex = (inputY * inputWidth) + inputX;
-          if (inputIndex >= inputWidth * inputHeight) {
-            Serial.println("expandBitMap(): inputIndex (" + String(inputIndex) + 
-                            ") >= inputSize (" + String(inputWidth * inputHeight) + 
-                            "), inputY: " + String(inputY) + ", inputX: " + String(inputX) + 
-                            ". xFactor: " + String(xFactor) +
-                            ", returning early");
-            return;
-          }
-          for (int pixelCoord = 0; pixelCoord < xFactor; pixelCoord++) {
-            int outputIndex = (inputX * xFactor) + pixelCoord;
-            if (outputIndex >= outputWidth) {
-              Serial.println("expandBitMap(): outputIndex (" + String(outputIndex) + 
-                              ") >= outputWidth (" + String(outputWidth) + 
-                              "), inputY: " + String(inputY) + ", inputX: " + String(inputX) + 
-                              ", pixelCoord: " + String(pixelCoord) + 
-                              ". xFactor: " + String(xFactor) +
-                              ", returning early");
-              return;
-            }
-            row[outputIndex] = vals[inputIndex];
-          }
-        }
-        // load that row into the bitmap, repeating for the yFactor
-        for (int y = 0; y < yFactor; y++) {
-          for (int j = 0; j < outputWidth; j++) {
-            if (indexInBitmap >= bitMapSize) {
-              Serial.println("expandBitMap(): indexInBitmap (" + String(indexInBitmap) + 
-                              ") >= bitMapSize (" + String(bitMapSize) + 
-                              "), y: " + String(y) + ", j: " + String(j) + 
-                              ", inputY: " + String(inputY) + ", returning early");
-              return;
-            }
-            bitMap[indexInBitmap++] = row[j];
-            bitMap[indexInBitmap++] = 0;
-            bitMap[indexInBitmap++] = 0;
-          }
-        }
-      }
-    }
-    const int SUPER_PIXEL_SIZE = 24;
-    // 24x24 'superpixels' to reduce memory usage.
-    // 12x12 needs array of 640000 bytes, too big.
-    // TODO: Fix me!
-    bool doDisplaySmoothedDynamicGrid(int* bitMap, int pixelsPerDimension, int nPixels) {
-      int indexInBitmap = 0;
+    bool doDisplaySmoothedDynamicGrid(uint16_t colors[], int size, int width, int height) {
+      const int   MASK_SIZE = 5;
+      const int   DIV = MASK_SIZE * MASK_SIZE;
+      const int   HALF_MASK_SIZE = MASK_SIZE / 2;
+      const int   FACTOR = height / 8; // 8x8 sensor grid
+      int         sumR = 0;
+      int         sumG = 0;
+      int         sumB = 0;
+
       display_.startWrite();
-      for (int x = 0; x < pixelsPerDimension; x++) {
-        for (int y = 0; y < pixelsPerDimension; y++) {
-          int rotatedX = y;
-          int rotatedY = 7 - x;
-          int x0 = rotatedX * SUPER_PIXEL_SIZE;
-          int y0 = rotatedY * SUPER_PIXEL_SIZE;
-          for (int i = 0; i < SUPER_PIXEL_SIZE; i++) {
-            for (int j = 0; j < SUPER_PIXEL_SIZE; j++) {
-              if (indexInBitmap >= nPixels * 3) {
-                Serial.println("displaySmoothedDynamicGrid(): indexInBitmap (" + String(indexInBitmap) + 
-                            ") >= nPixels * 3 (" + String(nPixels * 3) + "), " + 
-                            ", x: " + String(x) + ", y: " + String(y) + 
-                            ", rotatedX: " + String(rotatedX) + ", rotatedY: " + String(rotatedY) +
-                            ", x0: " + String(x0) + ", y0: " + String(y0) + 
-                            ", i: " + String(i) + ", j: " + String(j) +
-                            ", returning early");
+      for (int row = HALF_MASK_SIZE; row < height - HALF_MASK_SIZE; row++) {
+        for (int col = HALF_MASK_SIZE; col < width - HALF_MASK_SIZE; col++) {
+          sumR = sumG = sumB = 0;
+          for (int m = -HALF_MASK_SIZE; m <= HALF_MASK_SIZE; m++) {
+            for (int n = -HALF_MASK_SIZE; n <= HALF_MASK_SIZE; n++) {
+              int index = ((row + m) * width) / FACTOR + (col + n) / FACTOR;
+              // 00:00:26 doDisplaySmoothedDynamicGrid: index out of bounds: 64 >= 64, row: 6, col: 2, m: 2, n: -2
+              if (index >= size) {
+                Utils::publish("doDisplaySmoothedDynamicGrid: index out of bounds: " + 
+                        String(index) + " >= " + String(size) +
+                        ", row: " + String(row) + ", col: " + String(col) +
+                        ", m: " + String(m) + ", n: " + String(n));
                 return false;
               }
-              int r = map(bitMap[indexInBitmap++], MIN_TEMP, MAX_TEMP, 0, 255);
-              int g = map(bitMap[indexInBitmap++], MIN_TEMP, MAX_TEMP, 0, 255);
-              int b = map(bitMap[indexInBitmap++], MIN_TEMP, MAX_TEMP, 0, 255);
-              int color = display_.color565(r, g, b);
-              display_.drawPixel(x0 + j, y0 + i, color);
-              indexInBitmap -= 3; // reset to the start of the pixel for the next iteration
+              uint16_t color(colors[index]);
+              // return ((red & 0xF8) << 8) | ((green & 0xFC) << 3) | (blue >> 3);
+              sumR += (color >> 8) & 0xF8;
+              sumG += (color >> 3) & 0xFC;
+              sumB += (color << 3) & 0xF8;
             }
           }
-          indexInBitmap += 3; // to the next pixel
+          int color = display_.color565(sumR / DIV, sumG / DIV, sumB / DIV);
+          display_.drawPixel(row, col, color);
         }
       }
       display_.endWrite();
-      delete bitMap;
       return true;
     }
     void clampValues(int iVals[], float vals[], int nVals, int minVal, int maxVal) {
@@ -235,14 +177,12 @@ class OLEDWrapper {
     bool displaySmoothedDynamicGrid(float vals[]) {
       int iVals[64];
       clampValues(iVals, vals, 64, MIN_TEMP, MAX_TEMP);
-      int pixelsPerDimension = getHeight() / SUPER_PIXEL_SIZE;
-      const int PIXELS_PER_SENSOR = 5;
-      int nPixels = pixelsPerDimension * PIXELS_PER_SENSOR * pixelsPerDimension * PIXELS_PER_SENSOR;
-      int* bitMap = new int[nPixels * 3]; // "* 3" for RGB
-      expandBitMap(iVals, 8, 8,
-                  bitMap, PIXELS_PER_SENSOR, PIXELS_PER_SENSOR);
-      blur(bitMap, pixelsPerDimension * PIXELS_PER_SENSOR, pixelsPerDimension * PIXELS_PER_SENSOR);
-      return doDisplaySmoothedDynamicGrid(bitMap, pixelsPerDimension, nPixels);
+      uint16_t colors[64];
+      for (int i = 0; i < 64; i++) {
+        int val = map(iVals[i], MIN_TEMP, MAX_TEMP, 0, 255);
+        colors[i] = display_.color565(val, 0, 0);
+      }      
+      return doDisplaySmoothedDynamicGrid(colors, 64, getHeight(), getHeight());
     }
     void displayUnsmoothedDynamicGrid(float vals[]) {
       int iVals[64];
