@@ -98,7 +98,7 @@ class OLEDWrapper {
     uint16_t currentColor = COLOR_WHITE;
     const int DEFAULT_FONT_SIZE = 3;
   public:
-    bool doSmoothing = false;
+    bool doSmoothing = true;
     void clear() {
       display_.fillScreen(COLOR_BLACK);
     }
@@ -130,13 +130,14 @@ class OLEDWrapper {
       const int   MASK_SIZE = FACTOR / 2;
       const int   DIV = MASK_SIZE * MASK_SIZE;
       const int   HALF_MASK_SIZE = MASK_SIZE / 2;
+      const int   SUPER_PIXEL_SIZE = 16;
       int         sumR = 0;
       int         sumG = 0;
       int         sumB = 0;
 
       display_.startWrite();
-      for (int row = HALF_MASK_SIZE; row < height - HALF_MASK_SIZE; row++) {
-        for (int col = HALF_MASK_SIZE; col < width - HALF_MASK_SIZE; col++) {
+      for (int row = HALF_MASK_SIZE; row < height - HALF_MASK_SIZE; row += SUPER_PIXEL_SIZE) {
+        for (int col = HALF_MASK_SIZE; col < width - HALF_MASK_SIZE; col += SUPER_PIXEL_SIZE) {
           sumR = sumG = sumB = 0;
           for (int m = -HALF_MASK_SIZE; m <= HALF_MASK_SIZE; m++) {
             for (int n = -HALF_MASK_SIZE; n <= HALF_MASK_SIZE; n++) {
@@ -144,14 +145,13 @@ class OLEDWrapper {
               int sensorY = (row + m) / FACTOR;
               int sensorIndex = (sensorX * 8) + sensorY;
               uint16_t color(colors[sensorIndex]);
-              // return ((red & 0xF8) << 8) | ((green & 0xFC) << 3) | (blue >> 3);
               sumR += (color >> 8) & 0xF8;
               sumG += (color >> 3) & 0xFC;
               sumB += (color << 3) & 0xF8;
             }
           }
           int color = display_.color565(sumR / DIV, sumG / DIV, sumB / DIV);
-          display_.drawPixel(row, col, color);
+          display_.fillRect(row, col, SUPER_PIXEL_SIZE, SUPER_PIXEL_SIZE, color);
         }
       }
       display_.endWrite();
@@ -173,7 +173,6 @@ class OLEDWrapper {
     const int MIN_TEMP = 60;
     const int MAX_TEMP = 100;
     void displaySmoothedDynamicGrid(float vals[]) {
-      Timer t("displaySmoothedDynamicGrid"); // time for displaySmoothedDynamicGrid: 10.154 seconds
       int iVals[64];
       clampValues(iVals, vals, 64, MIN_TEMP, MAX_TEMP);
       uint16_t colors[64];
@@ -184,7 +183,6 @@ class OLEDWrapper {
       doDisplaySmoothedDynamicGrid(colors, 64, getHeight(), getHeight());
     }
     void displayUnsmoothedDynamicGrid(float vals[]) {
-      Timer t("displayUnsmoothedDynamicGrid");  // time for displayUnsmoothedDynamicGrid: 00.045 seconds
       int iVals[64];
       clampValues(iVals, vals, 64, MIN_TEMP, MAX_TEMP);
       display_.startWrite();
@@ -212,7 +210,6 @@ class OLEDWrapper {
       } else {
         displayUnsmoothedDynamicGrid(vals);
       }
-      doSmoothing = !doSmoothing;
     }
     void setDrawColor(int color) {
       currentColor = color;
