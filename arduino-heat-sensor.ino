@@ -66,10 +66,15 @@ class Timer {
     }
     ~Timer() {
       unsigned long ms = millis() - start;
-      String msg("milliseconds for ");
+      unsigned long seconds = ms / 1000;
+      unsigned long remainingMS = ms % 1000;
+      String msg("time for ");
       msg.concat(this->msg);
       msg.concat(": ");
-      msg.concat(ms);
+      char buf[100];
+      sprintf(buf, "%02u.%03u", seconds, remainingMS);
+      msg.concat(String(buf));
+      msg.concat(" seconds");
       Serial.println(msg);
     }
 };
@@ -120,8 +125,7 @@ class OLEDWrapper {
         display(s[i], DEFAULT_FONT_SIZE, 10, 32 + (i * 32));
       }
     }
-// #define ERROR_CHECK
-    bool doDisplaySmoothedDynamicGrid(uint16_t colors[], int size, int width, int height) {
+    void doDisplaySmoothedDynamicGrid(uint16_t colors[], int size, int width, int height) {
       const int   FACTOR = height / 8; // 8x8 sensor grid
       const int   MASK_SIZE = FACTOR / 2;
       const int   DIV = MASK_SIZE * MASK_SIZE;
@@ -138,28 +142,7 @@ class OLEDWrapper {
             for (int n = -HALF_MASK_SIZE; n <= HALF_MASK_SIZE; n++) {
               int sensorX = (col + n) / FACTOR;
               int sensorY = (row + m) / FACTOR;
-#ifdef ERROR_CHECK
-              if (sensorX < 0 || sensorX >= 8 || sensorY < 0 || sensorY >= 8) {
-                Utils::publish("doDisplaySmoothedDynamicGrid: sensorX or sensorY out of bounds: sensorX: " + 
-                    String(sensorX) + ", sensorY: " + String(sensorY) + ", row: " + String(row) + 
-                    ", col: " + String(col) + ", m: " + String(m) +
-                    ", n: " + String(n) + ", width: " + String(width) + 
-                    ", height: " + String(height) + ", FACTOR: " + String(FACTOR));
-                return false;
-              }
-#endif
               int sensorIndex = (sensorX * 8) + sensorY;
-#ifdef ERROR_CHECK
-              if (sensorIndex >= size) {
-                Utils::publish("doDisplaySmoothedDynamicGrid: index out of bounds: " + 
-                        String(sensorIndex) + " >= " + String(size) +
-                        ", row: " + String(row) + ", col: " + String(col) +
-                        ", m: " + String(m) + ", n: " + String(n) +
-                      ", width: " + String(width) + ", height: " + String(height) + 
-                      ", FACTOR: " + String(FACTOR));
-                return false;
-              }
-#endif
               uint16_t color(colors[sensorIndex]);
               // return ((red & 0xF8) << 8) | ((green & 0xFC) << 3) | (blue >> 3);
               sumR += (color >> 8) & 0xF8;
@@ -172,7 +155,6 @@ class OLEDWrapper {
         }
       }
       display_.endWrite();
-      return true;
     }
     void clampValues(int iVals[], float vals[], int nVals, int minVal, int maxVal) {
       for (int i = 0; i < nVals; i++) {
@@ -190,7 +172,8 @@ class OLEDWrapper {
     }
     const int MIN_TEMP = 60;
     const int MAX_TEMP = 100;
-    bool displaySmoothedDynamicGrid(float vals[]) {
+    void displaySmoothedDynamicGrid(float vals[]) {
+      Timer t("displaySmoothedDynamicGrid"); // time for displaySmoothedDynamicGrid: 10.154 seconds
       int iVals[64];
       clampValues(iVals, vals, 64, MIN_TEMP, MAX_TEMP);
       uint16_t colors[64];
@@ -198,9 +181,10 @@ class OLEDWrapper {
         int val = map(iVals[i], MIN_TEMP, MAX_TEMP, 0, 255);
         colors[i] = display_.color565(val, 0, 0);
       }      
-      return doDisplaySmoothedDynamicGrid(colors, 64, getHeight(), getHeight());
+      doDisplaySmoothedDynamicGrid(colors, 64, getHeight(), getHeight());
     }
     void displayUnsmoothedDynamicGrid(float vals[]) {
+      Timer t("displayUnsmoothedDynamicGrid");  // time for displayUnsmoothedDynamicGrid: 00.045 seconds
       int iVals[64];
       clampValues(iVals, vals, 64, MIN_TEMP, MAX_TEMP);
       display_.startWrite();
@@ -224,12 +208,11 @@ class OLEDWrapper {
     }
     void displayDynamicGrid(float vals[]) {
       if (doSmoothing) {
-        if (!displaySmoothedDynamicGrid(vals)) {
-          doSmoothing = false;
-        }
+        displaySmoothedDynamicGrid(vals);
       } else {
         displayUnsmoothedDynamicGrid(vals);
       }
+      doSmoothing = !doSmoothing;
     }
     void setDrawColor(int color) {
       currentColor = color;
