@@ -130,7 +130,7 @@ class OLEDWrapper {
       const int   MASK_SIZE = FACTOR / 2;
       const int   DIV = MASK_SIZE * MASK_SIZE;
       const int   HALF_MASK_SIZE = MASK_SIZE / 2;
-      const int   SUPER_PIXEL_SIZE = 16;
+      const int   SUPER_PIXEL_SIZE = 32;
       const int   ROTATE_FACTOR = height - HALF_MASK_SIZE;
       int         sumR = 0;
       int         sumG = 0;
