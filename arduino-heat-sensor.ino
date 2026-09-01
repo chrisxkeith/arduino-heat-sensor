@@ -131,6 +131,7 @@ class OLEDWrapper {
       const int   DIV = MASK_SIZE * MASK_SIZE;
       const int   HALF_MASK_SIZE = MASK_SIZE / 2;
       const int   SUPER_PIXEL_SIZE = 16;
+      const int   ROTATE_FACTOR = height - HALF_MASK_SIZE;
       int         sumR = 0;
       int         sumG = 0;
       int         sumB = 0;
@@ -151,7 +152,7 @@ class OLEDWrapper {
             }
           }
           int color = display_.color565(sumR / DIV, sumG / DIV, sumB / DIV);
-          display_.fillRect(row, col, SUPER_PIXEL_SIZE, SUPER_PIXEL_SIZE, color);
+          display_.fillRect(col, ROTATE_FACTOR - row, SUPER_PIXEL_SIZE, SUPER_PIXEL_SIZE, color);
         }
       }
       display_.endWrite();
