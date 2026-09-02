@@ -387,15 +387,10 @@ TemperatureMonitor temperatureMonitor;
 
 class App {
   private:
-#define SHOW_GRID true
     String configs[5] = {
+      "Unit ID: 1",
       "~Wed Sep  2 10:55:23 AM PDT 2026",
       "arduino-heat-sensor",
-#if SHOW_GRID
-      "showing grid",
-#else
-      "showing temp",
-#endif
       "Using GigaDisplay_GFX",
       "Testing: " + Utils::toString(displayParams.TESTING)
     };
@@ -477,11 +472,7 @@ class App {
       }
     }
     void display() {
-#if SHOW_GRID
       displayGrid();
-#else
-      oledWrapper.showTemp(temperatureMonitor.getValue());
-#endif
     }
   public:
     App() {
@@ -495,15 +486,10 @@ class App {
       gridEyeSupport.begin();
       status();
       oledWrapper.startup();
-      String initialMsgs[3] = { configs[0], configs[1], configs[4] };
       oledWrapper.clear();
     }
     void loop() {
-#if SHOW_GRID
       const int DISPLAY_RATE_IN_MS = 1;
-#else
-      const int DISPLAY_RATE_IN_MS = 2000;
-#endif
       int thisMS = millis();
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
         const int SHIFT_RATE = 1000 * 60 * 2; // Shift display every 2 minutes to avoid OLED burn-in.
