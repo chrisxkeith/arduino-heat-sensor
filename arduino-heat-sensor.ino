@@ -79,8 +79,41 @@ class Timer {
     }
 };
 
+class DisplayParams {
+  private:
+    const int MIN_TEMP = 80; // for production
+    const int MAX_TEMP = 100;
+    const int THRESHOLD = 90;
+    const int TEST_MIN_TEMP = 60; // for testing with skin temperature
+    const int TEST_MAX_TEMP = 100;
+    const int TEST_THRESHOLD = 60;
+
+  public:
+    const bool TESTING = true;
+    int minTemp;
+    int maxTemp;
+    int threshold;
+    DisplayParams() {
+      if (TESTING) {
+        setTestParams();
+      } else {
+        setParams();
+      }
+    }
+    void setTestParams() {
+      this->minTemp = TEST_MIN_TEMP;
+      this->maxTemp = TEST_MAX_TEMP;
+      this->threshold = TEST_THRESHOLD;
+    }
+    void setParams() {
+      this->minTemp = MIN_TEMP;
+      this->maxTemp = MAX_TEMP;
+      this->threshold = THRESHOLD;
+    }
+};
+DisplayParams displayParams;
+
 #include <float.h>
-#include <U8g2lib.h>
 
 const int COLOR_WHITE = 0x65535;
 const int COLOR_BLACK = 0x0;
@@ -171,26 +204,24 @@ class OLEDWrapper {
         }
       }
     }
-    const int MIN_TEMP = 60;
-    const int MAX_TEMP = 100;
     void displaySmoothedDynamicGrid(float vals[]) {
       int iVals[64];
-      clampValues(iVals, vals, 64, MIN_TEMP, MAX_TEMP);
+      clampValues(iVals, vals, 64, displayParams.minTemp, displayParams.maxTemp);
       uint16_t colors[64];
       for (int i = 0; i < 64; i++) {
-        int val = map(iVals[i], MIN_TEMP, MAX_TEMP, 0, 255);
+        int val = map(iVals[i], displayParams.minTemp, displayParams.maxTemp, 0, 255);
         colors[i] = display_.color565(val, 0, 0);
       }      
       doDisplaySmoothedDynamicGrid(colors, 64, getHeight(), getHeight());
     }
     void displayUnsmoothedDynamicGrid(float vals[]) {
       int iVals[64];
-      clampValues(iVals, vals, 64, MIN_TEMP, MAX_TEMP);
+      clampValues(iVals, vals, 64, displayParams.minTemp, displayParams.maxTemp);
       display_.startWrite();
       for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
           int index = (y * 8) + x;
-          int val = map(vals[index], MIN_TEMP, MAX_TEMP, 0, 255);
+          int val = map(vals[index], displayParams.minTemp, displayParams.maxTemp, 0, 255);
           int color = display_.color565(val, 0, 0);
           int rotatedX = y;
           int rotatedY = 7 - x;
@@ -356,10 +387,9 @@ TemperatureMonitor temperatureMonitor;
 
 class App {
   private:
-    const int THRESHOLD = 0; // degrees F
 #define SHOW_GRID true
     String configs[5] = {
-      "~Sun Aug 23 01:28:55 PM PDT 2026",
+      "~Wed Sep  2 10:55:23 AM PDT 2026",
       "arduino-heat-sensor",
 #if SHOW_GRID
       "showing grid",
@@ -367,7 +397,7 @@ class App {
       "showing temp",
 #endif
       "Using GigaDisplay_GFX",
-      "placeholder for threshold"
+      "Testing: " + Utils::toString(displayParams.TESTING)
     };
 
     int lastDisplay = 0;
@@ -397,9 +427,7 @@ class App {
       return false;
     }
 
-    // Read, blur and display should be < 400 ms.
     void displayGrid() {
-      // Timer t("displayGrid()");
       float vals[64];
       for (int i = 0; i < 64; i++) {
         vals[i] = gridEyeSupport.readOneSensor(i);
@@ -424,6 +452,10 @@ class App {
             oledWrapper.dump();
           } else if (teststr.equals("scan")) {
             Utils::scanI2C();
+          } else if (teststr.equals("startTest")) {
+            displayParams.setTestParams();
+          } else if (teststr.equals("stopTest")) {
+            displayParams.setParams();
           } else if (teststr.equals("temp")) {
             oledWrapper.showTemp(temperatureMonitor.getValue());
           } else if (teststr.equals("unsmooth")) {
@@ -434,7 +466,7 @@ class App {
           } else {
             String msg("Unknown command: '");
             msg.concat(teststr);
-            msg.concat("'. Expected ?, smooth, scan, temp, unsmooth, or values");
+            msg.concat("'. Expected ?, smooth, scan, startTest, stopTest, temp, unsmooth, or values");
             Utils::publish(msg);
             return;
           }
@@ -461,10 +493,6 @@ class App {
         delay(1000);
       }
       gridEyeSupport.begin();
-      String thresholdStr("Threshold: ");
-      thresholdStr.concat(THRESHOLD);
-      thresholdStr.concat(" F");
-      configs[4] = thresholdStr;
       status();
       oledWrapper.startup();
       String initialMsgs[3] = { configs[0], configs[1], configs[4] };
@@ -484,7 +512,14 @@ class App {
           oledWrapper.shiftDisplay();
           lastShift = thisMS;
         }
-        if (temperatureMonitor.getValue() >= THRESHOLD) {
+        bool doDisplay = false;
+        for (int i = 0; i < 64; i++) {
+          if (gridEyeSupport.readOneSensor(i) >= displayParams.threshold) {
+            doDisplay = true;
+            break;
+          }
+        }
+        if (doDisplay) {
           display();
           lastDisplay = thisMS;
         } else {
