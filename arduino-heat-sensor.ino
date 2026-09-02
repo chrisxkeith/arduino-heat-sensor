@@ -7,6 +7,7 @@
 class Utils {
   public:
     const static bool DO_SERIAL = true;
+    const static String unitID;
     static String msToString(unsigned long ms);
     static void publishWithSep(String s, String sep);
     static void publish(String s);
@@ -54,6 +55,7 @@ class Utils {
       Serial.println(ss);
     }
 };
+const String Utils::unitID = "1";
 
 class Timer {
   private:
@@ -89,7 +91,7 @@ class DisplayParams {
     const int TEST_THRESHOLD = 60;
 
   public:
-    const bool TESTING = true;
+    const bool TESTING = ! Utils::unitID.equals("1");
     int minTemp;
     int maxTemp;
     int threshold;
@@ -388,7 +390,7 @@ TemperatureMonitor temperatureMonitor;
 class App {
   private:
     String configs[5] = {
-      "Unit ID: 1",
+      "Unit ID: " + Utils::unitID,
       "~Wed Sep  2 10:55:23 AM PDT 2026",
       "arduino-heat-sensor",
       "Using GigaDisplay_GFX",
@@ -487,6 +489,11 @@ class App {
       status();
       oledWrapper.startup();
       oledWrapper.clear();
+      if (! displayParams.TESTING) {
+        oledWrapper.display("Unit ID: " + Utils::unitID);
+        delay(3000);
+        oledWrapper.clear();
+      }
     }
     void loop() {
       const int DISPLAY_RATE_IN_MS = 1;
