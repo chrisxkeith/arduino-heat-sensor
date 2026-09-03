@@ -55,7 +55,7 @@ class Utils {
       Serial.println(ss);
     }
 };
-const String Utils::unitID = "1";
+const String Utils::unitID = "2";
 
 class Timer {
   private:
@@ -155,9 +155,11 @@ class OLEDWrapper {
     void display(String s) {
       display(s, DEFAULT_FONT_SIZE, 10, 10);
     }
-    void display(String s[], int nStrings) {
+    void displayNextToGrid(String s[], int nStrings) {
+      int x0 = getHeight() + 10;
+      fillRectWH(x0, 0, getWidth() - x0, getHeight(), COLOR_BLACK);
       for (int i = 0; i < nStrings; i++) {
-        display(s[i], DEFAULT_FONT_SIZE, 10, 32 + (i * 32));
+        display(s[i], DEFAULT_FONT_SIZE, x0, 32 + (i * 32));
       }
     }
     void doDisplaySmoothedDynamicGrid(uint16_t colors[], int size, int width, int height) {
@@ -397,8 +399,9 @@ class App {
       "Testing: " + Utils::toString(displayParams.TESTING)
     };
 
-    int lastDisplay = 0;
+    unsigned long lastDisplay = 0;
     int lastShift = 0;
+    unsigned long mostRecentDisplayTime = 0;
 
     void status() {
       for (String s : configs) {
@@ -475,6 +478,11 @@ class App {
     }
     void display() {
       displayGrid();
+      if (mostRecentDisplayTime > 0) {
+        unsigned long elapsed = millis() - mostRecentDisplayTime;
+        String s = Utils::msToString(elapsed);
+        oledWrapper.displayNextToGrid(new String[1] {s}, 1);
+      }
     }
   public:
     App() {
@@ -497,7 +505,7 @@ class App {
     }
     void loop() {
       const int DISPLAY_RATE_IN_MS = 1;
-      int thisMS = millis();
+      unsigned long thisMS = millis();
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
         const int SHIFT_RATE = 1000 * 60 * 2; // Shift display every 2 minutes to avoid OLED burn-in.
         // const int SHIFT_RATE = 1000 * 2; // Shift display every 2 seconds for debugging.
@@ -515,8 +523,12 @@ class App {
         if (doDisplay) {
           display();
           lastDisplay = thisMS;
+          if (mostRecentDisplayTime == 0) {
+            mostRecentDisplayTime = thisMS;
+          }
         } else {
           oledWrapper.clear();
+          mostRecentDisplayTime = 0;
         }
       }
        checkSerial();
