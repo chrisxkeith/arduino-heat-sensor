@@ -143,13 +143,13 @@ class OLEDWrapper {
       clear();
       display_.setRotation(1);
     }
-    void display(String s, const GFXfont* font, int textSize, uint8_t x, uint8_t y) {
+    void display(String s, const GFXfont* font, int textSize, uint16_t x, uint16_t y) {
       display_.setCursor(x, y);
       display_.setFont(font);
       display_.setTextSize(textSize);
       display_.print(s);
     }
-    void display(String s, int textSize, uint8_t x, uint8_t y) {
+    void display(String s, int textSize, uint16_t x, uint16_t y) {
       display(s, nullptr, textSize, x, y);
     }
     void display(String s) {
