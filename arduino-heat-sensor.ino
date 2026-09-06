@@ -159,7 +159,7 @@ class OLEDWrapper {
       int x0 = getHeight() + 10;
       fillRectWH(x0, 0, getWidth() - x0, getHeight(), COLOR_BLACK);
       for (int i = 0; i < nStrings; i++) {
-        display(s[i], DEFAULT_FONT_SIZE, x0, 32 + (i * 32));
+        display(s[i], &FreeSans18pt7b, 1, x0 + 20, 32 + (i * 32));
       }
     }
     void doDisplaySmoothedDynamicGrid(uint16_t colors[], int size, int width, int height) {
