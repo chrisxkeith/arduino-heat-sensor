@@ -481,7 +481,9 @@ class App {
       if (mostRecentDisplayTime > 0) {
         unsigned long elapsed = millis() - mostRecentDisplayTime;
         String s = Utils::msToString(elapsed);
-        oledWrapper.displayNextToGrid(new String[1] {s}, 1);
+        String sArray[1];
+        sArray[0] = s;
+        oledWrapper.displayNextToGrid(sArray, 1);
       }
     }
   public:
