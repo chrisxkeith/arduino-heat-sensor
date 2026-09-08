@@ -2,6 +2,7 @@
 
 #ifdef LOCAL_BUILD
 String elapsedTime;
+String gridAsString;
 #else
 #include "thingProperties.h"
 #endif
@@ -494,7 +495,17 @@ class App {
       for (int i = 0; i < 8; i++) {
         Utils::publish(gridEyeSupport.getRowAsString(i));
       }
-  }
+    }
+    String getGridAsString() {
+      String ret;
+      for (int i = 0; i < 8; i++) {
+        ret.concat(gridEyeSupport.getRowAsString(i));
+        if (i < 7) {
+          ret.concat("\n");
+        }
+      }
+      return ret;
+    }
 
   public:
     App() {
@@ -534,6 +545,7 @@ class App {
         }
         if (doDisplay) {
           display();
+          gridAsString = getGridAsString();
           lastDisplay = thisMS;
           if (mostRecentDisplayTime == 0) {
             mostRecentDisplayTime = thisMS;
@@ -541,6 +553,12 @@ class App {
         } else {
           oledWrapper.clear();
           mostRecentDisplayTime = 0;
+          if (!elapsedTime.equals("--:--:--")) {
+            elapsedTime = "--:--:--";
+          }
+          if (!gridAsString.equals(" -- -- -- -- -- -- -- --")) {
+            gridAsString = " -- -- -- -- -- -- -- --";
+          }
         }
       }
        checkSerial();
