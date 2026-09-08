@@ -1,13 +1,31 @@
 #define LOCAL_BUILD
 
+const String unitID = "2";
+
 #ifdef LOCAL_BUILD
 String elapsedTime;
 String gridAsString;
+class CloudWrapper {
+  public:
+    void setup() {}
+    void loop() {}
+};
 #else
 #include "thingProperties.h"
+class CloudWrapper {
+  public:
+    void setup() {
+      initProperties();
+      ArduinoCloud.begin(ArduinoIoTPreferredConnection);
+      setDebugMessageLevel(2);
+      ArduinoCloud.printDebugInfo();
+    }
+    void loop() {
+      ArduinoCloud.update();
+    }
+};
 #endif
-
-const String unitID = "2";
+CloudWrapper cloudWrapper;
 
 #include <Wire.h>
 #include <vector>
@@ -511,6 +529,7 @@ class App {
     App() {
     }
     void setup() {
+      cloudWrapper.setup();
       Wire.begin();
       if (Utils::DO_SERIAL) {
         Serial.begin(115200);
@@ -527,6 +546,7 @@ class App {
       }
     }
     void loop() {
+      cloudWrapper.loop();
       const int DISPLAY_RATE_IN_MS = 1;
       unsigned long thisMS = millis();
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
