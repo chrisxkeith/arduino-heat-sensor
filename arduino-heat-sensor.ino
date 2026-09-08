@@ -326,19 +326,18 @@ public:
     return (grideye.getPixelTemperature(i) * 9.0 / 5.0 + 32.0);
   }
 
-  String getValuesAsString() {
+  String getRowAsString(int row) {
     String ret;
-    for(unsigned char i = 0; i < 64; i++) {
+    for (int i = 0; i < 8; i++) {
+      int val = (int)(readOneSensor((row * 8) + i));
       char buf[80];
-      int len = snprintf(buf, 80, "%2.0f", readOneSensor(i));
+      int len = snprintf(buf, 80, (val < 100) ? " %2d" : "%3d", val);
       if (len < 0) {
-        ret.concat("error formatting value");
-        break;
-      } else {
+        ret.concat(" --");
+      } else if (val > 0) {
         ret.concat(String(buf));
-        if (i < 63) {
-          ret.concat(",");
-        }
+      } else {
+        ret.concat(" --");
       }
     }
     return ret;
@@ -432,7 +431,6 @@ class App {
       }
       return false;
     }
-
     void displayGrid() {
       float vals[64];
       for (int i = 0; i < 64; i++) {
@@ -468,7 +466,7 @@ class App {
             oledWrapper.doSmoothing = false;
             oledWrapper.dump();
           } else if (teststr.equals("values")) {
-            Utils::publish(gridEyeSupport.getValuesAsString());
+            publishValuesAsString();
           } else {
             String msg("Unknown command: '");
             msg.concat(teststr);
@@ -492,6 +490,12 @@ class App {
         oledWrapper.displayNextToGrid(sArray, 1);
       }
     }
+    void publishValuesAsString() {
+      for (int i = 0; i < 8; i++) {
+        Utils::publish(gridEyeSupport.getRowAsString(i));
+      }
+  }
+
   public:
     App() {
     }
