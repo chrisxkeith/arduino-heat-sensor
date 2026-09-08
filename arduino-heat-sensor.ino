@@ -24,6 +24,8 @@ class CloudWrapper {
       ArduinoCloud.update();
     }
 };
+void onElapsedTimeChange() {}
+void onGridAsStringChange() {}
 #endif
 CloudWrapper cloudWrapper;
 
