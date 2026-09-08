@@ -6,6 +6,8 @@ String elapsedTime;
 #include "thingProperties.h"
 #endif
 
+const String unitID = "2";
+
 #include <Wire.h>
 #include <vector>
 #include <set>
@@ -13,7 +15,6 @@ String elapsedTime;
 class Utils {
   public:
     const static bool DO_SERIAL = true;
-    const static String unitID;
     static String msToString(unsigned long ms);
     static void publishWithSep(String s, String sep);
     static void publish(String s);
@@ -61,7 +62,6 @@ class Utils {
       Serial.println(ss);
     }
 };
-const String Utils::unitID = "2";
 
 class Timer {
   private:
@@ -92,12 +92,12 @@ class DisplayParams {
     const int MIN_TEMP = 80; // for production
     const int MAX_TEMP = 100;
     const int THRESHOLD = 90;
-    const int TEST_MIN_TEMP = 60; // for testing with skin temperature
-    const int TEST_MAX_TEMP = 100;
-    const int TEST_THRESHOLD = 60;
+    const int TEST_MIN_TEMP = 70; // for testing with skin temperature
+    const int TEST_MAX_TEMP = 90;
+    const int TEST_THRESHOLD = 80;
 
   public:
-    const bool TESTING = ! Utils::unitID.equals("1");
+    const bool TESTING = ! unitID.equals("1");
     int minTemp;
     int maxTemp;
     int threshold;
@@ -397,8 +397,8 @@ TemperatureMonitor temperatureMonitor;
 class App {
   private:
     String configs[5] = {
-      "Unit ID: " + Utils::unitID,
-      "~Wed Sep  2 10:55:23 AM PDT 2026",
+      "Unit ID: " + unitID,
+      "~Tue Sep  8 10:13:33 AM PDT 2026",
       "arduino-heat-sensor",
       "Using GigaDisplay_GFX",
       "Testing: " + Utils::toString(displayParams.TESTING)
@@ -510,7 +510,7 @@ class App {
       oledWrapper.startup();
       oledWrapper.clear();
       if (! displayParams.TESTING) {
-        oledWrapper.display("Unit ID: " + Utils::unitID);
+        oledWrapper.display("Unit ID: " + unitID);
         delay(3000);
         oledWrapper.clear();
       }
