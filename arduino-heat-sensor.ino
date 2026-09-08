@@ -1,4 +1,10 @@
-// Please credit chris.keith@gmail.com .
+#define LOCAL_BUILD
+
+#ifdef LOCAL_BUILD
+String elapsedTime;
+#else
+#include "thingProperties.h"
+#endif
 
 #include <Wire.h>
 #include <vector>
@@ -480,9 +486,9 @@ class App {
       displayGrid();
       if (mostRecentDisplayTime > 0) {
         unsigned long elapsed = millis() - mostRecentDisplayTime;
-        String s = Utils::msToString(elapsed);
+        elapsedTime = Utils::msToString(elapsed);
         String sArray[1];
-        sArray[0] = s;
+        sArray[0] = elapsedTime;
         oledWrapper.displayNextToGrid(sArray, 1);
       }
     }
