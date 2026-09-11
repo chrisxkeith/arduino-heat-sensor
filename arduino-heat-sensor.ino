@@ -419,7 +419,7 @@ class App {
   private:
     String configs[5] = {
       "Unit ID: " + unitID,
-      "~Tue Sep  8 10:13:33 AM PDT 2026",
+      "~Thu Sep 10 07:13:34 PM PDT 2026",
       "arduino-heat-sensor",
       "Using GigaDisplay_GFX",
       "Testing: " + Utils::toString(displayParams.TESTING)
@@ -566,7 +566,9 @@ class App {
           }
         }
         if (doDisplay) {
-          display();
+          if (displayParams.TESTING) {
+            display();
+          }
           gridAsString = getGridAsString();
           lastDisplay = thisMS;
           if (mostRecentDisplayTime == 0) {
