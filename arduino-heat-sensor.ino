@@ -502,7 +502,11 @@ class App {
       "Unit ID: " + unitID,
       "~Sun Sep 13 10:03:27 AM PDT 2026",
       "arduino-heat-sensor",
+#ifdef USE_128_X_128
+      "Using 128_X_128 OLED",
+#else
       "Using GigaDisplay_GFX",
+#endif
       "Production: " + Utils::toString(displayParams.PRODUCTION)
     };
 
