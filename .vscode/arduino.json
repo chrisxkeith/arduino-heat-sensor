@@ -1,7 +1,6 @@
 {
     "sketch": "arduino-heat-sensor.ino",
     "output": "build",
-    "board": "arduino:mbed_giga:giga",
-    "port": "/dev/ttyACM0",
-    "configuration": "target_core=cm7,split=100_0,security=none"
+    "board": "arduino:samd:nano_33_iot",
+    "port": "/dev/ttyACM0"
 }

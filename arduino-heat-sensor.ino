@@ -144,7 +144,7 @@ DisplayParams displayParams;
 
 #include <float.h>
 
-// #define USE_128_X_128
+#define USE_128_X_128
 
 #ifdef USE_128_X_128
 #include <U8g2lib.h>
