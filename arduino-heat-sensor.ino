@@ -455,14 +455,15 @@ public:
   }
 
   // This will timeout after 15-20 seconds if the GridEye isn't connected.
-  int readValue() {
-    float total = 0;
+  int getMax() {
+    int theMax = INT_MIN;
     for (int i = 0; i < 64; i++) {
       int t = (int)(readOneSensor(i));
-      total += t;
+      if (t > theMax) {
+        theMax = t;
+      }
     }
-    mostRecentValue = (int)(total / 64);
-    return mostRecentValue;
+    return theMax;
   }
 };
 GridEyeSupport gridEyeSupport;
@@ -494,16 +495,6 @@ String Utils::toString(bool b) {
   }
   return "false";
 }
-
-class TemperatureMonitor {
-  public:
-    int getValue() {
-      gridEyeSupport.readValue();
-      return gridEyeSupport.mostRecentValue;
-    }
-   
-};
-TemperatureMonitor temperatureMonitor;
 
 class App {
   private:
@@ -571,8 +562,6 @@ class App {
             displayParams.setTestParams();
           } else if (teststr.equals("stopTest")) {
             displayParams.setParams();
-          } else if (teststr.equals("temp")) {
-            oledWrapper.showTemp(temperatureMonitor.getValue());
           } else if (teststr.equals("unsmooth")) {
             oledWrapper.doSmoothing = false;
             oledWrapper.dump();
@@ -593,7 +582,7 @@ class App {
     }
     void display() {
 #ifdef USE_128_X_128
-      oledWrapper.showTemp(temperatureMonitor.getValue());
+      oledWrapper.showTemp(gridEyeSupport.getMax());
 #else
       displayGrid();
       if (mostRecentDisplayTime > 0) {
