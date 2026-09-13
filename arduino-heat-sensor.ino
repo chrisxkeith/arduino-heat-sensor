@@ -144,6 +144,95 @@ DisplayParams displayParams;
 
 #include <float.h>
 
+// #define USE_128_X_128
+
+#ifdef USE_128_X_128
+#include <U8g2lib.h>
+U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
+class OLEDWrapper {
+  private:
+      const int START_BASELINE = 50;
+      const int VERTICAL_SHIFT = 2;
+      const int HORIZONTAL_SHIFT = 4;
+      int   baseLine = START_BASELINE;
+      int   leftMargin = HORIZONTAL_SHIFT;
+      int getHeight() {
+        return 96; // ??? why does u8g2.getHeight() return 128 ???
+      }
+      int getWidth() {
+        return u8g2.getWidth();
+      }
+
+  public:
+    // For showing hands/fingers. Stove burner temps will be different.
+    static const long   MIN_TEMP_IN_F = 80;   // degrees F that will display as black superpixel.
+    static const long   MAX_TEMP_IN_F = 90;   // degrees F that will display as white superpixel.
+
+    void u8g2_prepare(void) {
+      u8g2.setFont(u8g2_font_fur49_tn);
+      u8g2.setFontRefHeightExtendedText();
+      u8g2.setDrawColor(1);
+      u8g2.setFontDirection(0);
+    }
+    void startup() {
+      pinMode(10, OUTPUT);
+      pinMode(9, OUTPUT);
+      digitalWrite(10, 0);
+      digitalWrite(9, 0);
+      u8g2.begin();
+      u8g2.setBusClock(400000);
+    }
+    void showMessages(String s[], int nStrings) {
+      u8g2_prepare();
+      u8g2.clearBuffer();
+      u8g2.drawFrame(0, 0, getWidth(), getHeight());
+      u8g2.setFont(u8g2_font_fur11_tf);
+      for (int i = 0; i < nStrings; i++) {
+        display(s[i], 0, 16 + (i * 16));
+      }
+      u8g2.sendBuffer();
+    }
+    void showTemp(int val) {
+      u8g2_prepare();
+      u8g2.clearBuffer();
+      u8g2.drawUTF8(leftMargin, this->baseLine, String(val).c_str());
+      u8g2.setFont(u8g2_font_fur11_tf);
+      u8g2.drawUTF8(leftMargin + 4, this->baseLine + 20, "Fahrenheit");
+      u8g2.sendBuffer();
+    }
+    void clear() {
+      u8g2_prepare();
+      u8g2.clearBuffer();
+      u8g2.sendBuffer();
+    }
+    void setupBlurFilter() {}
+    void startDisplay(const uint8_t *font) {
+      u8g2_prepare();
+      u8g2.clearBuffer();
+      u8g2.setFont(font);
+    }
+    void endDisplay() {
+      u8g2.sendBuffer();
+    }
+    void shiftDisplay() {
+      baseLine += VERTICAL_SHIFT;
+      leftMargin += HORIZONTAL_SHIFT;
+      if (baseLine > 63) {
+        baseLine = START_BASELINE;
+        leftMargin = HORIZONTAL_SHIFT;
+      }
+    }
+    void display(String s, int x, int y) {
+      u8g2.drawUTF8(x, y, s.c_str());
+    }
+    void display(String s) {
+      display(s, 0, 0);
+    }
+    void dump() {}
+    void  displayDynamicGrid(float vals[]) {}
+    bool  doSmoothing = false;
+};
+#else
 const int COLOR_WHITE = 0x65535;
 const int COLOR_BLACK = 0x0;
 #include "Arduino_GigaDisplay_GFX.h"
@@ -329,6 +418,7 @@ class OLEDWrapper {
       Utils::publish(s);
     }
 };
+#endif
 OLEDWrapper oledWrapper;
 
 #include <SparkFun_GridEYE_Arduino_Library.h>
@@ -502,6 +592,9 @@ class App {
       }
     }
     void display() {
+#ifdef USE_128_X_128
+      oledWrapper.showTemp(temperatureMonitor.getValue());
+#else
       displayGrid();
       if (mostRecentDisplayTime > 0) {
         unsigned long elapsed = millis() - mostRecentDisplayTime;
@@ -510,6 +603,7 @@ class App {
         sArray[0] = elapsedTime;
         oledWrapper.displayNextToGrid(sArray, 1);
       }
+#endif
     }
     void publishValuesAsString() {
       for (int i = 0; i < 8; i++) {
