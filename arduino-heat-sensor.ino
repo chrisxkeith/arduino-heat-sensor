@@ -604,7 +604,7 @@ class App {
       for (int i = 0; i < 8; i++) {
         ret.concat(gridEyeSupport.getRowAsString(i));
         if (i < 7) {
-          ret.concat("\n");
+          ret.concat(" ");
         }
       }
       return ret;
