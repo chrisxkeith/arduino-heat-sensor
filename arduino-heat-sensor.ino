@@ -1,6 +1,6 @@
 #define LOCAL_BUILD
 
-const String unitID = "2";
+const String unitID = "* * * set this before compile * * *"; // 'n' for giga, 'Nano-Iot-n" for Nano 33 IoT
 
 #ifdef LOCAL_BUILD
 String elapsedTime;
@@ -118,15 +118,15 @@ class DisplayParams {
     const int TEST_THRESHOLD = 80;
 
   public:
-    const bool TESTING = ! unitID.equals("1");
+    const bool PRODUCTION = unitID.equals("1") || unitID.equals("Nano-Iot-5");
     int minTemp;
     int maxTemp;
     int threshold;
     DisplayParams() {
-      if (TESTING) {
-        setTestParams();
-      } else {
+      if (PRODUCTION) {
         setParams();
+      } else {
+        setTestParams();
       }
     }
     void setTestParams() {
@@ -509,10 +509,10 @@ class App {
   private:
     String configs[5] = {
       "Unit ID: " + unitID,
-      "~Thu Sep 10 07:13:34 PM PDT 2026",
+      "~Sun Sep 13 10:03:27 AM PDT 2026",
       "arduino-heat-sensor",
       "Using GigaDisplay_GFX",
-      "Testing: " + Utils::toString(displayParams.TESTING)
+      "Production: " + Utils::toString(displayParams.PRODUCTION)
     };
 
     unsigned long lastDisplay = 0;
@@ -635,7 +635,7 @@ class App {
       status();
       oledWrapper.startup();
       oledWrapper.clear();
-      if (! displayParams.TESTING) {
+      if (displayParams.PRODUCTION) {
         oledWrapper.display("Unit ID: " + unitID);
         delay(3000);
         oledWrapper.clear();
@@ -660,9 +660,7 @@ class App {
           }
         }
         if (doDisplay) {
-          if (displayParams.TESTING) {
-            display();
-          }
+          display();
           gridAsString = getGridAsString();
           lastDisplay = thisMS;
           if (mostRecentDisplayTime == 0) {
