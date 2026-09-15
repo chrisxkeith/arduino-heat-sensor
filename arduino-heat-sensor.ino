@@ -5,6 +5,7 @@ const String unitID = "* * * set this before compile * * *"; // 'n' for giga, 'N
 #ifdef LOCAL_BUILD
 String elapsedTime;
 String gridAsString;
+String mostRecentMessage;
 class CloudWrapper {
   public:
     void setup() {}
@@ -26,6 +27,7 @@ class CloudWrapper {
 };
 void onElapsedTimeChange() {}
 void onGridAsStringChange() {}
+void onMostRecentMessageChange() {}
 #endif
 CloudWrapper cloudWrapper;
 
@@ -62,6 +64,11 @@ void TimeSupport::doHandleTime() {
   currentEpochMillis = ArduinoCloud.getLocalTime();
 #endif
   this->lastSyncMillis = millis();
+  mostRecentMessage.remove(0);
+  mostRecentMessage.concat("currentEpochMillis: ");
+  mostRecentMessage.concat((unsigned long)currentEpochMillis);
+  mostRecentMessage.concat(", now(): ");
+  mostRecentMessage.concat(now());
 }
 
 void TimeSupport::handleTime() {
