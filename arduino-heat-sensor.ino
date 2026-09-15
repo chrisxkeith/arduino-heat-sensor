@@ -29,6 +29,50 @@ void onGridAsStringChange() {}
 #endif
 CloudWrapper cloudWrapper;
 
+#include <time.h>
+class TimeSupport {
+  private:
+    const time_t    NO_TIME = 0;
+    unsigned long   lastSyncMillis = 0;
+    time_t          currentEpochMillis = NO_TIME;
+    void            doHandleTime();
+  public:
+    TimeSupport()  { doHandleTime(); }
+    String    timeStr(time_t t);
+    String    now();
+    void      handleTime();
+};
+
+String TimeSupport::timeStr(time_t t) {
+  if (t == NO_TIME) {
+    return "unknown time";
+  }
+  struct tm *time_info = localtime(&t);
+  char buffer[128];
+  size_t written = strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", time_info);
+  return String(buffer);
+}
+
+String TimeSupport::now() {
+  return timeStr(currentEpochMillis);
+}
+
+void TimeSupport::doHandleTime() {
+#ifndef LOCAL_BUILD
+  currentEpochMillis = ArduinoCloud.getLocalTime();
+#endif
+  this->lastSyncMillis = millis();
+}
+
+void TimeSupport::handleTime() {
+    int ONE_DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
+    if (millis() - lastSyncMillis > ONE_DAY_IN_MILLISECONDS) {    // If it's been a day since last sync...
+                                                            // Request time synchronization from the cloud.
+      this->doHandleTime();
+    }
+}
+TimeSupport    timeSupport;
+
 #include <Wire.h>
 #include <vector>
 #include <set>
@@ -636,6 +680,7 @@ class App {
     }
     void loop() {
       cloudWrapper.loop();
+      timeSupport.handleTime();
       const int DISPLAY_RATE_IN_MS = 1;
       unsigned long thisMS = millis();
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
