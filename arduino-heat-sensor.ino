@@ -11,6 +11,7 @@ class CloudWrapper {
     void setup() {}
     void loop() {}
 };
+#define CLOUD_TIME time_t
 #else
 #include "thingProperties.h"
 class CloudWrapper {
@@ -28,47 +29,46 @@ class CloudWrapper {
 void onElapsedTimeChange() {}
 void onGridAsStringChange() {}
 void onMostRecentMessageChange() {}
+#define CLOUD_TIME CloudTime
 #endif
 CloudWrapper cloudWrapper;
 
 #include <time.h>
 class TimeSupport {
   private:
-    const time_t    NO_TIME = 0;
+    const CLOUD_TIME    NO_TIME = 0;
     unsigned long   lastSyncMillis = 0;
-    time_t          currentEpochMillis = NO_TIME;
+    CLOUD_TIME      timeFromCloud = NO_TIME;
     void            doHandleTime();
   public:
     TimeSupport()  { doHandleTime(); }
-    String    timeStr(time_t t);
+    String    timeStr(CLOUD_TIME t);
     String    now();
     void      handleTime();
 };
 
-String TimeSupport::timeStr(time_t t) {
+String TimeSupport::timeStr(CLOUD_TIME t) {
   if (t == NO_TIME) {
     return "unknown time";
   }
-  struct tm *time_info = localtime(&t);
+  time_t rawTime = (time_t)t;
   char buffer[128];
-  size_t written = strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", time_info);
+  char* timeStr = ctime_r(&rawTime, buffer);
+  // size_t written = strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", time_info); // ToDo?
+  if (timeStr == NULL) {
+    return "unknown time, ctime_r failed";
+  }
   return String(buffer);
 }
 
 String TimeSupport::now() {
-  return timeStr(currentEpochMillis);
+  return timeStr(timeFromCloud);
 }
 
 void TimeSupport::doHandleTime() {
 #ifndef LOCAL_BUILD
-  currentEpochMillis = ArduinoCloud.getLocalTime();
+  timeFromCloud = ArduinoCloud.getLocalTime();
 #endif
-  this->lastSyncMillis = millis();
-  mostRecentMessage.remove(0);
-  mostRecentMessage.concat("currentEpochMillis: ");
-  mostRecentMessage.concat((unsigned long)currentEpochMillis);
-  mostRecentMessage.concat(", now(): ");
-  mostRecentMessage.concat(now());
 }
 
 void TimeSupport::handleTime() {
@@ -195,7 +195,7 @@ DisplayParams displayParams;
 
 #include <float.h>
 
-#define USE_128_X_128
+// #define USE_128_X_128
 
 #ifdef USE_128_X_128
 #include <U8g2lib.h>
@@ -300,7 +300,7 @@ class OLEDWrapper {
     uint16_t currentColor = COLOR_WHITE;
     const int DEFAULT_FONT_SIZE = 3;
   public:
-    bool doSmoothing = true;
+    bool doSmoothing = false;
     void clear() {
       display_.fillScreen(COLOR_BLACK);
     }
