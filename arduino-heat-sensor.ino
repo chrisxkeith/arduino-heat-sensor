@@ -726,7 +726,7 @@ class App {
     void loop() {
       cloudWrapper.loop();
       timeSupport->handleTime();
-      const int DISPLAY_RATE_IN_MS = 1;
+      const int DISPLAY_RATE_IN_MS = 500;
       unsigned long thisMS = millis();
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
         const int SHIFT_RATE = 1000 * 60 * 2; // Shift display every 2 minutes to avoid OLED burn-in.
