@@ -41,15 +41,22 @@ class TimeSupport {
     CLOUD_TIME      timeFromCloud = NO_TIME;
     void            doHandleTime();
   public:
-    TimeSupport()  { doHandleTime(); }
-    String    timeStr(CLOUD_TIME t);
-    String    now();
-    void      handleTime();
+                TimeSupport();
+    CLOUD_TIME  getCurrentTime();
+    String      timeStr(CLOUD_TIME t);
+    String      now();
+    void        handleTime();
 };
 
+TimeSupport::TimeSupport() {
+  doHandleTime();
+}
+CLOUD_TIME TimeSupport::getCurrentTime() {
+  return ((unsigned int)timeFromCloud) + (millis() - lastSyncMillis) / 1000;
+}
 String TimeSupport::timeStr(CLOUD_TIME t) {
   if (t == NO_TIME) {
-    return "unknown time";
+    return "unknown time, no time from cloud";
   }
   time_t rawTime = (time_t)t;
   char buffer[128];
@@ -69,16 +76,17 @@ void TimeSupport::doHandleTime() {
 #ifndef LOCAL_BUILD
   timeFromCloud = ArduinoCloud.getLocalTime();
 #endif
+  lastSyncMillis = millis();
 }
 
 void TimeSupport::handleTime() {
-    int ONE_DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
+    unsigned long ONE_DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
     if (millis() - lastSyncMillis > ONE_DAY_IN_MILLISECONDS) {    // If it's been a day since last sync...
                                                             // Request time synchronization from the cloud.
       this->doHandleTime();
     }
 }
-TimeSupport    timeSupport;
+TimeSupport*    timeSupport = nullptr;
 
 #include <Wire.h>
 #include <vector>
@@ -684,10 +692,11 @@ class App {
         delay(3000);
         oledWrapper.clear();
       }
+      timeSupport = new TimeSupport();
     }
     void loop() {
       cloudWrapper.loop();
-      timeSupport.handleTime();
+      timeSupport->handleTime();
       const int DISPLAY_RATE_IN_MS = 1;
       unsigned long thisMS = millis();
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
