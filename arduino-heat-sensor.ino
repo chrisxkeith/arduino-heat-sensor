@@ -5,7 +5,6 @@ const String unitID = "* * * set this before compile * * *"; // 'n' for giga, 'N
 #ifdef LOCAL_BUILD
 String elapsedTime;
 String gridAsString;
-String mostRecentMessage;
 class CloudWrapper {
   public:
     void setup() {}
@@ -28,7 +27,6 @@ class CloudWrapper {
 };
 void onElapsedTimeChange() {}
 void onGridAsStringChange() {}
-void onMostRecentMessageChange() {}
 #define CLOUD_TIME CloudTime
 #endif
 CloudWrapper cloudWrapper;
@@ -744,7 +742,7 @@ class App {
         }
         if (doDisplay) {
           display();
-          gridAsString = getGridAsString();
+  //        gridAsString = getGridAsString();
           lastDisplay = thisMS;
           if (mostRecentDisplayTime == 0) {
             mostRecentDisplayTime = thisMS;
@@ -755,10 +753,10 @@ class App {
           if (!elapsedTime.equals("--:--:--")) {
             elapsedTime = "--:--:--";
           }
-          if (!gridAsString.equals(" -- -- -- -- -- -- -- --")) {
+/*          if (!gridAsString.equals(" -- -- -- -- -- -- -- --")) {
             gridAsString = " -- -- -- -- -- -- -- --";
           }
-        }
+*/        }
       }
        checkSerial();
     }
