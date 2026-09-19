@@ -37,15 +37,16 @@ CloudWrapper cloudWrapper;
 class TimeSupport {
   private:
     const CLOUD_TIME    NO_TIME = 0;
-    unsigned long   lastSyncMillis = 0;
-    CLOUD_TIME      timeFromCloud = NO_TIME;
-    void            doHandleTime();
+    unsigned long       lastSyncMillis = 0;
+    CLOUD_TIME          timeFromCloud = NO_TIME;
+    void                doHandleTime();
   public:
                 TimeSupport();
     CLOUD_TIME  getCurrentTime();
     String      timeStr(CLOUD_TIME t);
     String      now();
     void        handleTime();
+    String      dump();
 };
 
 TimeSupport::TimeSupport() {
@@ -80,12 +81,41 @@ void TimeSupport::doHandleTime() {
 }
 
 void TimeSupport::handleTime() {
-    unsigned long ONE_DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
-    if (millis() - lastSyncMillis > ONE_DAY_IN_MILLISECONDS) {    // If it's been a day since last sync...
-                                                            // Request time synchronization from the cloud.
-      this->doHandleTime();
-    }
+  unsigned long ONE_DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
+  if (millis() - lastSyncMillis > ONE_DAY_IN_MILLISECONDS) {    // If it's been a day since last sync...
+                                                          // Request time synchronization from the cloud.
+    this->doHandleTime();
+  }
 }
+String TimeSupport::dump() {
+  String s("lastSyncMillis: ");
+  s.concat(lastSyncMillis);
+  s.concat(", timeFromCloud: ");
+  s.concat((unsigned long)timeFromCloud);
+  s.concat(", millis(): ");
+  s.concat(millis());
+  s.concat(", getCurrentTime(): ");
+  s.concat(getCurrentTime());
+  s.concat(", ArduinoCloud.getLocalTime(): ");
+  s.concat(ArduinoCloud.getLocalTime());
+  return s;
+}
+
+/* why can't I connect?
+  int nTries = 0;
+  while (!ArduinoCloud.connected()) {
+    delay(2000);
+    if (nTries++ > 20) {
+      int nSeconds = 2 * 20;
+      String err("Unable to connect to Arduino Cloud in ");
+      err.concat(nSeconds);
+      err.concat(" seconds.");
+      Serial.println(err);
+      return;
+    }
+  }
+
+*/
 TimeSupport*    timeSupport = nullptr;
 
 #include <Wire.h>
