@@ -686,9 +686,8 @@ class App {
       displayGrid();
       if (mostRecentDisplayTime > 0) {
         unsigned long elapsed = millis() - mostRecentDisplayTime;
-        elapsedTime = Utils::msToString(elapsed);
         String sArray[1];
-        sArray[0] = elapsedTime;
+        sArray[0] = Utils::msToString(elapsed);;
         oledWrapper.displayNextToGrid(sArray, 1);
       }
 #endif
@@ -707,6 +706,15 @@ class App {
         }
       }
       return ret;
+    }
+    unsigned long       lastCloudPublish = 0;
+    const unsigned long CLOUD_PUBLISH_RATE_IN_MS = 1000 * 10; // every 10 seconds
+    void setCloudValues(String elapsedTime_, String gridAsString_) {
+      if (millis() - lastCloudPublish > CLOUD_PUBLISH_RATE_IN_MS) {
+        lastCloudPublish = millis();
+        elapsedTime = elapsedTime_;
+        gridAsString = gridAsString_;
+      }
     }
 
   public:
@@ -751,7 +759,8 @@ class App {
         }
         if (doDisplay) {
           display();
-          gridAsString = getGridAsString();
+          unsigned long elapsed = millis() - mostRecentDisplayTime;
+          setCloudValues(Utils::msToString(elapsed), getGridAsString());
           lastDisplay = thisMS;
           if (mostRecentDisplayTime == 0) {
             mostRecentDisplayTime = thisMS;
@@ -760,12 +769,7 @@ class App {
           oledWrapper.clear();
           oledWrapper.turnBackLightOff();
           mostRecentDisplayTime = 0;
-          if (!elapsedTime.equals("--:--:--")) {
-            elapsedTime = "--:--:--";
-          }
-          if (!gridAsString.equals(" -- -- -- -- -- -- -- --")) {
-            gridAsString = " -- -- -- -- -- -- -- --";
-          }
+          setCloudValues("--:--:--", " -- -- -- -- -- -- -- --");
         }
       }
        checkSerial();
