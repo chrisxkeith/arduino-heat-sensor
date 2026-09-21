@@ -751,7 +751,7 @@ class App {
         }
         if (doDisplay) {
           display();
-  //        gridAsString = getGridAsString();
+          gridAsString = getGridAsString();
           lastDisplay = thisMS;
           if (mostRecentDisplayTime == 0) {
             mostRecentDisplayTime = thisMS;
@@ -763,10 +763,10 @@ class App {
           if (!elapsedTime.equals("--:--:--")) {
             elapsedTime = "--:--:--";
           }
-/*          if (!gridAsString.equals(" -- -- -- -- -- -- -- --")) {
+          if (!gridAsString.equals(" -- -- -- -- -- -- -- --")) {
             gridAsString = " -- -- -- -- -- -- -- --";
           }
-*/        }
+        }
       }
        checkSerial();
     }
