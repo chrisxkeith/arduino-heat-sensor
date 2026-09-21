@@ -334,16 +334,24 @@ class OLEDWrapper {
   private:
     uint16_t currentColor = COLOR_WHITE;
     const int DEFAULT_FONT_SIZE = 3;
+    const int backlightPin = 74; // D74 controls the backlight driver
   public:
     bool doSmoothing = false;
     void clear() {
       display_.fillScreen(COLOR_BLACK);
     }
     void startup() {
+      pinMode(backlightPin, OUTPUT);
       delay(1000);
       display_.begin(); //init library
       clear();
       display_.setRotation(1);
+    }
+    void turnBackLightOn() {
+      digitalWrite(backlightPin, HIGH);
+    }
+    void turnBackLightOff() {
+      digitalWrite(backlightPin, LOW);
     }
     void display(String s, const GFXfont* font, int textSize, uint16_t x, uint16_t y) {
       display_.setCursor(x, y);
@@ -674,6 +682,7 @@ class App {
 #ifdef USE_128_X_128
       oledWrapper.showTemp(gridEyeSupport.getMax());
 #else
+      oledWrapper.turnBackLightOn();
       displayGrid();
       if (mostRecentDisplayTime > 0) {
         unsigned long elapsed = millis() - mostRecentDisplayTime;
@@ -749,6 +758,7 @@ class App {
           }
         } else {
           oledWrapper.clear();
+          oledWrapper.turnBackLightOff();
           mostRecentDisplayTime = 0;
           if (!elapsedTime.equals("--:--:--")) {
             elapsedTime = "--:--:--";
