@@ -1,10 +1,6 @@
 #define LOCAL_BUILD
 
-const String unitID = "* * * set this before compile * * *"; // 'n' for giga, 'Nano-Iot-n" for Nano 33 IoT
-
-// #define LOCAL_BUILD
-
-const String unitID = "2";
+const String unitID = "* * * set this before compile * * *"; // 'n' for giga, 'Nano-Iot-n" for Nano 33 Io
 
 #ifdef LOCAL_BUILD
 String elapsedTime;
@@ -751,7 +747,7 @@ class App {
     void loop() {
       cloudWrapper.loop();
       timeSupport->handleTime();
-      const int DISPLAY_RATE_IN_MS = 500;
+      const int DISPLAY_RATE_IN_MS = (displayParams.PRODUCTION ? 5000 : 500);
       unsigned long thisMS = millis();
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
         const int SHIFT_RATE = 1000 * 60 * 2; // Shift display every 2 minutes to avoid OLED burn-in.
