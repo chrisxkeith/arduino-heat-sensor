@@ -5,6 +5,7 @@ const String unitID = "* * * set this before compile * * *"; // 'n' for giga, 'N
 #ifdef LOCAL_BUILD
 String elapsedTime;
 String gridAsString;
+String maxTemperature;
 class CloudWrapper {
   public:
     void setup() {}
@@ -683,7 +684,11 @@ class App {
       oledWrapper.showTemp(gridEyeSupport.getMax());
 #else
       oledWrapper.turnBackLightOn();
-      displayGrid();
+      if (displayParams.PRODUCTION) {
+        oledWrapper.showTemp(gridEyeSupport.getMax());
+      } else {
+        displayGrid();
+      }
       if (mostRecentDisplayTime > 0) {
         unsigned long elapsed = millis() - mostRecentDisplayTime;
         String sArray[1];
@@ -709,11 +714,12 @@ class App {
     }
     unsigned long       lastCloudPublish = 0;
     const unsigned long CLOUD_PUBLISH_RATE_IN_MS = 1000 * 10; // every 10 seconds
-    void setCloudValues(String elapsedTime_, String gridAsString_) {
+    void setCloudValues(String elapsedTime_, String gridAsString_, String maxTemperature_) {
       if (millis() - lastCloudPublish > CLOUD_PUBLISH_RATE_IN_MS) {
         lastCloudPublish = millis();
         elapsedTime = elapsedTime_;
         gridAsString = gridAsString_;
+        maxTemperature = maxTemperature_;
       }
     }
 
@@ -760,7 +766,9 @@ class App {
         if (doDisplay) {
           display();
           unsigned long elapsed = millis() - mostRecentDisplayTime;
-          setCloudValues(Utils::msToString(elapsed), getGridAsString());
+          String maxT(gridEyeSupport.getMax());
+          maxT.concat(" f");
+          setCloudValues(Utils::msToString(elapsed), getGridAsString(), maxT);
           lastDisplay = thisMS;
           if (mostRecentDisplayTime == 0) {
             mostRecentDisplayTime = thisMS;
@@ -769,7 +777,7 @@ class App {
           oledWrapper.clear();
           oledWrapper.turnBackLightOff();
           mostRecentDisplayTime = 0;
-          setCloudValues("--:--:--", " -- -- -- -- -- -- -- --");
+          setCloudValues("--:--:--", " -- -- -- -- -- -- -- --", "--- f");
         }
       }
        checkSerial();
@@ -783,4 +791,12 @@ void setup() {
 
 void loop() {
   app.loop();
+}
+
+/*
+  Since MaxTemperature is READ_WRITE variable, onMaxTemperatureChange() is
+  executed every time a new value is received from IoT Cloud.
+*/
+void onMaxTemperatureChange()  {
+  // Add your code here to act upon MaxTemperature change
 }
