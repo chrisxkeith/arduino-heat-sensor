@@ -2,6 +2,10 @@
 
 const String unitID = "* * * set this before compile * * *"; // 'n' for giga, 'Nano-Iot-n" for Nano 33 IoT
 
+// #define LOCAL_BUILD
+
+const String unitID = "2";
+
 #ifdef LOCAL_BUILD
 String elapsedTime;
 String gridAsString;
@@ -324,6 +328,7 @@ const int COLOR_WHITE = 0x65535;
 const int COLOR_BLACK = 0x0;
 #include "Arduino_GigaDisplay_GFX.h"
 #include "Fonts/FreeSans18pt7b.h"
+#include "Fonts/FreeSans24pt7b.h"
 #include "Fonts/Org_01.h"
 #include "Fonts/Picopixel.h"
 #include "Fonts/Tiny3x3a2pt7b.h"
@@ -361,7 +366,7 @@ class OLEDWrapper {
       display_.print(s);
     }
     void display(String s, int textSize, uint16_t x, uint16_t y) {
-      display(s, nullptr, textSize, x, y);
+      display(s, &FreeSans24pt7b, textSize, x, y);
     }
     void display(String s) {
       display(s, DEFAULT_FONT_SIZE, 10, 10);
@@ -496,10 +501,9 @@ class OLEDWrapper {
     }
     void showTemp(int temp) {
       clear();
-      String s("Temp: ");
-      s.concat(temp);
-      s.concat(" F");
-      display(s, 3, 10, 32);
+      String s(temp);
+      s.concat(" f");
+      display(s, 3, 10, 96);
     }
     void shiftDisplay() {
     }
