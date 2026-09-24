@@ -6,12 +6,14 @@ const String unitID = "* * * set this before compile * * *"; // 'n' for giga, 'N
 String elapsedTime;
 String gridAsString;
 String maxTemperature;
+#define CLOUD_TIME time_t
 class CloudWrapper {
   public:
     void setup() {}
     void loop() {}
+    bool isConnected() { return false; }
+    CLOUD_TIME getLocalTime() { return 0; }
 };
-#define CLOUD_TIME time_t
 #else
 #include "thingProperties.h"
 class CloudWrapper {
@@ -24,6 +26,12 @@ class CloudWrapper {
     }
     void loop() {
       ArduinoCloud.update();
+    }
+    bool isConnected() {
+      return ArduinoCloud.connected();
+    }
+    CLOUD_TIME getLocalTime() {
+      return ArduinoCloud.getLocalTime();
     }
 };
 void onElapsedTimeChange() {}
@@ -76,9 +84,7 @@ String TimeSupport::now() {
 }
 
 void TimeSupport::doHandleTime() {
-#ifndef LOCAL_BUILD
-  timeFromCloud = ArduinoCloud.getLocalTime();
-#endif
+  timeFromCloud = cloudWrapper.getLocalTime();
   lastSyncMillis = millis();
 }
 
@@ -86,7 +92,7 @@ unsigned long lastAttemptMillis = 0;
 void TimeSupport::handleTime() {
   if (timeFromCloud == NO_TIME) {
     if (millis() - lastAttemptMillis > 1000 * 30) { // every 30 seconds until we can connect
-      if (!ArduinoCloud.connected()) {
+      if (!cloudWrapper.isConnected()) {
         lastAttemptMillis = millis();
         Serial.println("TimeSupport: Not connected to cloud, cannot get time.");
         return;
@@ -109,9 +115,9 @@ String TimeSupport::dump() {
   s.concat(", millis(): ");
   s.concat(millis());
   s.concat(", getCurrentTime(): ");
-  s.concat(getCurrentTime());
-  s.concat(", ArduinoCloud.getLocalTime(): ");
-  s.concat(ArduinoCloud.getLocalTime());
+  s.concat((unsigned long)getCurrentTime());
+  s.concat(", cloudWrapper.getLocalTime(): ");
+  s.concat((unsigned long)cloudWrapper.getLocalTime());
   return s;
 }
 TimeSupport*    timeSupport = nullptr;
