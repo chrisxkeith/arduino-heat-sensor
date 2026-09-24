@@ -380,12 +380,15 @@ class OLEDWrapper {
     void display(String s) {
       display(s, DEFAULT_FONT_SIZE, 10, 10);
     }
-    void displayNextToGrid(String s[], int nStrings) {
-      int x0 = getHeight() + 10;
-      fillRectWH(x0, 0, getWidth() - x0, getHeight(), COLOR_BLACK);
-      for (int i = 0; i < nStrings; i++) {
-        display(s[i], &FreeSans18pt7b, 1, x0 + 20, 32 + (i * 32));
-      }
+    void displayNextToGrid(String s) {
+      fillRectWH(getHeight() + 1, 0, getWidth() - getHeight(), getHeight(), COLOR_BLACK);
+      int16_t   x;
+      int16_t   y;
+      uint16_t  w;
+      uint16_t  h;
+
+      getTextBox(&FreeSans18pt7b, "00:00:00", 1, &x, &y, &w, &h);
+      display(s, &FreeSans18pt7b, 1, getWidth() - w - 20, h); // right-justified
     }
     void doDisplaySmoothedDynamicGrid(uint16_t colors[], int size, int width, int height) {
       const int   FACTOR = height / 8; // 8x8 sensor grid
@@ -466,12 +469,13 @@ class OLEDWrapper {
       display_.endWrite();
     }
     void displayGridValues(float vals[]) {
+      fillRect(0, 0, getWidth(), getWidth(), COLOR_BLACK);
       int16_t   x;
       int16_t   y;
       uint16_t  w;
       uint16_t  h;
 
-      getTextBox(&FreeSans12pt7b, "1", 1, &x, &y, &w, &h);
+      getTextBox(&FreeSans18pt7b, "1", 1, &x, &y, &w, &h);
       for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
           int rotatedX = y;
@@ -479,7 +483,7 @@ class OLEDWrapper {
           int x0 = rotatedX * 64;
           int y0 = rotatedY * 64;
           int index = (y * 8) + x;
-          display(String((int)vals[index]), &FreeSans12pt7b, 1, x0, y0 + h);
+          display(String((int)vals[index]), &FreeSans18pt7b, 1, x0, y0 + h);
         }
       }
     }
@@ -721,9 +725,7 @@ class App {
       }
       if (mostRecentDisplayTime > 0) {
         unsigned long elapsed = millis() - mostRecentDisplayTime;
-        String sArray[1];
-        sArray[0] = Utils::msToString(elapsed);;
-        oledWrapper.displayNextToGrid(sArray, 1);
+        oledWrapper.displayNextToGrid(Utils::msToString(elapsed));
       }
 #endif
     }
