@@ -390,6 +390,7 @@ class OLEDWrapper {
       uint16_t  h;
 
       getTextBox(&FreeSans18pt7b, "00:00:00", 1, &x, &y, &w, &h);
+      display_.setTextColor(COLOR_WHITE);
       display(s, &FreeSans18pt7b, 1, getWidth() - w - 20, h); // right-justified
     }
     void doDisplaySmoothedDynamicGrid(uint16_t colors[], int size, int width, int height) {
@@ -493,12 +494,12 @@ class OLEDWrapper {
           max = (int)vals[i];
         }
       }
-      int16_t   x;
-      int16_t   y;
+      int16_t   x0;
+      int16_t   y0;
       uint16_t  w;
       uint16_t  h;
 
-      getTextBox(&FreeSans18pt7b, "1", 1, &x, &y, &w, &h);
+      getTextBox(&FreeSans18pt7b, "1", 1, &x0, &y0, &w, &h);
       for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
           int rotatedX = y;
@@ -507,7 +508,7 @@ class OLEDWrapper {
           int y0 = rotatedY * 64;
           int index = (y * 8) + x;
           uint16_t color = getColor((vals[index] - min) / (max - min));
-          setDrawColor(color);
+          display_.setTextColor(color);
           display(String((int)vals[index]), &FreeSans18pt7b, 1, x0, y0 + h);
         }
       }
