@@ -326,6 +326,8 @@ class OLEDWrapper {
     void  displayDynamicGrid(float vals[]) {}
 };
 #else
+#include <limits.h>
+
 const int COLOR_WHITE = 0x65535;
 const int COLOR_BLACK = 0x0;
 #include "Arduino_GigaDisplay_GFX.h"
@@ -468,8 +470,29 @@ class OLEDWrapper {
       }
       display_.endWrite();
     }
+    uint16_t getColor(float percent) {
+      const int START_RED = 173; // light blue
+      const int START_GREEN = 216;
+      const int START_BLUE = 230;
+      const int END_RED = 255;
+      const int END_GREEN = 0;
+      const int END_BLUE = 0;
+      return display_.color565((uint8_t)(abs(END_RED - START_RED) / percent),
+                               (uint8_t)(abs(END_GREEN - START_GREEN) / percent),
+                               (uint8_t)(abs(END_BLUE - START_BLUE) / percent));
+    }
     void displayGridValues(float vals[]) {
       fillRect(0, 0, getWidth(), getWidth(), COLOR_BLACK);
+      int min = INT_MAX;
+      int max = INT_MIN;
+      for (int i = 0; i < 64; i++) {
+        if (vals[i] < min) {
+          min = (int)vals[i];
+        }
+        if (vals[i] > max) {
+          max = (int)vals[i];
+        }
+      }
       int16_t   x;
       int16_t   y;
       uint16_t  w;
@@ -483,6 +506,8 @@ class OLEDWrapper {
           int x0 = rotatedX * 64;
           int y0 = rotatedY * 64;
           int index = (y * 8) + x;
+          uint16_t color = getColor((vals[index] - min) / (max - min));
+          setDrawColor(color);
           display(String((int)vals[index]), &FreeSans18pt7b, 1, x0, y0 + h);
         }
       }
@@ -557,7 +582,6 @@ class OLEDWrapper {
 OLEDWrapper oledWrapper;
 
 #include <SparkFun_GridEYE_Arduino_Library.h>
-#include <limits.h>
 
 class GridEyeSupport {
 public:
