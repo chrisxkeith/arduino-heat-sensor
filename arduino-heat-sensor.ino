@@ -15,6 +15,7 @@ class CloudWrapper {
     CLOUD_TIME getLocalTime() { return 0; }
 };
 #else
+#define CLOUD_TIME CloudTime
 #include "thingProperties.h"
 class CloudWrapper {
   public:
@@ -36,7 +37,7 @@ class CloudWrapper {
 };
 void onElapsedTimeChange() {}
 void onGridAsStringChange() {}
-#define CLOUD_TIME CloudTime
+void onMaxTemperatureChange() {}
 #endif
 CloudWrapper cloudWrapper;
 
@@ -797,12 +798,4 @@ void setup() {
 
 void loop() {
   app.loop();
-}
-
-/*
-  Since MaxTemperature is READ_WRITE variable, onMaxTemperatureChange() is
-  executed every time a new value is received from IoT Cloud.
-*/
-void onMaxTemperatureChange()  {
-  // Add your code here to act upon MaxTemperature change
 }
