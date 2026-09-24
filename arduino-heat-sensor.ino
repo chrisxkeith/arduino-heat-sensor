@@ -324,12 +324,12 @@ class OLEDWrapper {
     }
     void dump() {}
     void  displayDynamicGrid(float vals[]) {}
-    bool  doSmoothing = false;
 };
 #else
 const int COLOR_WHITE = 0x65535;
 const int COLOR_BLACK = 0x0;
 #include "Arduino_GigaDisplay_GFX.h"
+#include "Fonts/FreeSans12pt7b.h"
 #include "Fonts/FreeSans18pt7b.h"
 #include "Fonts/FreeSans24pt7b.h"
 #include "Fonts/Org_01.h"
@@ -345,7 +345,7 @@ class OLEDWrapper {
     const int DEFAULT_FONT_SIZE = 3;
     const int backlightPin = 74; // D74 controls the backlight driver
   public:
-    bool doSmoothing = false;
+    enum GridType { SMOOTHED, NOT_SMOOTHED, VALUES };
     void clear() {
       display_.fillScreen(COLOR_BLACK);
     }
@@ -361,6 +361,12 @@ class OLEDWrapper {
     }
     void turnBackLightOff() {
       digitalWrite(backlightPin, LOW);
+    }
+    void getTextBox(const GFXfont* font, String str, int textSize, int16_t* x, int16_t* y, uint16_t* w, uint16_t* h) {
+      display_.setFont(font);
+      display_.setTextSize(textSize);
+      display_.getTextBounds(str, 0, 0, x, y, w, h);
+      // Does NOT include descenders. :(
     }
     void display(String s, const GFXfont* font, int textSize, uint16_t x, uint16_t y) {
       display_.setCursor(x, y);
@@ -459,11 +465,36 @@ class OLEDWrapper {
       }
       display_.endWrite();
     }
+    void displayGridValues(float vals[]) {
+      int16_t   x;
+      int16_t   y;
+      uint16_t  w;
+      uint16_t  h;
+
+      getTextBox(&FreeSans12pt7b, "1", 1, &x, &y, &w, &h);
+      for (int x = 0; x < 8; x++) {
+        for (int y = 0; y < 8; y++) {
+          int rotatedX = y;
+          int rotatedY = 7 - x;
+          int x0 = rotatedX * 64;
+          int y0 = rotatedY * 64;
+          int index = (y * 8) + x;
+          display(String((int)vals[index]), &FreeSans12pt7b, 1, x0, y0 + h);
+        }
+      }
+    }
     void displayDynamicGrid(float vals[]) {
-      if (doSmoothing) {
-        displaySmoothedDynamicGrid(vals);
-      } else {
-        displayUnsmoothedDynamicGrid(vals);
+      GridType gridType = VALUES;
+      switch (gridType) {
+        case SMOOTHED:
+          displaySmoothedDynamicGrid(vals);
+          break;
+        case NOT_SMOOTHED:
+          displayUnsmoothedDynamicGrid(vals);
+          break;
+        case VALUES:
+          displayGridValues(vals);
+          break;
       }
     }
     void setDrawColor(int color) {
@@ -515,8 +546,6 @@ class OLEDWrapper {
       s.concat(getHeight());
       s.concat(", getWidth(): ");
       s.concat(getWidth());
-      s.concat(", doSmoothing: ");
-      s.concat(doSmoothing);
       Utils::publish(s);
     }
 };
@@ -659,18 +688,12 @@ class App {
           if (teststr.equals("?")) {
             status();
             oledWrapper.dump();
-          } else if (teststr.equals("smooth")) {
-            oledWrapper.doSmoothing = true;
-            oledWrapper.dump();
           } else if (teststr.equals("scan")) {
             Utils::scanI2C();
           } else if (teststr.equals("startTest")) {
             displayParams.setTestParams();
           } else if (teststr.equals("stopTest")) {
             displayParams.setParams();
-          } else if (teststr.equals("unsmooth")) {
-            oledWrapper.doSmoothing = false;
-            oledWrapper.dump();
           } else if (teststr.equals("values")) {
             publishValuesAsString();
           } else {
