@@ -450,13 +450,14 @@ class OLEDWrapper {
       doDisplaySmoothedDynamicGrid(colors, 64, getHeight(), getHeight());
     }
     void displayUnsmoothedDynamicGrid(float vals[]) {
-      int iVals[64];
-      clampValues(iVals, vals, 64, displayParams.minTemp, displayParams.maxTemp);
+      int min;
+      int max;
+      getMinMax(vals, &min, &max);
       display_.startWrite();
       for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
           int index = (y * 8) + x;
-          int val = map(vals[index], displayParams.minTemp, displayParams.maxTemp, 0, 255);
+          int val = map(vals[index], min, max, 0, 255);
           int color = display_.color565(val, 0, 0);
           int rotatedX = y;
           int rotatedY = 7 - x;
@@ -482,18 +483,24 @@ class OLEDWrapper {
                                (uint8_t)(abs(END_GREEN - START_GREEN) / percent),
                                (uint8_t)(abs(END_BLUE - START_BLUE) / percent));
     }
-    void displayGridValues(float vals[]) {
-      fillRect(0, 0, getWidth(), getWidth(), COLOR_BLACK);
-      int min = INT_MAX;
-      int max = INT_MIN;
+    void getMinMax(float vals[], int* min, int* max) {
+      *min = INT_MAX;
+      *max = INT_MIN;
       for (int i = 0; i < 64; i++) {
-        if (vals[i] < min) {
-          min = (int)vals[i];
+        if (vals[i] < *min) {
+          *min = (int)vals[i];
         }
-        if (vals[i] > max) {
-          max = (int)vals[i];
+        if (vals[i] > *max) {
+          *max = (int)vals[i];
         }
       }
+    }
+    void displayGridValues(float vals[]) {
+      displayUnsmoothedDynamicGrid(vals);
+      int min;
+      int max;
+      getMinMax(vals, &min, &max);
+      
       int16_t   x0;
       int16_t   y0;
       uint16_t  w;
@@ -508,7 +515,7 @@ class OLEDWrapper {
           int y0 = rotatedY * 64;
           int index = (y * 8) + x;
           uint16_t color = getColor((vals[index] - min) / (max - min));
-          display_.setTextColor(color);
+          // display_.setTextColor(color);
           display(String((int)vals[index]), &FreeSans18pt7b, 1, x0, y0 + h);
         }
       }
@@ -804,7 +811,7 @@ class App {
     void loop() {
       cloudWrapper.loop();
       timeSupport->handleTime();
-      const int DISPLAY_RATE_IN_MS = (displayParams.PRODUCTION ? 5000 : 500);
+      const int DISPLAY_RATE_IN_MS = (displayParams.PRODUCTION ? 5000 : 1);
       unsigned long thisMS = millis();
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
         const int SHIFT_RATE = 1000 * 60 * 2; // Shift display every 2 minutes to avoid OLED burn-in.
