@@ -745,6 +745,12 @@ class App {
          }
       }
     }
+    void displayElapsed() {
+      if (mostRecentDisplayTime > 0) {
+        unsigned long elapsed = millis() - mostRecentDisplayTime;
+        oledWrapper.displayNextToGrid(Utils::msToString(elapsed));
+      }
+    }
     void display() {
 #ifdef USE_128_X_128
       oledWrapper.showTemp(gridEyeSupport.getMax());
@@ -755,10 +761,7 @@ class App {
       } else {
         displayGrid();
       }
-      if (mostRecentDisplayTime > 0) {
-        unsigned long elapsed = millis() - mostRecentDisplayTime;
-        oledWrapper.displayNextToGrid(Utils::msToString(elapsed));
-      }
+//      displayElapsed(); // TODO: figure out how to do this faster (how long does it take to read the sensors?)
 #endif
     }
     void publishValuesAsString() {
@@ -786,7 +789,28 @@ class App {
         maxTemperature = maxTemperature_;
       }
     }
-
+    bool thresholdReached() {
+      for (int i = 0; i < 64; i++) {
+        if (gridEyeSupport.readOneSensor(i) >= displayParams.threshold) {
+          return true;
+        }
+      }
+      return false;
+    }
+    void shiftDisplay(unsigned long thisMS) {
+      const int SHIFT_RATE = 1000 * 60 * 2; // Shift display every 2 minutes to avoid OLED burn-in.
+      // const int SHIFT_RATE = 1000 * 2; // Shift display every 2 seconds for debugging.
+      if (thisMS - lastShift > SHIFT_RATE) {
+        oledWrapper.shiftDisplay();
+        lastShift = thisMS;
+      }
+    }
+    void stopDisplay() {
+      oledWrapper.clear();
+      oledWrapper.turnBackLightOff();
+      mostRecentDisplayTime = 0;
+      setCloudValues("--:--:--", " -- -- -- -- -- -- -- --", "--- f");
+    }
   public:
     App() {
     }
@@ -814,20 +838,8 @@ class App {
       const int DISPLAY_RATE_IN_MS = (displayParams.PRODUCTION ? 5000 : 1);
       unsigned long thisMS = millis();
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
-        const int SHIFT_RATE = 1000 * 60 * 2; // Shift display every 2 minutes to avoid OLED burn-in.
-        // const int SHIFT_RATE = 1000 * 2; // Shift display every 2 seconds for debugging.
-        if (thisMS - lastShift > SHIFT_RATE) {
-          oledWrapper.shiftDisplay();
-          lastShift = thisMS;
-        }
-        bool doDisplay = false;
-        for (int i = 0; i < 64; i++) {
-          if (gridEyeSupport.readOneSensor(i) >= displayParams.threshold) {
-            doDisplay = true;
-            break;
-          }
-        }
-        if (doDisplay) {
+        shiftDisplay(thisMS);
+        if (thresholdReached()) {
           display();
           unsigned long elapsed = millis() - mostRecentDisplayTime;
           String maxT(gridEyeSupport.getMax());
@@ -838,13 +850,10 @@ class App {
             mostRecentDisplayTime = thisMS;
           }
         } else {
-          oledWrapper.clear();
-          oledWrapper.turnBackLightOff();
-          mostRecentDisplayTime = 0;
-          setCloudValues("--:--:--", " -- -- -- -- -- -- -- --", "--- f");
+          stopDisplay();
         }
       }
-       checkSerial();
+      checkSerial();
     }
 };
 App app;
