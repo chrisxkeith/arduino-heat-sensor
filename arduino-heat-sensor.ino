@@ -716,6 +716,12 @@ class App {
         }
       }
     }
+    void timeSensor() {
+      Timer timer("timeSensor");
+      for (int i = 0; i < 64; i++) {
+        gridEyeSupport.readOneSensor(i);
+      }
+    }
     void checkSerial() {
       if (Utils::DO_SERIAL) {
         if (Serial.available() > 0) {
@@ -730,6 +736,8 @@ class App {
             displayParams.setTestParams();
           } else if (teststr.equals("stopTest")) {
             displayParams.setParams();
+          } else if (teststr.equals("timeSensor")) {
+            timeSensor();
           } else if (teststr.equals("values")) {
             publishValuesAsString();
           } else {
