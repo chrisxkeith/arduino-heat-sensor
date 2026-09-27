@@ -376,6 +376,20 @@ class OLEDWrapper {
       display_.setTextSize(textSize);
       display_.print(s);
     }
+    void displayAtXY(String s, const GFXfont* font, int textSize, uint16_t x0, uint16_t y0) {
+      int16_t   x;
+      int16_t   y;
+      uint16_t  w;
+      uint16_t  h;
+
+      getTextBox(font, s, 1, &x, &y, &w, &h);
+      fillRectWH(x, y, w, h, COLOR_BLACK);
+      display_.setTextColor(COLOR_WHITE);
+      display_.setCursor(x0, y0 + h);
+      display_.setFont(font);
+      display_.setTextSize(textSize);
+      display_.print(s);
+    }
     void display(String s, int textSize, uint16_t x, uint16_t y) {
       display(s, &FreeSans24pt7b, textSize, x, y);
     }
@@ -571,10 +585,9 @@ class OLEDWrapper {
       return display_.width();
     }
     void showTemp(int temp) {
-      clear();
       String s(temp);
       s.concat(" f");
-      display(s, 3, 10, 96);
+      displayAtXY(s, &FreeSans24pt7b, 1, 0, 0);
     }
     void shiftDisplay() {
     }
