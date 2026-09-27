@@ -383,7 +383,7 @@ class OLEDWrapper {
       uint16_t  h;
 
       getTextBox(font, s, 1, &x, &y, &w, &h);
-      fillRectWH(x, y, w, h, COLOR_BLACK);
+      display_.fillRect(x0, y0, w < getWidth() ? w : getWidth(), y > 0 ? y : -y, COLOR_BLACK);
       display_.setTextColor(COLOR_WHITE);
       display_.setCursor(x0, y0 + h);
       display_.setFont(font);
