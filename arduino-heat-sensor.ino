@@ -692,7 +692,6 @@ class App {
 
     unsigned long lastDisplay = 0;
     int lastShift = 0;
-    unsigned long mostRecentDisplayTime = 0;
 
     void status() {
       for (String s : configs) {
@@ -758,6 +757,7 @@ class App {
          }
       }
     }
+    unsigned long mostRecentDisplayTime = 0;
     void displayElapsed() {
       if (mostRecentDisplayTime > 0) {
         unsigned long elapsed = millis() - mostRecentDisplayTime;
@@ -774,7 +774,7 @@ class App {
       } else {
         displayGrid();
       }
-//      displayElapsed(); // TODO: figure out how to do this faster (how long does it take to read the sensors?)
+      displayElapsed();
 #endif
     }
     void publishValuesAsString() {
@@ -853,15 +853,15 @@ class App {
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
         shiftDisplay(thisMS);
         if (thresholdReached()) {
+          if (mostRecentDisplayTime == 0) {
+            mostRecentDisplayTime = thisMS;
+          }
           display();
           unsigned long elapsed = millis() - mostRecentDisplayTime;
           String maxT(gridEyeSupport.getMax());
           maxT.concat(" f");
           setCloudValues(Utils::msToString(elapsed), getGridAsString(), maxT);
           lastDisplay = thisMS;
-          if (mostRecentDisplayTime == 0) {
-            mostRecentDisplayTime = thisMS;
-          }
         } else {
           stopDisplay();
         }
