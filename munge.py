@@ -16,6 +16,7 @@ def main():
     if not input_file:
         print(fn + " file not found in " + dir)
         return
+    print("Input file: " + input_file)
     output_file = 'data.txt'
     nRows = 0
     with open(output_file, mode='w', newline='') as outfile:
