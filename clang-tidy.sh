@@ -1,3 +1,4 @@
+# Not working yet, too many dependencies to find
 cp arduino-heat-sensor.ino arduino-heat-sensor.cpp
 clang-tidy arduino-heat-sensor.cpp -- \
     -I/home/ck/.arduino15/packages/arduino/hardware/mbed_giga/4.6.0/libraries/Wire \
