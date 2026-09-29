@@ -616,6 +616,10 @@ class OLEDWrapper {
 #endif
 OLEDWrapper oledWrapper;
 
+String gridEyeRows[] = {
+#include "/home/ck/Documents/github/arduino-heat-sensor/data.txt"
+};
+
 #include <SparkFun_GridEYE_Arduino_Library.h>
 
 class GridEyeSupport {
