@@ -18,14 +18,18 @@ def main():
         return
     print("Input file: " + input_file)
     output_file = 'data.txt'
-    nRows = 0
+    nInputRows = 0
+    nOutputRows = 0
     with open(output_file, mode='w', newline='') as outfile:
         with open(input_file, mode='r', newline='') as file:
             reader = csv.DictReader(file)
             for row in reader:
-                outfile.write('"' + row['time'] + '","' + row['value'] + '"\n')
-                nRows += 1
-    print("Total rows processed: " + str(nRows))
+                if not row['value'].startswith(" -"):
+                    outfile.write('"' + row['time'] + '","' + row['value'] + '"\n')
+                    nOutputRows += 1
+                nInputRows += 1
+    print("Total input rows processed: " + str(nInputRows))
+    print("Total output rows processed: " + str(nOutputRows))
 
 if __name__ == "__main__":
     main()
