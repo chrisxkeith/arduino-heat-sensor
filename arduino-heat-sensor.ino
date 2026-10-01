@@ -1,6 +1,6 @@
 #define LOCAL_BUILD
 
-const String unitID = "3"; //* * * set this before compile * * *"; // 'n' for giga, 'Nano-Iot-n" for Nano 33 Io
+const String unitID = "* * * set this before compile * * *"; // 'n' for giga, 'Nano-Iot-n" for Nano 33 Io
 
 #ifdef LOCAL_BUILD
 String elapsedTime;
