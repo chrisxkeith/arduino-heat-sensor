@@ -26,7 +26,7 @@ def main():
             reader = csv.DictReader(file)
             for row in reader:
                 if not row['value'].startswith(" -"):
-                    outfile.write('"' + row['time'] + '","' + row['value'].replace("  ", " ") + '"\n')
+                    outfile.write('"' + row['time'] + '","' + row['value'].replace("  ", " ") + '",\n')
                     nOutputRows += 1
                 nInputRows += 1
     print("Total input rows processed: " + str(nInputRows))

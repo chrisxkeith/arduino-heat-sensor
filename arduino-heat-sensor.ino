@@ -405,7 +405,7 @@ class OLEDWrapper {
     void display(String s) {
       display(s, DEFAULT_FONT_SIZE, 10, 10);
     }
-    void displayNextToGrid(String s) {
+    void displayNextToGrid(String s, bool rightJustified) {
       fillRectWH(getHeight() + 1, 0, getWidth() - getHeight(), getHeight(), COLOR_BLACK);
       int16_t   x;
       int16_t   y;
@@ -414,7 +414,11 @@ class OLEDWrapper {
 
       getTextBox(&FreeSans18pt7b, "00:00:00", 1, &x, &y, &w, &h);
       display_.setTextColor(COLOR_WHITE);
-      display(s, &FreeSans18pt7b, 1, getWidth() - w - 20, h); // right-justified
+      if (rightJustified) {
+        display(s, &FreeSans18pt7b, 1, getWidth() - w - 20, h); // right-justified
+      } else {
+        display(s, &FreeSans18pt7b, 1, getHeight(), h); // left-justified
+      }
     }
     void doDisplaySmoothedDynamicGrid(uint16_t colors[], int size, int width, int height) {
       const int   FACTOR = height / 8; // 8x8 sensor grid
@@ -616,64 +620,6 @@ class OLEDWrapper {
 #endif
 OLEDWrapper oledWrapper;
 
-#ifdef LOCAL_BUILD
-const int DATA_ROWS = 821; // get this value from the output of the python script
-String gridEyeRows[DATA_ROWS * 2] = {
-#include "/home/ck/Documents/github/arduino-heat-sensor/data.txt"
-};
-#include <ctime>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
-class SensorData {
-public:
-  time_t    theTime;
-  int       gridEyeValues[64];
-  SensorData() {
-    theTime = 0;
-    for (int i = 0; i < 64; i++) {
-      gridEyeValues[i] = 0;
-    }
-  }
-};
-class DataProvider {
-  private:
-    unsigned int  currentIndex = 0;
-    void getItemAt(unsigned int index, SensorData& sensorData) {
-      if (index >= DATA_ROWS * 2) {
-        Serial.println("index out of range: " + String(index) + " (max: " + String(DATA_ROWS * 2 - 1) + ")");
-        return;
-      }
-      std::tm t = {}; // Zero-initialize the structure
-      std::istringstream ss(gridEyeRows[index * 2].c_str());
-      // Parse the string using the corresponding format specifiers
-      // 2026-09-19T20:29:57.955607075Z
-      ss >> std::get_time(&t, "%Y-%m-%dT%H:%M");
-      if (ss.fail()) {
-        Serial.println("Parsing failed! " + gridEyeRows[index * 2]);
-      } else {
-        sensorData.theTime = std::mktime(&t);
-        String vals = gridEyeRows[index * 2 + 1];
-        int charIndex = 1;
-        for (int j = 0; j < 64; j++) {
-          String valStr(vals[charIndex++]);
-          valStr.concat(vals[charIndex++]);
-          sensorData.gridEyeValues[j] = valStr.toInt();
-          charIndex++;
-        }
-      }
-    }
-  public:
-    void reset() {
-      currentIndex = 0;
-    }
-    void getNext(SensorData& sensorData) {
-        getItemAt(currentIndex, sensorData);
-        currentIndex++;
-    }
-};
-#endif
-
 #include <SparkFun_GridEYE_Arduino_Library.h>
 
 class GridEyeSupport {
@@ -748,6 +694,62 @@ String Utils::toString(bool b) {
   return "false";
 }
 
+#ifdef LOCAL_BUILD
+const int DATA_ROWS = 821; // get this value from the output of the python script
+String gridEyeRows[DATA_ROWS * 2] = {
+#include "/home/ck/Documents/github/arduino-heat-sensor/data.txt"
+};
+#include <ctime>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+class SensorData {
+public:
+  String    theTime;
+  float     gridEyeValues[64];
+  SensorData() {
+    for (int i = 0; i < 64; i++) {
+      gridEyeValues[i] = 0;
+    }
+  }
+};
+class DataProvider {
+  private:
+    void getItemAt(unsigned int index, SensorData& sensorData) {
+      if (index >= DATA_ROWS) {
+        Serial.println("index out of range: " + String(index) + " (max: " + String(DATA_ROWS - 1) + ")");
+        return;
+      }
+      String t = gridEyeRows[index * 2];
+      sensorData.theTime = t.substring(0, t.indexOf("."));
+      String vals = gridEyeRows[index * 2 + 1];
+      int charIndex = 1;
+      for (int j = 0; j < 64; j++) {
+        String valStr(vals[charIndex++]);
+        valStr.concat(vals[charIndex++]);
+        sensorData.gridEyeValues[j] = valStr.toFloat();
+        charIndex++;
+      }
+    }
+  public:
+    void run() {
+      oledWrapper.turnBackLightOn();
+      for (unsigned int i = 0; i < DATA_ROWS; i++) {
+        SensorData sensorData;
+        getItemAt(i, sensorData);
+        oledWrapper.displayUnsmoothedDynamicGrid(sensorData.gridEyeValues);
+        oledWrapper.displayNextToGrid(sensorData.theTime, false);
+        delay(2000);
+      }
+    }
+};
+#else
+class DataProvider {
+  public:
+    void run() {}
+};
+#endif
+
 class App {
   private:
     String configs[5] = {
@@ -800,8 +802,9 @@ class App {
         }
       }
     }
-    void loadData() {
-      DataProvider dataProvider;      
+    void runDemoData() {
+      DataProvider dataProvider;
+      dataProvider.run();
     }
     void checkSerial() {
       if (Utils::DO_SERIAL) {
@@ -817,8 +820,8 @@ class App {
             displayParams.setTestParams();
           } else if (teststr.equals("stopTest")) {
             displayParams.setParams();
-          } else if (teststr.equals("loadData")) {
-            loadData();
+          } else if (teststr.equals("runDemoData")) {
+            runDemoData();
           } else {
             String msg("Unknown command: '");
             msg.concat(teststr);
@@ -836,7 +839,7 @@ class App {
     void displayElapsed() {
       if (mostRecentDisplayTime > 0) {
         unsigned long elapsed = millis() - mostRecentDisplayTime;
-        oledWrapper.displayNextToGrid(Utils::msToString(elapsed));
+        oledWrapper.displayNextToGrid(Utils::msToString(elapsed), true);
       }
     }
     void display() {
