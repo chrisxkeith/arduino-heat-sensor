@@ -6,6 +6,7 @@ const String unitID = "* * * set this before compile * * *"; // 'n' for giga, 'N
 String elapsedTime;
 String gridAsString;
 String maxTemperature;
+boolean showGrid;
 #define CLOUD_TIME time_t
 class CloudWrapper {
   public:
@@ -38,6 +39,7 @@ class CloudWrapper {
 void onElapsedTimeChange() {}
 void onGridAsStringChange() {}
 void onMaxTemperatureChange() {}
+void onShowGridChange()  {}
 #endif
 CloudWrapper cloudWrapper;
 
@@ -847,10 +849,10 @@ class App {
       oledWrapper.showTemp(gridEyeSupport.getMax());
 #else
       oledWrapper.turnBackLightOn();
-      if (displayParams.PRODUCTION) {
-        oledWrapper.showTemp(gridEyeSupport.getMax());
-      } else {
+      if (showGrid) {
         displayGrid();
+      } else {
+        oledWrapper.showTemp(gridEyeSupport.getMax());
       }
       displayElapsed();
 #endif
