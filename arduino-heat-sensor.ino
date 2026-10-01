@@ -643,14 +643,17 @@ class DataProvider {
         // 2026-09-19T20:29:57.955607075Z
         ss >> std::get_time(&t, "%Y-%m-%dT%H:%M");
         if (ss.fail()) {
-          std::cout << "Parsing failed!" << std::endl;
+          Serial.println("Parsing failed! " + gridEyeRows[c - 1]);
         } else {
           sensorDataArray[i].theTime = std::mktime(&t);
-        }    
-        String vals = gridEyeRows[c++];
-        // TODO: pull out values from the string, assuming known format, and put them into sensorDataArray[i].gridEyeValues[]
-        for (int j = 0; j < 64; j++) {
-//          sensorDataArray[i].gridEyeValues[j] = values[j].toInt();
+          String vals = gridEyeRows[c++];
+          int charIndex = 1;
+          for (int j = 0; j < 64; j++) {
+            String valStr(vals[charIndex++]);
+            valStr.concat(vals[charIndex++]);
+            sensorDataArray[i].gridEyeValues[j] = valStr.toInt();
+            charIndex++;
+          }
         }
       }
     }
