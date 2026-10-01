@@ -629,6 +629,12 @@ class SensorData {
 public:
   time_t    theTime;
   int       gridEyeValues[64];
+  SensorData() {
+    theTime = 0;
+    for (int i = 0; i < 64; i++) {
+      gridEyeValues[i] = 0;
+    }
+  }
 };
 class DataProvider {
   private:
