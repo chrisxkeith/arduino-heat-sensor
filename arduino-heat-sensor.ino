@@ -1,6 +1,6 @@
 #define LOCAL_BUILD
 
-const String unitID = "* * * set this before compile * * *"; // 'n' for giga, 'Nano-Iot-n" for Nano 33 Io
+const String unitID = "3"; //* * * set this before compile * * *"; // 'n' for giga, 'Nano-Iot-n" for Nano 33 Io
 
 #ifdef LOCAL_BUILD
 String elapsedTime;
@@ -617,7 +617,7 @@ class OLEDWrapper {
 OLEDWrapper oledWrapper;
 
 #ifdef LOCAL_BUILD
-const int DATA_ROWS = 821;
+const int DATA_ROWS = 821; // get this value from the output of the python script
 String gridEyeRows[DATA_ROWS * 2] = {
 #include "/home/ck/Documents/github/arduino-heat-sensor/data.txt"
 };
@@ -631,31 +631,39 @@ public:
   int       gridEyeValues[64];
 };
 class DataProvider {
-  public:
-    SensorData* sensorDataArray = nullptr;
-    DataProvider() {
-      sensorDataArray = new SensorData[DATA_ROWS];
-      int c = 0;
-      for (int i = 0; i < DATA_ROWS; i++) {
-        std::tm t = {}; // Zero-initialize the structure
-        std::istringstream ss(gridEyeRows[c++].c_str());
-        // Parse the string using the corresponding format specifiers
-        // 2026-09-19T20:29:57.955607075Z
-        ss >> std::get_time(&t, "%Y-%m-%dT%H:%M");
-        if (ss.fail()) {
-          Serial.println("Parsing failed! " + gridEyeRows[c - 1]);
-        } else {
-          sensorDataArray[i].theTime = std::mktime(&t);
-          String vals = gridEyeRows[c++];
-          int charIndex = 1;
-          for (int j = 0; j < 64; j++) {
-            String valStr(vals[charIndex++]);
-            valStr.concat(vals[charIndex++]);
-            sensorDataArray[i].gridEyeValues[j] = valStr.toInt();
-            charIndex++;
-          }
+  private:
+    unsigned int  currentIndex = 0;
+    void getItemAt(unsigned int index, SensorData& sensorData) {
+      if (index >= DATA_ROWS * 2) {
+        Serial.println("index out of range: " + String(index) + " (max: " + String(DATA_ROWS * 2 - 1) + ")");
+        return;
+      }
+      std::tm t = {}; // Zero-initialize the structure
+      std::istringstream ss(gridEyeRows[index * 2].c_str());
+      // Parse the string using the corresponding format specifiers
+      // 2026-09-19T20:29:57.955607075Z
+      ss >> std::get_time(&t, "%Y-%m-%dT%H:%M");
+      if (ss.fail()) {
+        Serial.println("Parsing failed! " + gridEyeRows[index * 2]);
+      } else {
+        sensorData.theTime = std::mktime(&t);
+        String vals = gridEyeRows[index * 2 + 1];
+        int charIndex = 1;
+        for (int j = 0; j < 64; j++) {
+          String valStr(vals[charIndex++]);
+          valStr.concat(vals[charIndex++]);
+          sensorData.gridEyeValues[j] = valStr.toInt();
+          charIndex++;
         }
       }
+    }
+  public:
+    void reset() {
+      currentIndex = 0;
+    }
+    void getNext(SensorData& sensorData) {
+        getItemAt(currentIndex, sensorData);
+        currentIndex++;
     }
 };
 #endif
@@ -786,6 +794,9 @@ class App {
         }
       }
     }
+    void loadData() {
+      DataProvider dataProvider;      
+    }
     void checkSerial() {
       if (Utils::DO_SERIAL) {
         if (Serial.available() > 0) {
@@ -800,8 +811,8 @@ class App {
             displayParams.setTestParams();
           } else if (teststr.equals("stopTest")) {
             displayParams.setParams();
-          } else if (teststr.equals("values")) {
-            publishValuesAsString();
+          } else if (teststr.equals("loadData")) {
+            loadData();
           } else {
             String msg("Unknown command: '");
             msg.concat(teststr);
