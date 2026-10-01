@@ -616,9 +616,46 @@ class OLEDWrapper {
 #endif
 OLEDWrapper oledWrapper;
 
-String gridEyeRows[] = {
+#ifdef LOCAL_BUILD
+const int DATA_ROWS = 821;
+String gridEyeRows[DATA_ROWS * 2] = {
 #include "/home/ck/Documents/github/arduino-heat-sensor/data.txt"
 };
+#include <ctime>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+class SensorData {
+public:
+  time_t    theTime;
+  int       gridEyeValues[64];
+};
+class DataProvider {
+  public:
+    SensorData* sensorDataArray = nullptr;
+    DataProvider() {
+      sensorDataArray = new SensorData[DATA_ROWS];
+      int c = 0;
+      for (int i = 0; i < DATA_ROWS; i++) {
+        std::tm t = {}; // Zero-initialize the structure
+        std::istringstream ss(gridEyeRows[c++].c_str());
+        // Parse the string using the corresponding format specifiers
+        // 2026-09-19T20:29:57.955607075Z
+        ss >> std::get_time(&t, "%Y-%m-%dT%H:%M");
+        if (ss.fail()) {
+          std::cout << "Parsing failed!" << std::endl;
+        } else {
+          sensorDataArray[i].theTime = std::mktime(&t);
+        }    
+        String vals = gridEyeRows[c++];
+        // TODO: pull out values from the string, assuming known format, and put them into sensorDataArray[i].gridEyeValues[]
+        for (int j = 0; j < 64; j++) {
+//          sensorDataArray[i].gridEyeValues[j] = values[j].toInt();
+        }
+      }
+    }
+};
+#endif
 
 #include <SparkFun_GridEYE_Arduino_Library.h>
 
