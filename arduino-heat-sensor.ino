@@ -752,11 +752,38 @@ class DataProvider {
 };
 #endif
 
+class ButtonHandler {
+  private:
+    const int           BUTTON_PIN = 2;
+    bool                lastButtonState = HIGH;
+    unsigned long       lastDebounceTime = 0;
+    const unsigned long DEBOUNCE_DELAY = 50; // milliseconds
+  public:
+    ButtonHandler() {
+      pinMode(BUTTON_PIN, INPUT);
+    }
+    bool isPressed() {
+      bool reading = digitalRead(BUTTON_PIN);
+      if (reading != lastButtonState) {
+        lastDebounceTime = millis();
+      }
+      if ((millis() - lastDebounceTime) > DEBOUNCE_DELAY) {
+        if (reading == LOW) {
+          lastButtonState = reading;
+          return true;
+        }
+      }
+      lastButtonState = reading;
+      return false;
+    }
+};
+ButtonHandler buttonHandler;
+
 class App {
   private:
     String configs[5] = {
       "Unit ID: " + unitID,
-      "~Sat Sep 19 01:31:36 PM PDT 2026",
+      "~Fri Oct  2 08:32:41 PM PDT 2026",
       "arduino-heat-sensor",
 #ifdef USE_128_X_128
       "Using 128_X_128 OLED",
