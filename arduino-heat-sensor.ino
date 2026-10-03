@@ -1,6 +1,6 @@
 #define LOCAL_BUILD
 
-const String unitID = "* * * set this before compile * * *"; // 'n' for giga, 'Nano-Iot-n" for Nano 33 Io
+const String unitID = "2"; //"* * * set this before compile * * *"; // 'n' for giga, 'Nano-Iot-n" for Nano 33 Io
 
 #ifdef LOCAL_BUILD
 String elapsedTime;
@@ -209,9 +209,9 @@ class DisplayParams {
     const int MIN_TEMP = 80; // for production
     const int MAX_TEMP = 100;
     const int THRESHOLD = 90;
-    const int TEST_MIN_TEMP = 70; // for testing with skin temperature
-    const int TEST_MAX_TEMP = 90;
-    const int TEST_THRESHOLD = 80;
+    const int TEST_MIN_TEMP = 60; // for testing with skin temperature
+    const int TEST_MAX_TEMP = 100;
+    const int TEST_THRESHOLD = 70;
 
   public:
     const bool PRODUCTION = unitID.equals("1") || unitID.equals("Nano-Iot-5");
@@ -802,6 +802,7 @@ class App {
       }
     }
 
+    const float DELTA = 3.0; // degrees F
     float previousVals[64] = {-1.0};
     bool changed(float vals[64]) {
       if (vals[0] < 0.0) {
@@ -810,7 +811,6 @@ class App {
         }
         return false;
       }
-      const float DELTA = 3.0; // degrees F
       bool changed = false;
       for (int i = 0; i < 64; i++) {
         if (abs(vals[i] - previousVals[i]) > DELTA) {
@@ -819,17 +819,13 @@ class App {
       }
       return false;
     }
-    void displayGrid() {
-      float vals[64];
+    void getVals(float vals[64]) {
       for (int i = 0; i < 64; i++) {
         vals[i] = gridEyeSupport.readOneSensor(i);
       }
-      if (changed(vals)) {
-        oledWrapper.displayDynamicGrid(vals);
-        for (int i = 0; i < 64; i++) {
-          previousVals[i] = vals[i];
-        }
-      }
+    }
+    void displayGrid(float vals[64]) {
+      oledWrapper.displayDynamicGrid(vals);
     }
     void runDemoData() {
       DataProvider dataProvider;
@@ -872,17 +868,24 @@ class App {
       }
     }
     void display() {
+      float vals[64];
+      getVals(vals);
+      if (changed(vals)) {
 #ifdef USE_128_X_128
-      oledWrapper.showTemp(gridEyeSupport.getMax());
-#else
-      oledWrapper.turnBackLightOn();
-      if (showGrid) {
-        displayGrid();
-      } else {
         oledWrapper.showTemp(gridEyeSupport.getMax());
-      }
-      displayElapsed();
+#else
+        oledWrapper.turnBackLightOn();
+        if (showGrid) {
+          displayGrid(vals);
+        } else {
+          oledWrapper.showTemp(gridEyeSupport.getMax());
+        }
+        displayElapsed();
 #endif
+        for (int i = 0; i < 64; i++) {
+          previousVals[i] = vals[i];
+        }
+      }
     }
     void publishValuesAsString() {
       for (int i = 0; i < 8; i++) {
@@ -955,6 +958,10 @@ class App {
     void loop() {
       cloudWrapper.loop();
       timeSupport->handleTime();
+      if (buttonHandler.isPressed()) {
+//        showGrid = !showGrid;
+//        oledWrapper.clear();
+      }
       const int DISPLAY_RATE_IN_MS = (displayParams.PRODUCTION ? 5000 : 1);
       unsigned long thisMS = millis();
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
