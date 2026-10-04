@@ -366,11 +366,11 @@ class OLEDWrapper {
     void turnBackLightOff() {
       digitalWrite(backlightPin, LOW);
     }
-    void getTextBox(const GFXfont* font, String str, int textSize, int16_t* x, int16_t* y, uint16_t* w, uint16_t* h) {
+    void getTextBox(const GFXfont* font, String str, int textSize, int16_t x0, int16_t y0,
+                    int16_t* x, int16_t* y, uint16_t* w, uint16_t* h) {
       display_.setFont(font);
       display_.setTextSize(textSize);
-      display_.getTextBounds(str, 0, 0, x, y, w, h);
-      // Does NOT include descenders. :(
+      display_.getTextBounds(str, x0, y0, x, y, w, h);
     }
     void display(String s, const GFXfont* font, int textSize, uint16_t x, uint16_t y) {
       display_.setCursor(x, y);
@@ -384,8 +384,8 @@ class OLEDWrapper {
       uint16_t  w;
       uint16_t  h;
 
-      getTextBox(font, s, 1, &x, &y, &w, &h);
-      display_.fillRect(x0, y0, w < getWidth() ? w : getWidth(), y > 0 ? y : -y, COLOR_BLACK);
+      getTextBox(font, s, 1, x0, y0, &x, &y, &w, &h);
+      display_.fillRect(x0, y0, w < getWidth() ? w : getWidth(), h, COLOR_BLACK);
       display_.setTextColor(COLOR_WHITE);
       display_.setCursor(x0, y0 + h);
       display_.setFont(font);
@@ -398,8 +398,8 @@ class OLEDWrapper {
       uint16_t  w;
       uint16_t  h;
 
-      getTextBox(font, s, 1, &x, &y, &w, &h);
-      display_.fillRect(x0, y0, w < getWidth() ? w : getWidth(), y > 0 ? y : -y, COLOR_BLACK);
+      getTextBox(font, s, 1, x0, y0, &x, &y, &w, &h);
+      display_.fillRect(x0, y0, w < getWidth() ? w : getWidth(), h, COLOR_BLACK);
     }
     void display(String s, int textSize, uint16_t x, uint16_t y) {
       display(s, &FreeSans24pt7b, textSize, x, y);
@@ -414,7 +414,7 @@ class OLEDWrapper {
       uint16_t  w;
       uint16_t  h;
 
-      getTextBox(&FreeSans18pt7b, "00:00:00", 1, &x, &y, &w, &h);
+      getTextBox(&FreeSans18pt7b, "00:00:00", 1, 0, 0, &x, &y, &w, &h);
       display_.setTextColor(COLOR_WHITE);
       if (rightJustified) {
         display(s, &FreeSans18pt7b, 1, getWidth() - w - 20, h); // right-justified
@@ -535,7 +535,7 @@ class OLEDWrapper {
       uint16_t  w;
       uint16_t  h;
 
-      getTextBox(&FreeSans18pt7b, "1", 1, &x0, &y0, &w, &h);
+      getTextBox(&FreeSans18pt7b, "1", 1, 0, 0, &x0, &y0, &w, &h);
       for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
           int rotatedX = y;
