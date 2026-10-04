@@ -902,7 +902,7 @@ class App {
       return ret;
     }
     unsigned long       lastCloudPublish = 0;
-    const unsigned long CLOUD_PUBLISH_RATE_IN_MS = 1000 * 10; // every 10 seconds
+    const unsigned long CLOUD_PUBLISH_RATE_IN_MS = 5 * 1000; // every 5 seconds, same as PRODUCTION display rate
     void setCloudValues(String elapsedTime_, String gridAsString_, String maxTemperature_) {
       if (millis() - lastCloudPublish > CLOUD_PUBLISH_RATE_IN_MS) {
         lastCloudPublish = millis();
@@ -957,15 +957,15 @@ class App {
     void loop() {
       cloudWrapper.loop();
       timeSupport->handleTime();
-      if (buttonHandler.isPressed()) {
-        showGrid = !showGrid;
-        oledWrapper.clear();
-      }
       const int DISPLAY_RATE_IN_MS = (displayParams.PRODUCTION ? 5000 : 1);
       unsigned long thisMS = millis();
       if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
         shiftDisplay(thisMS);
         if (thresholdReached()) {
+          if (buttonHandler.isPressed()) {
+            // showGrid = !showGrid;
+            // oledWrapper.clear();
+          }
           if (mostRecentDisplayTime == 0) {
             mostRecentDisplayTime = thisMS;
           }
