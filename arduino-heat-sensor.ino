@@ -587,9 +587,6 @@ class OLEDWrapper {
       // Rotate not happening automatically?
       display_.drawLine(y0, x0, y1, x1, currentColor);
     }
-    void fillRect(int x0, int y0, int x1, int y1, int color) {
-      display_.fillRect(x0, y0, x1 - x0, y1 - y0, color); // is there an off-by-one error here?
-    }  
     void fillRectWH(int x0, int y0, int w, int h, int color) {
       display_.fillRect(x0, y0, w, h, color);
     }  
