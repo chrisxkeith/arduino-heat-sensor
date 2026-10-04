@@ -755,25 +755,24 @@ class DataProvider {
 class ButtonHandler {
   private:
     const int           BUTTON_PIN = 2;
-    bool                lastButtonState = HIGH;
-    unsigned long       lastDebounceTime = 0;
-    const unsigned long DEBOUNCE_DELAY = 50; // milliseconds
+    bool                lastButtonState = LOW;
+    unsigned long       lastTimeButtonStateChanged = 0;
+    const unsigned long DEBOUNCE_DURATION = 50; // milliseconds
   public:
     ButtonHandler() {
       pinMode(BUTTON_PIN, INPUT);
     }
     bool isPressed() {
-      bool reading = digitalRead(BUTTON_PIN);
-      if (reading != lastButtonState) {
-        lastDebounceTime = millis();
-      }
-      if ((millis() - lastDebounceTime) > DEBOUNCE_DELAY) {
-        if (reading == LOW) {
-          lastButtonState = reading;
-          return true;
+      if (millis() - lastTimeButtonStateChanged > DEBOUNCE_DURATION) {
+        byte buttonState = digitalRead(BUTTON_PIN);
+        if (buttonState != lastButtonState) {
+          lastTimeButtonStateChanged = millis();
+          lastButtonState = buttonState;
+          if (buttonState == HIGH) {
+            return true;
+          }
         }
       }
-      lastButtonState = reading;
       return false;
     }
 };
@@ -959,8 +958,8 @@ class App {
       cloudWrapper.loop();
       timeSupport->handleTime();
       if (buttonHandler.isPressed()) {
-//        showGrid = !showGrid;
-//        oledWrapper.clear();
+        showGrid = !showGrid;
+        oledWrapper.clear();
       }
       const int DISPLAY_RATE_IN_MS = (displayParams.PRODUCTION ? 5000 : 1);
       unsigned long thisMS = millis();
