@@ -490,10 +490,11 @@ class OLEDWrapper {
           int color = display_.color565(val, 0, 0);
           int rotatedX = y;
           int rotatedY = 7 - x;
-          int x0 = rotatedX * 64;
-          int y0 = rotatedY * 64;
-          for (int i = 0; i < 64; i++) {
-            for (int j = 0; j < 64; j++) {
+          int blockWidth = getHeight() / 8;
+          int x0 = rotatedX * blockWidth;
+          int y0 = rotatedY * blockWidth;
+          for (int i = 0; i < blockWidth; i++) {
+            for (int j = 0; j < blockWidth; j++) {
               display_.drawPixel(x0 + j, y0 + i, color);
             }
           }
