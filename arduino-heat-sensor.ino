@@ -526,7 +526,6 @@ class OLEDWrapper {
       }
     }
     void displayGridValues(float vals[]) {
-      displayUnsmoothedDynamicGrid(vals);
       int min;
       int max;
       getMinMax(vals, &min, &max);
@@ -551,7 +550,7 @@ class OLEDWrapper {
       }
     }
     void displayDynamicGrid(float vals[]) {
-      GridType gridType = VALUES;
+      GridType gridType = NOT_SMOOTHED;
       switch (gridType) {
         case SMOOTHED:
           displaySmoothedDynamicGrid(vals);
@@ -989,3 +988,4 @@ void setup() {
 void loop() {
   app.loop();
 }
+
