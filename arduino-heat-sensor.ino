@@ -371,6 +371,9 @@ class OLEDWrapper {
       display_.setFont(font);
       display_.setTextSize(textSize);
       display_.getTextBounds(str, x0, y0, x, y, w, h);
+      // https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA/issues/43
+      *w += (textSize * 2);
+      *h += (textSize * 2);
     }
     void display(String s, const GFXfont* font, int textSize, uint16_t x, uint16_t y) {
       display_.setCursor(x, y);
