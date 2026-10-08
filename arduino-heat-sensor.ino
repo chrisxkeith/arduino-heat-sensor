@@ -39,7 +39,6 @@ class CloudWrapper {
 void onElapsedTimeChange() {}
 void onGridAsStringChange() {}
 void onMaxTemperatureChange() {}
-void onShowGridChange()  {}
 #endif
 CloudWrapper cloudWrapper;
 
@@ -776,9 +775,6 @@ class App {
       "Production: " + Utils::toString(displayParams.PRODUCTION)
     };
 
-    unsigned long lastDisplay = 0;
-    int lastShift = 0;
-
     void status() {
       for (String s : configs) {
         Utils::publish(s);
@@ -911,6 +907,7 @@ class App {
   public:
     App() {
     }
+    unsigned long lastDisplay = 0;
     void setup() {
       cloudWrapper.setup();
       Wire.begin();
@@ -966,3 +963,7 @@ void loop() {
   app.loop();
 }
 
+void onShowGridChange()  {
+  oledWrapper.clear();
+  app.lastDisplay = 0; // try to force redraw immediately
+}
