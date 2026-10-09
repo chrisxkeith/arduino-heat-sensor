@@ -879,8 +879,8 @@ class App {
       }
       return ret;
     }
+    const unsigned long CLOUD_PUBLISH_RATE_IN_MS = 5 * 1000; // every 5 seconds
     unsigned long       lastCloudPublish = 0;
-    const unsigned long CLOUD_PUBLISH_RATE_IN_MS = 5 * 1000; // every 5 seconds, same as PRODUCTION display rate
     void setCloudValues(String elapsedTime_, String gridAsString_, String maxTemperature_) {
       if (millis() - lastCloudPublish > CLOUD_PUBLISH_RATE_IN_MS) {
         lastCloudPublish = millis();
@@ -904,9 +904,6 @@ class App {
       setCloudValues("--:--:--", " -- -- -- -- -- -- -- --", "--- f");
     }
   public:
-    App() {
-    }
-    unsigned long lastDisplay = 0;
     void setup() {
       cloudWrapper.setup();
       Wire.begin();
@@ -928,26 +925,18 @@ class App {
     void loop() {
       cloudWrapper.loop();
       timeSupport->handleTime();
-      const int DISPLAY_RATE_IN_MS = (displayParams.PRODUCTION ? 5000 : 1);
-      unsigned long thisMS = millis();
-      if (thisMS - lastDisplay > DISPLAY_RATE_IN_MS) {
-        if (thresholdReached()) {
-          if (buttonHandler.isPressed()) {
-            // showGrid = !showGrid;
-            // oledWrapper.clear();
-          }
-          if (mostRecentDisplayTime == 0) {
-            mostRecentDisplayTime = thisMS;
-          }
-          display();
-          unsigned long elapsed = millis() - mostRecentDisplayTime;
-          String maxT(gridEyeSupport.getMax());
-          maxT.concat(" f");
-          setCloudValues(Utils::msToString(elapsed), getGridAsString(), maxT);
-          lastDisplay = thisMS;
-        } else {
-          stopDisplay();
+      if (thresholdReached()) {
+        unsigned long thisMS = millis();
+        if (mostRecentDisplayTime == 0) {
+          mostRecentDisplayTime = thisMS;
         }
+        display();
+        unsigned long elapsed = thisMS - mostRecentDisplayTime;
+        String maxT(gridEyeSupport.getMax());
+        maxT.concat(" f");
+        setCloudValues(Utils::msToString(elapsed), getGridAsString(), maxT);
+      } else {
+        stopDisplay();
       }
       checkSerial();
     }
@@ -964,5 +953,4 @@ void loop() {
 
 void onShowGridChange()  {
   oledWrapper.clear();
-  app.lastDisplay = 0; // try to force redraw immediately
 }
