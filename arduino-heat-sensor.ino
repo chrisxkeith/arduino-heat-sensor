@@ -857,12 +857,12 @@ class App {
         } else {
           oledWrapper.showTemp(gridEyeSupport.getMax());
         }
-        displayElapsed();
 #endif
         for (int i = 0; i < 64; i++) {
           previousVals[i] = vals[i];
         }
       }
+      displayElapsed();
     }
     void publishValuesAsString() {
       for (int i = 0; i < 8; i++) {
