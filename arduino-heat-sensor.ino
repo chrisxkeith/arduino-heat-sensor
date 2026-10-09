@@ -347,7 +347,8 @@ class OLEDWrapper {
     uint16_t currentColor = COLOR_WHITE;
     const int DEFAULT_FONT_SIZE = 3;
     const int backlightPin = 74; // D74 controls the backlight driver
-
+    const GFXfont* font24 = &FreeSans24pt7b;
+    const GFXfont* font18 = &FreeSans18pt7b;
     void display(String s, int textSize, uint16_t x, uint16_t y) {
       display(s, &FreeSans24pt7b, textSize, x, y);
     }
@@ -429,6 +430,77 @@ class OLEDWrapper {
     void fillRectWH(int x0, int y0, int w, int h, int color) {
       display_.fillRect(x0, y0, w, h, color);
     }  
+    void getTextBox(const GFXfont* font, String str, int textSize, int16_t x0, int16_t y0,
+                    int16_t* x, int16_t* y, uint16_t* w, uint16_t* h) {
+      display_.setFont(font);
+      display_.setTextSize(textSize);
+      display_.getTextBounds(str, x0, y0, x, y, w, h);
+      // https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA/issues/43
+      *w += (textSize * 2);
+      *h += (textSize * 2);
+    }
+    void displayAtXY_(String s, int textSize, uint16_t x0, uint16_t y0) {
+      int16_t   x;
+      int16_t   y;
+      uint16_t  w;
+      uint16_t  h;
+
+      getTextBox(font24, s, 1, x0, y0, &x, &y, &w, &h);
+      display_.fillRect(x0, y0, w < getWidth() ? w : getWidth(), h, COLOR_BLACK);
+      display_.setTextColor(COLOR_WHITE);
+      display_.setCursor(x0, y0 + h);
+      display_.setFont(font24);
+      display_.setTextSize(textSize);
+      display_.print(s);
+    }
+    void clear_(String s, int textSize, uint16_t x0, uint16_t y0) {
+      int16_t   x;
+      int16_t   y;
+      uint16_t  w;
+      uint16_t  h;
+
+      getTextBox(font24, s, 1, x0, y0, &x, &y, &w, &h);
+      display_.fillRect(x0, y0, w < getWidth() ? w : getWidth(), h, COLOR_BLACK);
+    }
+    void displayNextToGrid_(String s, bool rightJustified) {
+      fillRectWH(getHeight() + 1, 0, getWidth() - getHeight(), getHeight(), COLOR_BLACK);
+      int16_t   x;
+      int16_t   y;
+      uint16_t  w;
+      uint16_t  h;
+
+      getTextBox(font24, "00:00:00", 1, 0, 0, &x, &y, &w, &h);
+      display_.setTextColor(COLOR_WHITE);
+      if (rightJustified) {
+        display(s, font24, 1, getWidth() - w - 20, h); // right-justified
+      } else {
+        display(s, font24, 1, getHeight(), h); // left-justified
+      }
+    }
+    void displayGridValues_(float vals[]) {
+      int min;
+      int max;
+      getMinMax(vals, &min, &max);
+      
+      int16_t   x0;
+      int16_t   y0;
+      uint16_t  w;
+      uint16_t  h;
+
+      getTextBox(font18, "1", 1, 0, 0, &x0, &y0, &w, &h);
+      for (int x = 0; x < 8; x++) {
+        for (int y = 0; y < 8; y++) {
+          int rotatedX = y;
+          int rotatedY = 7 - x;
+          int x0 = rotatedX * 64;
+          int y0 = rotatedY * 64;
+          int index = (y * 8) + x;
+          uint16_t color = getColor((vals[index] - min) / (max - min));
+          // display_.setTextColor(color);
+          display(String((int)vals[index]), font18, 1, x0, y0 + h);
+        }
+      }
+    }
 
     enum GridType { SMOOTHED, NOT_SMOOTHED, VALUES };
     String previousTemp;
@@ -450,55 +522,17 @@ class OLEDWrapper {
     void turnBackLightOff() {
       digitalWrite(backlightPin, LOW);
     }
-    void getTextBox(const GFXfont* font, String str, int textSize, int16_t x0, int16_t y0,
-                    int16_t* x, int16_t* y, uint16_t* w, uint16_t* h) {
-      display_.setFont(font);
-      display_.setTextSize(textSize);
-      display_.getTextBounds(str, x0, y0, x, y, w, h);
-      // https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA/issues/43
-      *w += (textSize * 2);
-      *h += (textSize * 2);
-    }
     void display(String s) {
       display(s, DEFAULT_FONT_SIZE, 10, 10);
     }
-    void displayAtXY(String s, const GFXfont* font, int textSize, uint16_t x0, uint16_t y0) {
-      int16_t   x;
-      int16_t   y;
-      uint16_t  w;
-      uint16_t  h;
-
-      getTextBox(font, s, 1, x0, y0, &x, &y, &w, &h);
-      display_.fillRect(x0, y0, w < getWidth() ? w : getWidth(), h, COLOR_BLACK);
-      display_.setTextColor(COLOR_WHITE);
-      display_.setCursor(x0, y0 + h);
-      display_.setFont(font);
-      display_.setTextSize(textSize);
-      display_.print(s);
+    void displayAtXY(String s, int textSize, uint16_t x0, uint16_t y0) {
+      displayAtXY_(s, textSize, x0, y0);
     }
-    void clear(String s, const GFXfont* font, int textSize, uint16_t x0, uint16_t y0) {
-      int16_t   x;
-      int16_t   y;
-      uint16_t  w;
-      uint16_t  h;
-
-      getTextBox(font, s, 1, x0, y0, &x, &y, &w, &h);
-      display_.fillRect(x0, y0, w < getWidth() ? w : getWidth(), h, COLOR_BLACK);
+    void clear(String s, int textSize, uint16_t x0, uint16_t y0) {
+      clear_(s, textSize, x0, y0);
     }
     void displayNextToGrid(String s, bool rightJustified) {
-      fillRectWH(getHeight() + 1, 0, getWidth() - getHeight(), getHeight(), COLOR_BLACK);
-      int16_t   x;
-      int16_t   y;
-      uint16_t  w;
-      uint16_t  h;
-
-      getTextBox(&FreeSans18pt7b, "00:00:00", 1, 0, 0, &x, &y, &w, &h);
-      display_.setTextColor(COLOR_WHITE);
-      if (rightJustified) {
-        display(s, &FreeSans18pt7b, 1, getWidth() - w - 20, h); // right-justified
-      } else {
-        display(s, &FreeSans18pt7b, 1, getHeight(), h); // left-justified
-      }
+      displayNextToGrid_(s, rightJustified);
     }
     void displaySmoothedDynamicGrid(float vals[]) {
       int iVals[64];
@@ -535,28 +569,7 @@ class OLEDWrapper {
       display_.endWrite();
     }
     void displayGridValues(float vals[]) {
-      int min;
-      int max;
-      getMinMax(vals, &min, &max);
-      
-      int16_t   x0;
-      int16_t   y0;
-      uint16_t  w;
-      uint16_t  h;
-
-      getTextBox(&FreeSans18pt7b, "1", 1, 0, 0, &x0, &y0, &w, &h);
-      for (int x = 0; x < 8; x++) {
-        for (int y = 0; y < 8; y++) {
-          int rotatedX = y;
-          int rotatedY = 7 - x;
-          int x0 = rotatedX * 64;
-          int y0 = rotatedY * 64;
-          int index = (y * 8) + x;
-          uint16_t color = getColor((vals[index] - min) / (max - min));
-          // display_.setTextColor(color);
-          display(String((int)vals[index]), &FreeSans18pt7b, 1, x0, y0 + h);
-        }
-      }
+      displayGridValues_(vals);
     }
     void displayDynamicGrid(float vals[]) {
       GridType gridType = NOT_SMOOTHED;
@@ -572,20 +585,6 @@ class OLEDWrapper {
           break;
       }
     }
-    void getTextBoundsWH(String string, const GFXfont* font, int textSize,
-                          int16_t x, int16_t y, int16_t* x1, int16_t* y1, uint16_t* w, uint16_t* h) {
-      display_.setFont(font);
-      display_.setTextSize(textSize);
-      display_.getTextBounds(string, x, y, x1, y1, w, h);
-    }
-    void getTextBounds(String string, const GFXfont* font, int textSize,
-                          int16_t* x1, int16_t* y1, uint16_t* x2, uint16_t* y2) {
-      uint16_t w;
-      uint16_t h;
-      getTextBoundsWH(string, font, textSize, 0, 0, x1, y1, &w, &h);
-      *x2 = *x1 + w;
-      *y2 = *y1 + h;
-    }
     int getHeight() {
       return display_.height();
     }
@@ -596,10 +595,10 @@ class OLEDWrapper {
       String s(temp);
       s.concat(" f");
       if (previousTemp.length() > 0) {
-        clear(previousTemp, &FreeSans24pt7b, 1, 0, 0);
+        clear(previousTemp, 1, 0, 0);
       }
       previousTemp = s;
-      displayAtXY(s, &FreeSans24pt7b, 1, 0, 0);
+      displayAtXY(s, 1, 0, 0);
     }
 };
 #endif
