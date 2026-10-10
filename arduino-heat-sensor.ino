@@ -6,7 +6,7 @@ const String unitID = "2"; //"* * * set this before compile * * *"; // 'n' for g
 String elapsedTime;
 String gridAsString;
 String maxTemperature;
-boolean showGrid;
+bool showGrid;
 #define CLOUD_TIME time_t
 class CloudWrapper {
   public:
