@@ -879,16 +879,32 @@ class App {
       }
       return ret;
     }
-    const unsigned long CLOUD_PUBLISH_RATE_IN_MS = 5 * 1000; // every 5 seconds
-    unsigned long       lastCloudPublish = 0;
-    void setCloudValues(String elapsedTime_, String gridAsString_, String maxTemperature_) {
-      if (millis() - lastCloudPublish > CLOUD_PUBLISH_RATE_IN_MS) {
-        lastCloudPublish = millis();
-        elapsedTime = elapsedTime_;
-        gridAsString = gridAsString_;
-        maxTemperature = maxTemperature_;
-      }
-    }
+    class CloudData {
+      public:
+        const unsigned long CLOUD_PUBLISH_RATE_IN_MS = 5 * 1000; // every 5 seconds
+        unsigned long       lastCloudPublish = 0;
+
+        String previousElapsedTime;
+        String previousGridAsString;
+        String previousMaxTemperature;
+        void setCloudValues(String elapsedTime_, String gridAsString_, String maxTemperature_) {
+          if (millis() - lastCloudPublish > CLOUD_PUBLISH_RATE_IN_MS) {
+            lastCloudPublish = millis();
+            if (!elapsedTime_.equals(previousElapsedTime)) {
+              previousElapsedTime = elapsedTime_;
+              elapsedTime = elapsedTime_;
+            }
+            if (!gridAsString_.equals(previousGridAsString)) {
+              previousGridAsString = gridAsString_;
+              gridAsString = gridAsString_;
+            }
+            if (!maxTemperature_.equals(previousMaxTemperature)) {
+              previousMaxTemperature = maxTemperature_;
+              maxTemperature = maxTemperature_;
+            }
+          }
+        }
+    } cloudData;
     bool thresholdReached() {
       for (int i = 0; i < 64; i++) {
         if (gridEyeSupport.readOneSensor(i) >= displayParams.threshold) {
@@ -901,7 +917,7 @@ class App {
       oledWrapper.clear();
       oledWrapper.turnBackLightOff();
       mostRecentDisplayTime = 0;
-      setCloudValues("--:--:--", " -- -- -- -- -- -- -- --", "--- f");
+      cloudData.setCloudValues("--:--:--", " -- -- -- -- -- -- -- --", "--- f");
     }
   public:
     void setup() {
@@ -921,6 +937,7 @@ class App {
         oledWrapper.clear();
       }
       timeSupport = new TimeSupport();
+      showGrid = false;
     }
     void loop() {
       cloudWrapper.loop();
@@ -934,7 +951,7 @@ class App {
         unsigned long elapsed = thisMS - mostRecentDisplayTime;
         String maxT(gridEyeSupport.getMax());
         maxT.concat(" f");
-        setCloudValues(Utils::msToString(elapsed), getGridAsString(), maxT);
+        cloudData.setCloudValues(Utils::msToString(elapsed), getGridAsString(), maxT);
       } else {
         stopDisplay();
       }
