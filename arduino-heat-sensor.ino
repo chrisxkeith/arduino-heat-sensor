@@ -37,9 +37,6 @@ class CloudWrapper {
       return ArduinoCloud.getLocalTime();
     }
 };
-void onElapsedTimeChange() {}
-void onGridAsStringChange() {}
-void onMaxTemperatureChange() {}
 #endif
 CloudWrapper cloudWrapper;
 
@@ -974,3 +971,7 @@ void loop() {
 void onShowGridChange()  {
   oledWrapper.clear();
 }
+void onElapsedTimeInSecondsChange() {}
+void onElapsedTimeChange() {}
+void onGridAsStringChange() {}
+void onMaxTemperatureChange() {}
