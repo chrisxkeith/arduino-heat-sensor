@@ -816,18 +816,19 @@ class App {
           teststr.trim();                        // remove any \r \n whitespace at the end of the String
           if (teststr.equals("?")) {
             status();
+          } else if (teststr.equals("runDemoData")) {
+            runDemoData();
           } else if (teststr.equals("scan")) {
             Utils::scanI2C();
           } else if (teststr.equals("startTest")) {
             displayParams.setTestParams();
           } else if (teststr.equals("stopTest")) {
             displayParams.setParams();
-          } else if (teststr.equals("runDemoData")) {
-            runDemoData();
+          } else if (teststr.equals("testEmail")) {
+            stoveOnTooLong = true;
           } else {
             String msg("Unknown command: '");
             msg.concat(teststr);
-            msg.concat("'. Expected ?, smooth, scan, startTest, stopTest, temp, unsmooth, or values");
             Utils::publish(msg);
             return;
           }
