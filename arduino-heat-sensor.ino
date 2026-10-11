@@ -212,7 +212,7 @@ class DisplayParams {
     const int TEST_MIN_TEMP = 60; // for testing with skin temperature
     const int TEST_MAX_TEMP = 100;
     const int TEST_THRESHOLD = 70;
-    const int TEST_TOO_LONG_INTERVAL = 60; // seconds, e.g., 1 minute
+    const int TEST_TOO_LONG_INTERVAL = TOO_LONG_INTERVAL; // test worked, turn it down
 
   public:
     const bool PRODUCTION = unitID.equals("1") || unitID.equals("Nano-Iot-5");
@@ -829,8 +829,6 @@ class App {
             displayParams.setTestParams();
           } else if (teststr.equals("stopTest")) {
             displayParams.setParams();
-          } else if (teststr.equals("testEmail")) {
-            stoveOnTooLong = true;
           } else {
             String msg("Unknown command: '");
             msg.concat(teststr);
