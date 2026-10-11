@@ -208,15 +208,18 @@ class DisplayParams {
     const int MIN_TEMP = 80; // for production
     const int MAX_TEMP = 100;
     const int THRESHOLD = 90;
+    const int TOO_LONG_INTERVAL = 60 * 60; // seconds, e.g., 1 hour
     const int TEST_MIN_TEMP = 60; // for testing with skin temperature
     const int TEST_MAX_TEMP = 100;
     const int TEST_THRESHOLD = 70;
+    const int TEST_TOO_LONG_INTERVAL = 60; // seconds, e.g., 1 minute
 
   public:
     const bool PRODUCTION = unitID.equals("1") || unitID.equals("Nano-Iot-5");
     int minTemp;
     int maxTemp;
     int threshold;
+    int tooLongInterval;
     DisplayParams() {
       if (PRODUCTION) {
         setParams();
@@ -228,11 +231,13 @@ class DisplayParams {
       this->minTemp = TEST_MIN_TEMP;
       this->maxTemp = TEST_MAX_TEMP;
       this->threshold = TEST_THRESHOLD;
+      this->tooLongInterval = TEST_TOO_LONG_INTERVAL;
     }
     void setParams() {
       this->minTemp = MIN_TEMP;
       this->maxTemp = MAX_TEMP;
       this->threshold = THRESHOLD;
+      this->tooLongInterval = TOO_LONG_INTERVAL;
     }
 };
 DisplayParams displayParams;
@@ -895,7 +900,7 @@ class App {
             if (elapsedTimeInSeconds_ != previousElapsedTime) {
               previousElapsedTime = elapsedTimeInSeconds_;
               elapsedTime = Utils::msToString(elapsedTimeInMS);
-              if (elapsedTimeInSeconds_ > 60 * 60) { // 1 hour
+              if (elapsedTimeInSeconds_ > displayParams.tooLongInterval) {
                 stoveOnTooLong = true;
               }
             }
