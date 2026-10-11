@@ -3,11 +3,13 @@
 const String unitID = "2"; //"* * * set this before compile * * *"; // 'n' for giga, 'Nano-Iot-n" for Nano 33 Io
 
 #ifdef LOCAL_BUILD
-String elapsedTime;
-String gridAsString;
-String maxTemperature;
-int elapsedTimeInSeconds;
-bool showGrid;
+String  elapsedTime;
+String  gridAsString;
+String  maxTemperature;
+int     elapsedTimeInSeconds;
+bool    showGrid;
+bool    stoveOnTooLong;
+
 #define CLOUD_TIME time_t
 class CloudWrapper {
   public:
@@ -891,8 +893,10 @@ class App {
             int elapsedTimeInSeconds_ = elapsedTimeInMS / 1000;
             if (elapsedTimeInSeconds_ != previousElapsedTime) {
               previousElapsedTime = elapsedTimeInSeconds_;
-              elapsedTimeInSeconds = elapsedTimeInSeconds_;
               elapsedTime = Utils::msToString(elapsedTimeInMS);
+              if (elapsedTimeInSeconds_ > 60 * 60) { // 1 hour
+                stoveOnTooLong = true;
+              }
             }
             if (!gridAsString_.equals(previousGridAsString)) {
               previousGridAsString = gridAsString_;
@@ -938,6 +942,7 @@ class App {
       }
       timeSupport = new TimeSupport();
       showGrid = false;
+      stoveOnTooLong = false;
     }
     void loop() {
       cloudWrapper.loop();
@@ -975,3 +980,4 @@ void onElapsedTimeInSecondsChange() {}
 void onElapsedTimeChange() {}
 void onGridAsStringChange() {}
 void onMaxTemperatureChange() {}
+void onStoveOnTooLongChange() {}
