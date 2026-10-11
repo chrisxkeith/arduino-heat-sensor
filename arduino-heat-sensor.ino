@@ -6,6 +6,7 @@ const String unitID = "2"; //"* * * set this before compile * * *"; // 'n' for g
 String elapsedTime;
 String gridAsString;
 String maxTemperature;
+int elapsedTimeInSeconds;
 bool showGrid;
 #define CLOUD_TIME time_t
 class CloudWrapper {
@@ -884,15 +885,17 @@ class App {
         const unsigned long CLOUD_PUBLISH_RATE_IN_MS = 5 * 1000; // every 5 seconds
         unsigned long       lastCloudPublish = 0;
 
-        String previousElapsedTime;
+        int previousElapsedTime;
         String previousGridAsString;
         String previousMaxTemperature;
-        void setCloudValues(String elapsedTime_, String gridAsString_, String maxTemperature_) {
+        void setCloudValues(int elapsedTimeInMS, String gridAsString_, String maxTemperature_) {
           if (millis() - lastCloudPublish > CLOUD_PUBLISH_RATE_IN_MS) {
             lastCloudPublish = millis();
-            if (!elapsedTime_.equals(previousElapsedTime)) {
-              previousElapsedTime = elapsedTime_;
-              elapsedTime = elapsedTime_;
+            int elapsedTimeInSeconds_ = elapsedTimeInMS / 1000;
+            if (elapsedTimeInSeconds_ != previousElapsedTime) {
+              previousElapsedTime = elapsedTimeInSeconds_;
+              elapsedTimeInSeconds = elapsedTimeInSeconds_;
+              elapsedTime = Utils::msToString(elapsedTimeInMS);
             }
             if (!gridAsString_.equals(previousGridAsString)) {
               previousGridAsString = gridAsString_;
@@ -917,7 +920,7 @@ class App {
       oledWrapper.clear();
       oledWrapper.turnBackLightOff();
       mostRecentDisplayTime = 0;
-      cloudData.setCloudValues("--:--:--", " -- -- -- -- -- -- -- --", "--- f");
+      cloudData.setCloudValues(0, " -- -- -- -- -- -- -- --", "--- f");
     }
   public:
     void setup() {
@@ -951,7 +954,7 @@ class App {
         unsigned long elapsed = thisMS - mostRecentDisplayTime;
         String maxT(gridEyeSupport.getMax());
         maxT.concat(" f");
-        cloudData.setCloudValues(Utils::msToString(elapsed), getGridAsString(), maxT);
+        cloudData.setCloudValues(elapsed, getGridAsString(), maxT);
       } else {
         stopDisplay();
       }
