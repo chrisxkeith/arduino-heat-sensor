@@ -5,7 +5,7 @@ const String unitID = "2"; //"* * * set this before compile * * *"; // 'n' for g
 #ifdef LOCAL_BUILD
 String  elapsedTime;
 String  gridAsString;
-String  maxTemperature;
+int     maxTemperature;
 int     elapsedTimeInSeconds;
 bool    showGrid;
 bool    stoveOnTooLong;
@@ -890,8 +890,8 @@ class App {
 
         int previousElapsedTime;
         String previousGridAsString;
-        String previousMaxTemperature;
-        void setCloudValues(int elapsedTimeInMS, String gridAsString_, String maxTemperature_) {
+        int previousMaxTemperature;
+        void setCloudValues(int elapsedTimeInMS, String gridAsString_, int maxTemperature_) {
           if (millis() - lastCloudPublish > CLOUD_PUBLISH_RATE_IN_MS) {
             lastCloudPublish = millis();
             int elapsedTimeInSeconds_ = elapsedTimeInMS / 1000;
@@ -906,7 +906,7 @@ class App {
               previousGridAsString = gridAsString_;
               gridAsString = gridAsString_;
             }
-            if (!maxTemperature_.equals(previousMaxTemperature)) {
+            if (maxTemperature_ != previousMaxTemperature) {
               previousMaxTemperature = maxTemperature_;
               maxTemperature = maxTemperature_;
             }
@@ -925,7 +925,7 @@ class App {
       oledWrapper.clear();
       oledWrapper.turnBackLightOff();
       mostRecentDisplayTime = 0;
-      cloudData.setCloudValues(0, " -- -- -- -- -- -- -- --", "--- f");
+      cloudData.setCloudValues(0, " -- -- -- -- -- -- -- --", -1);
     }
   public:
     void setup() {
@@ -958,9 +958,7 @@ class App {
         }
         display();
         unsigned long elapsed = thisMS - mostRecentDisplayTime;
-        String maxT(gridEyeSupport.getMax());
-        maxT.concat(" f");
-        cloudData.setCloudValues(elapsed, getGridAsString(), maxT);
+        cloudData.setCloudValues(elapsed, getGridAsString(), gridEyeSupport.getMax());
       } else {
         stopDisplay();
       }
