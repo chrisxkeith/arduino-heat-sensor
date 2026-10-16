@@ -45,81 +45,45 @@ CloudWrapper cloudWrapper;
 #include <time.h>
 class TimeSupport {
   private:
-    const CLOUD_TIME    NO_TIME = 0;
-    unsigned long       lastSyncMillis = 0;
-    CLOUD_TIME          timeFromCloud = NO_TIME;
-    void                doHandleTime();
+    const unsigned long  NO_TIME = 0;
   public:
                 TimeSupport();
     CLOUD_TIME  getCurrentTime();
     String      timeStr(CLOUD_TIME t);
     String      now();
-    void        handleTime();
     String      dump();
 };
 
-TimeSupport::TimeSupport() {
-  doHandleTime();
-}
+TimeSupport::TimeSupport() {}
 CLOUD_TIME TimeSupport::getCurrentTime() {
-  if (timeFromCloud == NO_TIME) {
-    return 0;
-  }
-  return ((unsigned int)timeFromCloud) + (millis() - lastSyncMillis) / 1000;
+  return cloudWrapper.getLocalTime();
 }
 String TimeSupport::timeStr(CLOUD_TIME t) {
-  if ((timeFromCloud == NO_TIME) || (t == NO_TIME)) {
+  if ((unsigned long)t == NO_TIME) {
     return "unknown time, no time from cloud";
   }
   time_t rawTime = (time_t)t;
   char buffer[128];
   char* timeStr = ctime_r(&rawTime, buffer);
-  // size_t written = strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", time_info); // ToDo?
   if (timeStr == NULL) {
     return "unknown time, ctime_r failed";
   }
-  return String(buffer);
+  String s(buffer);
+  s.trim();
+  return s;
 }
 
 String TimeSupport::now() {
-  return timeStr(timeFromCloud);
+  return timeStr(getCurrentTime());
 }
 
-void TimeSupport::doHandleTime() {
-  timeFromCloud = cloudWrapper.getLocalTime();
-  lastSyncMillis = millis();
-}
-
-unsigned long lastAttemptMillis = 0;
-void TimeSupport::handleTime() {
-  if (timeFromCloud == NO_TIME) {
-    if (millis() - lastAttemptMillis > 1000 * 30) { // every 30 seconds until we can connect
-      if (!cloudWrapper.isConnected()) {
-        lastAttemptMillis = millis();
-        Serial.println("TimeSupport: Not connected to cloud, cannot get time.");
-        return;
-      }
-      doHandleTime();
-    }
-  } else {
-    const unsigned long ONE_DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
-    if (millis() - lastSyncMillis > ONE_DAY_IN_MILLISECONDS) {    // If it's been a day since last sync...
-                                                            // Request time synchronization from the cloud.
-      doHandleTime();
-    }
-  }
-}
 String TimeSupport::dump() {
-  String s("lastSyncMillis: ");
-  s.concat(lastSyncMillis);
-  s.concat(", timeFromCloud: ");
-  s.concat((unsigned long)timeFromCloud);
-  s.concat(", millis(): ");
-  s.concat(millis());
-  s.concat(", getCurrentTime(): ");
+  String s("getCurrentTime(): ");
   s.concat((unsigned long)getCurrentTime());
-  s.concat(", cloudWrapper.getLocalTime(): ");
-  s.concat((unsigned long)cloudWrapper.getLocalTime());
+  s.concat(", now(): ");
+  s.concat(now());
+  s.concat(", NO_TIME: ");
+  s.concat(NO_TIME);
   return s;
 }
 TimeSupport*    timeSupport = nullptr;
@@ -950,7 +914,6 @@ class App {
     }
     void loop() {
       cloudWrapper.loop();
-      timeSupport->handleTime();
       if (thresholdReached()) {
         unsigned long thisMS = millis();
         if (mostRecentDisplayTime == 0) {
