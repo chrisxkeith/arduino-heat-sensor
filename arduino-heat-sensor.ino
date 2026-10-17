@@ -409,13 +409,13 @@ class OLEDWrapper {
       *h += (textSize * 2);
     }
     void displayAtXY_(String s, int textSize, uint16_t x0, uint16_t y0) {
+      clear_(s, textSize, x0, y0);
       int16_t   x;
       int16_t   y;
       uint16_t  w;
       uint16_t  h;
 
       getTextBox(font24, s, 1, x0, y0, &x, &y, &w, &h);
-      display_.fillRect(x0, y0, w < getWidth() ? w : getWidth(), h, COLOR_BLACK);
       display_.setTextColor(COLOR_WHITE);
       display_.setCursor(x0, y0 + h);
       display_.setFont(font24);
@@ -429,7 +429,8 @@ class OLEDWrapper {
       uint16_t  h;
 
       getTextBox(font24, s, 1, x0, y0, &x, &y, &w, &h);
-      display_.fillRect(x0, y0, w < getWidth() ? w : getWidth(), h, COLOR_BLACK);
+      const int KLUDGE = 8;
+      display_.fillRect(x0, y0, w + KLUDGE, h + KLUDGE, COLOR_BLACK);
     }
     void displayNextToGrid_(String s, bool rightJustified) {
       fillRectWH(getHeight() + 1, 0, getWidth() - getHeight(), getHeight(), COLOR_BLACK);
@@ -566,7 +567,7 @@ class OLEDWrapper {
       String s(temp);
       s.concat(" f");
       if (previousTemp.length() > 0) {
-        clear(previousTemp, 1, 0, Y_OFFSET);
+        clear_(previousTemp, 1, 0, Y_OFFSET);
       }
       previousTemp = s;
       displayAtXY(s, 1, 0, Y_OFFSET);
@@ -810,6 +811,7 @@ class App {
     unsigned long mostRecentDisplayTime = 0;
     void displayElapsed() {
       if (mostRecentDisplayTime > 0) {
+        oledWrapper.clear("00:00:00", 1, 0, 0);
         unsigned long elapsed = millis() - mostRecentDisplayTime;
         oledWrapper.displayAtXY(Utils::msToString(elapsed), 1, 0, 0);
       }
