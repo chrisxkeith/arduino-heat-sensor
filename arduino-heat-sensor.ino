@@ -517,6 +517,7 @@ class OLEDWrapper {
       int min;
       int max;
       getMinMax(vals, &min, &max);
+      const int SHIFT = getWidth() - getHeight();
       display_.startWrite();
       for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
@@ -530,7 +531,7 @@ class OLEDWrapper {
           int y0 = rotatedY * blockWidth;
           for (int i = 0; i < blockWidth; i++) {
             for (int j = 0; j < blockWidth; j++) {
-              display_.drawPixel(x0 + j, y0 + i, color);
+              display_.drawPixel(x0 + j + SHIFT, y0 + i, color);
             }
           }
         }
@@ -561,13 +562,14 @@ class OLEDWrapper {
       return display_.width();
     }
     void showTemp(int temp) {
+      const int Y_OFFSET = 48;
       String s(temp);
       s.concat(" f");
       if (previousTemp.length() > 0) {
-        clear(previousTemp, 1, 0, 0);
+        clear(previousTemp, 1, 0, Y_OFFSET);
       }
       previousTemp = s;
-      displayAtXY(s, 1, 0, 0);
+      displayAtXY(s, 1, 0, Y_OFFSET);
     }
 };
 #endif
@@ -809,7 +811,7 @@ class App {
     void displayElapsed() {
       if (mostRecentDisplayTime > 0) {
         unsigned long elapsed = millis() - mostRecentDisplayTime;
-        oledWrapper.displayNextToGrid(Utils::msToString(elapsed), true);
+        oledWrapper.displayAtXY(Utils::msToString(elapsed), 1, 0, 0);
       }
     }
     void display() {
@@ -820,11 +822,8 @@ class App {
         oledWrapper.showTemp(gridEyeSupport.getMax());
 #else
         oledWrapper.turnBackLightOn();
-        if (showGrid) {
-          displayGrid(vals);
-        } else {
-          oledWrapper.showTemp(gridEyeSupport.getMax());
-        }
+        displayGrid(vals);
+        oledWrapper.showTemp(gridEyeSupport.getMax());
 #endif
         for (int i = 0; i < 64; i++) {
           previousVals[i] = vals[i];
