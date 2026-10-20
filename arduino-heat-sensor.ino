@@ -903,6 +903,15 @@ class App {
       mostRecentDisplayTime = 0;
       cloudData.setCloudValues(0, " -- -- -- -- -- -- -- --", -1);
     }
+    // If the flag has been set, turn it off at midnight, so that the user can be reminded again the next day if the stove is left on too long.
+    void resetOnTooLong() {
+      struct tm brokenDownTime;
+      if (timeSupport->getBrokenDownTime(cloudWrapper.getLocalTime(), &brokenDownTime) != nullptr) {
+        if ((brokenDownTime.tm_hour == 0) && (stoveOnTooLong)) {
+          stoveOnTooLong = false;
+        }
+      }
+    }
   public:
     void setup() {
       cloudWrapper.setup();
@@ -937,6 +946,7 @@ class App {
       } else {
         stopDisplay();
       }
+      resetOnTooLong();
       checkSerial();
     }
 };
