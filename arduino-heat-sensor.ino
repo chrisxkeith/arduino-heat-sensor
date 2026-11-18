@@ -184,9 +184,9 @@ class DisplayParams {
     const int MAX_TEMP = 100;
     const int THRESHOLD = 90;
     const int TOO_LONG_INTERVAL = 60 * 60; // seconds, e.g., 1 hour
-    const int TEST_MIN_TEMP = 60; // for testing with skin temperature
-    const int TEST_MAX_TEMP = 100;
-    const int TEST_THRESHOLD = 70;
+    const int TEST_MIN_TEMP = 50; // for testing with skin temperature
+    const int TEST_MAX_TEMP = 80;
+    const int TEST_THRESHOLD = 60;
     const int TEST_TOO_LONG_INTERVAL = TOO_LONG_INTERVAL; // test worked, turn it down
 
   public:
@@ -630,6 +630,13 @@ public:
     }
     return theMax;
   }
+  int getAverage() {
+    long sum = 0;
+    for (int i = 0; i < 64; i++) {
+      sum += (long)(readOneSensor(i));
+    }
+    return (int)(sum / 64);
+  }
 };
 GridEyeSupport gridEyeSupport;
 
@@ -890,12 +897,7 @@ class App {
         }
     } cloudData;
     bool thresholdReached() {
-      for (int i = 0; i < 64; i++) {
-        if (gridEyeSupport.readOneSensor(i) >= displayParams.threshold) {
-          return true;
-        }
-      }
-      return false;
+      return gridEyeSupport.getAverage() >= displayParams.threshold;
     }
     void stopDisplay() {
       oledWrapper.clear();
