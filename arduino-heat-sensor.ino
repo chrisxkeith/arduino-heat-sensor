@@ -826,7 +826,6 @@ class App {
     unsigned long mostRecentDisplayTime = 0;
     void displayElapsed() {
       if (mostRecentDisplayTime > 0) {
-        oledWrapper.clear("00:00:00", 1, 0, 0);
         unsigned long elapsed = millis() - mostRecentDisplayTime;
         oledWrapper.displayAtXY(Utils::msToString(elapsed), 1, 0, 0);
       }
@@ -840,6 +839,8 @@ class App {
 #else
         oledWrapper.turnBackLightOn();
         displayGrid(vals);
+        oledWrapper.fillRectWH(0, 0, oledWrapper.getWidth() - oledWrapper.getHeight(),
+                             oledWrapper.getHeight(), BACKGROUND_COLOR);
         oledWrapper.showTemp(gridEyeSupport.getMax());
 #endif
         for (int i = 0; i < 64; i++) {
