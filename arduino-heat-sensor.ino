@@ -309,8 +309,6 @@ class OLEDWrapper {
 #else
 #include <limits.h>
 
-const int COLOR_WHITE = 0x65535;
-const int COLOR_BLACK = 0x0;
 #include "Arduino_GigaDisplay_GFX.h"
 #include "Fonts/FreeSans12pt7b.h"
 #include "Fonts/FreeSans18pt7b.h"
@@ -321,6 +319,10 @@ const int COLOR_BLACK = 0x0;
 #include "Fonts/TomThumb.h"
 
 GigaDisplay_GFX display_;
+const int COLOR_WHITE = display_.color565(255, 255, 255);
+const int COLOR_BLACK = display_.color565(0, 0, 0);
+const int COLOR_GRAY = display_.color565(27, 27, 27);
+const int BACKGROUND_COLOR = COLOR_GRAY;
 
 class OLEDWrapper {
   private:
@@ -407,9 +409,6 @@ class OLEDWrapper {
         }
       }
     }
-    void fillRectWH(int x0, int y0, int w, int h, int color) {
-      display_.fillRect(x0, y0, w, h, color);
-    }  
     void getTextBox(const GFXfont* font, String str, int textSize, int16_t x0, int16_t y0,
                     int16_t* x, int16_t* y, uint16_t* w, uint16_t* h) {
       display_.setFont(font);
@@ -441,7 +440,7 @@ class OLEDWrapper {
 
       getTextBox(font24, s, 1, x0, y0, &x, &y, &w, &h);
       const int KLUDGE = 8;
-      display_.fillRect(x0, y0, w + KLUDGE, h + KLUDGE, COLOR_BLACK);
+      display_.fillRect(x0, y0, w + KLUDGE, h + KLUDGE, BACKGROUND_COLOR);
     }
     void displayNextToGrid_(String s, bool rightJustified) {
       fillRectWH(getHeight() + 1, 0, getWidth() - getHeight(), getHeight(), COLOR_BLACK);
@@ -484,8 +483,7 @@ class OLEDWrapper {
     }
 
     enum GridType { SMOOTHED, NOT_SMOOTHED, VALUES };
-    String previousTemp;
-
+    
   public:
     void clear() {
       display_.fillScreen(COLOR_BLACK);
@@ -503,6 +501,9 @@ class OLEDWrapper {
     void turnBackLightOff() {
       digitalWrite(backlightPin, LOW);
     }
+    void fillRectWH(int x0, int y0, int w, int h, int color) {
+      display_.fillRect(x0, y0, w, h, color);
+    }  
     void display(String s) {
       display(s, DEFAULT_FONT_SIZE, 10, 10);
     }
@@ -577,10 +578,6 @@ class OLEDWrapper {
       const int Y_OFFSET = 48;
       String s(temp);
       s.concat(" F");
-      if (previousTemp.length() > 0) {
-        clear_(previousTemp, 1, 0, Y_OFFSET);
-      }
-      previousTemp = s;
       displayAtXY(s, 1, 0, Y_OFFSET);
     }
 };
