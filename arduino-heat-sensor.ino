@@ -6,6 +6,7 @@ const String unitID = "2"; //"* * * set this before compile * * *"; // 'n' for g
 String  elapsedTime;
 String  gridAsString;
 int     maxTemperature;
+int     avgTemperature;
 int     elapsedTimeInSeconds;
 bool    showGrid;
 bool    stoveOnTooLong;
@@ -869,10 +870,11 @@ class App {
         const unsigned long CLOUD_PUBLISH_RATE_IN_MS = 5 * 1000; // every 5 seconds
         unsigned long       lastCloudPublish = 0;
 
-        int previousElapsedTime;
-        String previousGridAsString;
-        int previousMaxTemperature;
-        void setCloudValues(int elapsedTimeInMS, String gridAsString_, int maxTemperature_) {
+        int previousElapsedTime = -1;
+        String previousGridAsString = String("");
+        int previousMaxTemperature = -1;
+        int previousAvgTemperature = -1;
+        void setCloudValues(int elapsedTimeInMS, String gridAsString_, int maxTemperature_, int avgTemperature_) {
           if (millis() - lastCloudPublish > CLOUD_PUBLISH_RATE_IN_MS) {
             lastCloudPublish = millis();
             int elapsedTimeInSeconds_ = elapsedTimeInMS / 1000;
@@ -891,6 +893,10 @@ class App {
               previousMaxTemperature = maxTemperature_;
               maxTemperature = maxTemperature_;
             }
+            if (avgTemperature_ != previousAvgTemperature) {
+              previousAvgTemperature = avgTemperature_;
+              avgTemperature = avgTemperature_;
+            }
           }
         }
     } cloudData;
@@ -901,7 +907,7 @@ class App {
       oledWrapper.clear();
       oledWrapper.turnBackLightOff();
       mostRecentDisplayTime = 0;
-      cloudData.setCloudValues(0, " -- -- -- -- -- -- -- --", -1);
+      cloudData.setCloudValues(0, " -- -- -- -- -- -- -- --", -1, -1);
     }
     // If the flag has been set, turn it off at midnight, so that the user can be reminded again the next day if the stove is left on too long.
     void resetOnTooLong() {
@@ -942,7 +948,7 @@ class App {
         }
         display();
         unsigned long elapsed = thisMS - mostRecentDisplayTime;
-        cloudData.setCloudValues(elapsed, getGridAsString(), gridEyeSupport.getMax());
+        cloudData.setCloudValues(elapsed, getGridAsString(), gridEyeSupport.getMax(), gridEyeSupport.getAverage());
       } else {
         stopDisplay();
       }
